@@ -1,0 +1,3 @@
+[submodule "dependencies/pygsp"]
+	path = dependencies/pygsp
+	url = git@github.com:epfl-lts2/pygsp.git

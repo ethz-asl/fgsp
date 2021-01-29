@@ -1,1 +1,3 @@
-# fgsp
+# Factor Graph Signal Processing
+
+

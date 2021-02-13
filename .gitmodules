@@ -1,3 +1,6 @@
 [submodule "dependencies/pygsp"]
 	path = dependencies/pygsp
 	url = git@github.com:epfl-lts2/pygsp.git
+[submodule "dependencies/maplab_msgs"]
+	path = dependencies/maplab_msgs
+	url = git@github.com:ethz-asl/maplab_msgs.git

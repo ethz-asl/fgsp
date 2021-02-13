@@ -11,4 +11,6 @@
   <author email="berlukas@ethz.ch">Lukas Bernreiter</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>maplab_msgs</depend>
 </package>

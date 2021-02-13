@@ -1,1 +1,2 @@
 graph_topic: /sparse_graph/graph
+traj_topic:  /sparse_graph/trajectory

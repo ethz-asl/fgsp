@@ -2,7 +2,7 @@
 
 import rospy
 from std_msgs.msg import Header
-from maplab_msgs import Graph, Trajectory, TrajectoryNode
+from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
 
 
 class GraphMonitor(object):
@@ -13,8 +13,10 @@ class GraphMonitor(object):
         graph_topic = rospy.get_param("~graph_topic")
         traj_topic = rospy.get_param("~traj_topic")
 
-        rospy.Subscriber(graph_topic, Header, self.graph_callback)
-        rospy.Subscriber(graph_topic, Header, self.traj_callback)
+        rospy.Subscriber(graph_topic, Graph, self.graph_callback)
+        rospy.Subscriber(graph_topic, Trajectory, self.traj_callback)
+        rospy.loginfo("[GraphMonitor] Listening for graphs from " + graph_topic)
+        rospy.loginfo("[GraphMonitor] Listening for trajectory from " + traj_topic)
 
         rospy.loginfo("[GraphMonitor] Graph monitor is set up.")
 

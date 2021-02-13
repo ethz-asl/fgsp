@@ -1,2 +1,2 @@
-graph_topic: /sparse_graph/graph
-traj_topic:  /sparse_graph/trajectory
+graph_topic: /maplab_server/sparse_graph/graph
+traj_topic:  /maplab_server/sparse_graph/trajectory

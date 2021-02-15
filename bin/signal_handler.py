@@ -42,7 +42,12 @@ class SignalHandler(object):
     def compute_signal(self, key):
         nodes = self.signals[key]
         traj = self.compute_trajectory(nodes)
-        return traj
+        traj_origin = traj[0,:]
+
+        pos_signal = (traj - traj_origin).squeeze()
+
+        x = np.linalg.norm(pos_signal, ord=2, axis=1)
+        return x
 
 
     def compute_trajectory(self, nodes):

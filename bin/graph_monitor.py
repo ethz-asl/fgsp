@@ -38,8 +38,9 @@ class GraphMonitor(object):
     def traj_callback(self, msg):
         rospy.loginfo("[GraphMonitor] Received trajectory message.")
         key = self.signal.convert_signal(msg)
-        traj = self.signal.compute_signal(key)
-        GraphVisualizer.visualize_trajectory(traj)
+        x = self.signal.compute_signal(key)
+        #GraphVisualizer.visualize_trajectory(traj)
+
 
 
 

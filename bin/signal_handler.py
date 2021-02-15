@@ -32,7 +32,6 @@ class SignalHandler(object):
     def get_all_nodes(self, key):
         return self.signals[key]
 
-
     def convert_trajectory_node(self, node_msg):
         id = node_msg.id;
         robot_name = node_msg.robot_name

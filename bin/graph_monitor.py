@@ -18,7 +18,7 @@ class GraphMonitor(object):
         traj_topic = rospy.get_param("~traj_topic")
 
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
-        rospy.Subscriber(graph_topic, Trajectory, self.traj_callback)
+        rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
         rospy.loginfo("[GraphMonitor] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphMonitor] Listening for trajectory from " + traj_topic)
 
@@ -38,6 +38,8 @@ class GraphMonitor(object):
     def traj_callback(self, msg):
         rospy.loginfo("[GraphMonitor] Received trajectory message.")
         key = self.signal.convert_signal(msg)
+        traj = self.signal.compute_signal(key)
+        GraphVisualizer.visualize_trajectory(traj)
 
 
 

@@ -19,3 +19,9 @@ class GraphVisualizer(object):
         rospy.loginfo("[GraphVisualizer] Visualizing graph")
         graph.G.plot()
         plt.show()
+
+    @staticmethod
+    def visualize_trajectory(trajectory):
+        rospy.loginfo("[GraphVisualizer] Visualizing trajectory")
+        plt.plot(trajectory[:,0], trajectory[:,1])
+        plt.show()

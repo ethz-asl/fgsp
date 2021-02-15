@@ -9,7 +9,7 @@ class SignalNode(object):
         self.pose = None
         self.residual = None
 
-    def set_node(self, id, robot_name, pose, residual):
+    def init(self, id, robot_name, pose, residual):
         self.id = id
         self.robot_name = robot_name
         self.pose = pose

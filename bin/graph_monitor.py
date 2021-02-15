@@ -47,12 +47,17 @@ class GraphMonitor(object):
     def traj_opt_callback(self, msg):
         key = self.optimized_signal.convert_signal(msg)
         rospy.loginfo(f"[GraphMonitor] Received opt trajectory message from {key}.")
+
+        if self.key_in_optimized_keys(key):
+            return
         self.optimized_keys.append(key)
 
     def traj_callback(self, msg):
         key = self.signal.convert_signal(msg)
         rospy.loginfo(f"[GraphMonitor] Received trajectory message from {key}.")
 
+        if self.key_in_keys(key):
+            return
         self.keys.append(key)
 
 
@@ -66,7 +71,7 @@ class GraphMonitor(object):
         # Iterate over all estimated trajectories.
         for key in self.keys:
             # Check whether we have an optimized version of it.
-            if ~(key in self.optimized_keys):
+            if not self.key_in_optimized_keys(key):
                 rospy.loginfo(f"[GraphMonitor] Found no optimized version of {key}.")
                 continue
             rospy.loginfo(f"[GraphMonitor] Comparing trajectories for {key}.")
@@ -79,6 +84,12 @@ class GraphMonitor(object):
             x = self.signal.compute_signal(key)
             GraphVisualizer.visualize_signal(self.graph, x)
 
+
+    def key_in_optimized_keys(self, key):
+       return any(key in k for k in self.optimized_keys)
+
+    def key_in_keys(self, key):
+       return any(key in k for k in self.keys)
 
 if __name__ == '__main__':
     rospy.init_node('graph_monitor')

@@ -77,8 +77,6 @@ class GraphMonitor(object):
             est_nodes = self.synchronizer.syncrhonize(opt_nodes, est_nodes)
             assert(len(est_nodes) == len(opt_nodes))
 
-
-
             x = self.signal.compute_signal(key)
             GraphVisualizer.visualize_signal(self.graph, x)
 

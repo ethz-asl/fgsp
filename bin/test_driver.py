@@ -11,14 +11,22 @@ class TestDriver(object):
 
     def __init__(self):
         # Send every 10 seconds.
-        self.rate = rospy.Rate(0.1)
+        self.rate = rospy.Rate(rospy.get_param("~update_rate"))
+        traj_topic = rospy.get_param("~traj_topic")
+
+        self.pub = rospy.Publisher(traj_topic, Trajectory, queue_size=10)
+
 
     def update(self):
         (loam_df, rovio_df) = self.read_estimations()
         rospy.loginfo(f'[TestDriver] Read {loam_df.size} (loam) and {rovio_df.size} (rovio) entries.')
 
-        loam_msg = self.create_trajectory_message(loam_df, "anymal")
-        rovio_msg = self.create_trajectory_message(rovio_df, "penguin")
+        loam_msg = self.create_trajectory_message(loam_df, "cerberus")
+        #rovio_msg = self.create_trajectory_message(rovio_df, "penguin")
+        self.pub.publish(loam_msg)
+        rospy.loginfo(f'[TestDriver] Published trajectory message.')
+
+
 
     def read_estimations(self):
         dataset_path = '/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/data/mission_03/'
@@ -50,6 +58,8 @@ class TestDriver(object):
             node_msg = TrajectoryNode()
             node_msg.robot_name = robot_name
             node_msg.pose = pose_msg
+
+            traj_msg.nodes.append(node_msg)
 
         traj_msg.header.stamp = ts
         return traj_msg

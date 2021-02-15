@@ -3,17 +3,16 @@
 
   <!-- Config file -->
   <arg name="config_file"             default="$(find graph_monitor)/config/default.yaml"/>
-  <arg name="config_file_overlay"     default=""/>
+  <arg name="debug_file"             default="$(find graph_monitor)/config/debug.yaml"/>
 
   <!-- Node name -->
   <arg name="node_name"               default="graph_monitor"/>
 
   <node name="$(arg node_name)" pkg="graph_monitor" type="graph_monitor.py" output="screen" respawn="true">
     <rosparam command="load" file="$(arg config_file)"/>
-    <rosparam command="load" file="$(arg config_file_overlay)" if="$(eval bool(arg('config_file_overlay')))"/>
   </node>
 
   <node name="test_driver" pkg="graph_monitor" type="test_driver.py" output="screen" respawn="true">
+    <rosparam command="load" file="$(arg debug_file)"/>
   </node>
-
 </launch>

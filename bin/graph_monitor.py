@@ -30,12 +30,13 @@ class GraphMonitor(object):
         self.graph = GlobalGraph(reduced=True)
         self.signal = SignalHandler()
         self.optimized_signal = SignalHandler()
-        self.optimized_keys = []
         self.synchronizer = SignalSynchronizer()
 
+        # Key management to keep track of the received messages.
+        self.optimized_keys = []
+        self.keys = []
+
         rospy.loginfo("[GraphMonitor] Graph monitor is set up.")
-
-
 
     def graph_callback(self, msg):
         rospy.loginfo("[GraphMonitor] Received graph message.")
@@ -43,34 +44,32 @@ class GraphMonitor(object):
         #GraphVisualizer.visualize_adjacency(self.graph)
         #GraphVisualizer.visualize_graph(self.graph)
 
-
     def traj_opt_callback(self, msg):
-        rospy.loginfo("[GraphMonitor] Received opt trajectory message.")
         key = self.optimized_signal.convert_signal(msg)
+        rospy.loginfo(f"[GraphMonitor] Received opt trajectory message from {key}.")
         self.optimized_keys.append(key)
 
     def traj_callback(self, msg):
-        rospy.loginfo("[GraphMonitor] Received trajectory message.")
         key = self.signal.convert_signal(msg)
-        self.keys.append(key)
+        rospy.loginfo(f"[GraphMonitor] Received trajectory message from {key}.")
 
-    def traj_callback(self, msg):
-        rospy.loginfo("[GraphMonitor] Received trajectory message.")
-        key = self.signal.convert_signal(msg)
         self.keys.append(key)
 
 
     def update(self):
-        rospy.loginfo("[GraphMonitor] Checking graph updates")
-        if (~self.graph.is_built):
+        rospy.loginfo(f"[GraphMonitor] Checking graph updates for {len(self.keys)} keys")
+        if self.graph.is_built is False:
             rospy.loginfo("[GraphMonitor] Graph is not built yet.")
             return
+
 
         # Iterate over all estimated trajectories.
         for key in self.keys:
             # Check whether we have an optimized version of it.
             if ~(key in self.optimized_keys):
+                rospy.loginfo(f"[GraphMonitor] Found no optimized version of {key}.")
                 continue
+            rospy.loginfo(f"[GraphMonitor] Comparing trajectories for {key}.")
 
             est_nodes = self.signal.get_all_nodes(key)
             opt_nodes = self.optimized_signal.get_all_nodes(key)

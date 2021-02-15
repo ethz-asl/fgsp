@@ -5,6 +5,7 @@ from std_msgs.msg import Header
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
 
 from global_graph import GlobalGraph
+from signal_handler import SignalHandler
 from graph_visualizer import GraphVisualizer
 
 
@@ -22,6 +23,7 @@ class GraphMonitor(object):
         rospy.loginfo("[GraphMonitor] Listening for trajectory from " + traj_topic)
 
         self.graph = GlobalGraph(reduced=True)
+        self.signal = SignalHandler()
         rospy.loginfo("[GraphMonitor] Graph monitor is set up.")
 
 
@@ -35,6 +37,8 @@ class GraphMonitor(object):
 
     def traj_callback(self, msg):
         rospy.loginfo("[GraphMonitor] Received trajectory message.")
+        key = self.signal.convert_signal(msg)
+
 
 
 

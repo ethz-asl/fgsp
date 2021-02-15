@@ -1,19 +1,20 @@
-
 #! /usr/bin/env python3
+
 import rospy
 import pandas
 import numpy as np
+
+from maplab_msgs.msg import Trajectory, TrajectoryNode
 
 class TestDriver(object):
 
     def __init__(self):
         # Send every 10 seconds.
-        self.rate = rospy.Rate(10)
-
+        self.rate = rospy.Rate(0.1)
 
     def update(self):
         (loam_df, rovio_df) = self.read_estimations()
-        print(f'\nRead {loam_df.size} (loam) and {rovio_df.size} (rovio) entries.')
+        rospy.loginfo(f'[TestDriver] Read {loam_df.size} (loam) and {rovio_df.size} (rovio) entries.')
 
     def read_estimations(self):
         dataset_path = '/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/data/mission_03/'

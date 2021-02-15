@@ -3,4 +3,4 @@ traj_opt_topic: /maplab_server/sparse_graph/trajectory
 traj_topic:     /trajectory
 opt_key:        optimized
 
-update_rate:    1.
+update_rate:    0.2

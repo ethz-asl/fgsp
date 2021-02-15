@@ -21,7 +21,7 @@ class GraphMonitor(object):
         rospy.loginfo("[GraphMonitor] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphMonitor] Listening for trajectory from " + traj_topic)
 
-        self.graph = GlobalGraph()
+        self.graph = GlobalGraph(reduced=True)
         rospy.loginfo("[GraphMonitor] Graph monitor is set up.")
 
 
@@ -29,7 +29,7 @@ class GraphMonitor(object):
         rospy.loginfo("[GraphMonitor] Received graph message.")
         self.graph.build(msg)
         #GraphVisualizer.visualize_adjacency(self.graph)
-        GraphVisualizer.visualize_graph(self.graph)
+        #GraphVisualizer.visualize_graph(self.graph)
 
 
 

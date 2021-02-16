@@ -1,0 +1,3 @@
+traj_topic:   /trajectory
+
+update_rate:  0.1

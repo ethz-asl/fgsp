@@ -75,5 +75,5 @@ if __name__ == '__main__':
     rospy.init_node('test_driver')
     node = TestDriver()
     while not rospy.is_shutdown():
-        node.update()
         node.rate.sleep()
+        node.update()

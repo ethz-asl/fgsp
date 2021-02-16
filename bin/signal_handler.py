@@ -44,8 +44,17 @@ class SignalHandler(object):
         signal.init(ts, id, robot_name, pose, residual)
         return signal
 
-    def compute_signal(self, key):
+    def compute_signal_from_key(self, key):
         nodes = self.signals[key]
+        traj = self.compute_trajectory(nodes)
+        traj_origin = traj[0,:]
+
+        pos_signal = (traj - traj_origin).squeeze()
+
+        x = np.linalg.norm(pos_signal, ord=2, axis=1)
+        return x
+
+    def compute_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
         traj_origin = traj[0,:]
 

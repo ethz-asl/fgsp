@@ -13,6 +13,7 @@ class GlobalGraph(object):
         self.G = None
         self.is_reduced = reduced
         self.is_built = False
+        self.reduced_ind = []
 
     def build(self, graph_msg):
         self.coords = self.read_coordinates(graph_msg)
@@ -53,9 +54,9 @@ class GlobalGraph(object):
     def reduce_graph(self):
         # TODO(lbern): find a more intelligent way to select vertices.
         n_nodes = np.shape(self.coords)[0]
-        ind = np.arange(0, n_nodes, 2)
+        self.reduced_ind = np.arange(0, n_nodes, 2)
 
-        self.coords = self.coords[ind]
-        self.G = reduction.kron_reduction(self.G, ind)
+        self.coords = self.coords[self.reduced_ind]
+        self.G = reduction.kron_reduction(self.G, self.reduced_ind)
         self.G.compute_fourier_basis()
         self.adj = self.G.W.toarray()

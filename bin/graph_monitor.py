@@ -3,6 +3,8 @@
 import rospy
 from std_msgs.msg import Header
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
+from multiprocessing import Lock
+
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
@@ -13,6 +15,9 @@ from signal_synchronizer import SignalSynchronizer
 class GraphMonitor(object):
 
     def __init__(self):
+        self.is_initialized = False
+        self.mutex = Lock()
+        self.mutex.acquire()
         rospy.loginfo("[GraphMonitor] Initializing monitor node...")
         self.rate = rospy.Rate(rospy.get_param("~update_rate"))
 
@@ -37,14 +42,24 @@ class GraphMonitor(object):
         self.keys = []
 
         rospy.loginfo("[GraphMonitor] Graph monitor is set up.")
+        self.is_initialized = True
+        self.mutex.release()
 
     def graph_callback(self, msg):
+        if self.is_initialized is False:
+            return
+
+        self.mutex.acquire()
         rospy.loginfo("[GraphMonitor] Received graph message.")
         self.graph.build(msg)
+        self.mutex.release()
         #GraphVisualizer.visualize_adjacency(self.graph)
         #GraphVisualizer.visualize_graph(self.graph)
 
     def traj_opt_callback(self, msg):
+        if self.is_initialized is False:
+            return
+
         key = self.optimized_signal.convert_signal(msg)
         rospy.loginfo(f"[GraphMonitor] Received opt trajectory message from {key}.")
 
@@ -53,6 +68,9 @@ class GraphMonitor(object):
         self.optimized_keys.append(key)
 
     def traj_callback(self, msg):
+        if self.is_initialized is False:
+            return
+
         key = self.signal.convert_signal(msg)
         rospy.loginfo(f"[GraphMonitor] Received trajectory message from {key}.")
 
@@ -62,9 +80,11 @@ class GraphMonitor(object):
 
 
     def update(self):
+        self.mutex.acquire()
         rospy.loginfo(f"[GraphMonitor] Checking graph updates for {len(self.keys)} keys")
         if self.graph.is_built is False:
             rospy.loginfo("[GraphMonitor] Graph is not built yet.")
+            self.mutex.release()
             return
 
 
@@ -78,11 +98,18 @@ class GraphMonitor(object):
 
             est_nodes = self.signal.get_all_nodes(key)
             opt_nodes = self.optimized_signal.get_all_nodes(key)
+
+            if self.graph.is_reduced:
+                opt_nodes = [opt_nodes[i] for i in self.graph.reduced_ind]
+
             est_nodes = self.synchronizer.syncrhonize(opt_nodes, est_nodes)
+            rospy.loginfo(f"est_node length: {len(est_nodes)}, opt_nodes len: {len(opt_nodes)}")
             assert(len(est_nodes) == len(opt_nodes))
 
-            x = self.signal.compute_signal(key)
+            x = self.signal.compute_signal(est_nodes)
             GraphVisualizer.visualize_signal(self.graph, x)
+
+        self.mutex.release()
 
 
     def key_in_optimized_keys(self, key):

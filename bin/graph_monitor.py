@@ -92,22 +92,23 @@ class GraphMonitor(object):
         for key in self.keys:
             # Check whether we have an optimized version of it.
             if not self.key_in_optimized_keys(key):
-                rospy.loginfo(f"[GraphMonitor] Found no optimized version of {key}.")
+                rospy.logwarn(f"[GraphMonitor] Found no optimized version of {key}.")
                 continue
             rospy.loginfo(f"[GraphMonitor] Comparing trajectories for {key}.")
 
             est_nodes = self.signal.get_all_nodes(key)
             opt_nodes = self.optimized_signal.get_all_nodes(key)
 
+            # If the graph is reduced, we need to reduce the optimized nodes too.
             if self.graph.is_reduced:
                 opt_nodes = [opt_nodes[i] for i in self.graph.reduced_ind]
-
             est_nodes = self.synchronizer.syncrhonize(opt_nodes, est_nodes)
-            rospy.loginfo(f"est_node length: {len(est_nodes)}, opt_nodes len: {len(opt_nodes)}")
             assert(len(est_nodes) == len(opt_nodes))
 
+            # Compute the signal using the synchronized estimated nodes.
             x = self.signal.compute_signal(est_nodes)
-            GraphVisualizer.visualize_signal(self.graph, x)
+            y = self.signal.compute_signal(opt_nodes)
+            #GraphVisualizer.visualize_signal(self.graph, x)
 
         self.mutex.release()
 

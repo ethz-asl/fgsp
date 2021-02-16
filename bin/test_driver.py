@@ -19,14 +19,12 @@ class TestDriver(object):
 
     def update(self):
         (loam_df, rovio_df) = self.read_estimations()
-        rospy.loginfo(f'[TestDriver] Read {loam_df.size} (loam) and {rovio_df.size} (rovio) entries.')
+        rospy.logdebug(f'[TestDriver] Read {loam_df.size} (loam) and {rovio_df.size} (rovio) entries.')
 
         loam_msg = self.create_trajectory_message(loam_df, "cerberus")
         #rovio_msg = self.create_trajectory_message(rovio_df, "penguin")
         self.pub.publish(loam_msg)
-        rospy.loginfo(f'[TestDriver] Published trajectory message.')
-
-
+        rospy.logdebug(f'[TestDriver] Published trajectory message.')
 
     def read_estimations(self):
         dataset_path = '/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/data/mission_03/'

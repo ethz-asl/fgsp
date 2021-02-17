@@ -2,4 +2,4 @@ traj_topic:   /trajectory
 
 update_rate:  0.1
 
-conv_topic:   /foo
+conv_topic:   /compslam_path

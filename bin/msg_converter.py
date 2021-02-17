@@ -16,7 +16,7 @@ class MessageConverter(object):
         rospy.loginfo("[MessageConverter] Listening for paths from " + conv_topic)
         rospy.loginfo("[MessageConverter] Initialized")
 
-    def path_callback(self):
+    def path_callback(self, msg):
         rospy.loginfo("[MessageConverter] Received path")
 
 if __name__ == '__main__':

@@ -15,7 +15,8 @@ class MessageConverter(object):
         rospy.loginfo("[MessageConverter] Listening for paths from " + conv_topic)
 
         traj_topic = rospy.get_param("~traj_topic")
-        self.pub = rospy.Publisher(traj_topic, Trajectory, queue_size=10)
+        self.pub_trajectory = rospy.Publisher(traj_topic, Trajectory, queue_size=10)
+        self.pub_debug = rospy.Publisher('/test', Path, queue_size=10)
 
         self.robot_name = rospy.get_param("~conv_robot")
 
@@ -24,9 +25,11 @@ class MessageConverter(object):
     def path_callback(self, msg):
         # Convert the nav_msgs::Path to a maplab_msgs::Trajectory.
         traj_msg = self.create_trajectory_message(msg)
+        path_msg = self.fix_path_message(msg)
 
         # Republish the converted message.
-        self.pub.publish(traj_msg)
+        self.pub_trajectory.publish(traj_msg)
+        self.pub_debug.publish(path_msg)
 
     def create_trajectory_message(self, msg):
         traj_msg = Trajectory()
@@ -42,6 +45,10 @@ class MessageConverter(object):
 
         traj_msg.header.stamp = msg.header.stamp
         return traj_msg
+
+    def fix_path_message(self, msg):
+        msg.header.frame_id = 'darpa'
+        return msg
 
 
 if __name__ == '__main__':

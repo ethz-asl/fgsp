@@ -52,11 +52,32 @@ class GlobalGraph(object):
         return adj
 
     def reduce_graph(self):
-        # TODO(lbern): find a more intelligent way to select vertices.
-        n_nodes = np.shape(self.coords)[0]
-        self.reduced_ind = np.arange(0, n_nodes, 2)
+        #self.reduced_ind = self.reduce_every_other()
+        self.reduced_ind = self.reduce_largest_ev_positive()
 
         self.coords = self.coords[self.reduced_ind]
         self.G = reduction.kron_reduction(self.G, self.reduced_ind)
         self.G.compute_fourier_basis()
         self.adj = self.G.W.toarray()
+
+    def reduce_every_other(self):
+        n_nodes = np.shape(self.coords)[0]
+        return np.arange(0, n_nodes, 2)
+
+    def reduce_largest_ev_positive(self):
+        idx = np.argmax(np.abs(self.G.U))
+        idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
+        indices = []
+        for i in range(0, self.G.N):
+            if (self.G.U[i,idx_fourier] >= 0):
+                indices.append(i)
+        return indices
+
+    def reduce_largest_ev_negative(self):
+        idx = np.argmax(np.abs(self.G.U))
+        idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
+        indices = []
+        for i in range(0, self.G.N):
+            if (self.G.U[i,idx_fourier] < 0):
+                indices.append(i)
+        return indices

@@ -22,7 +22,7 @@ class GlobalGraph(object):
         self.adj = self.read_adjacency(graph_msg)
         rospy.loginfo("[Graph] Building with adj: " + str(self.adj.shape))
         self.submap_ind = self.read_submap_indices(graph_msg)
-        rospy.loginfo("[Graph] Building with adj: " + str(len(self.submap_ind)))
+        rospy.loginfo("[Graph] Building with ind: " + str(len(self.submap_ind)))
 
         self.G = graphs.Graph(self.adj)
         self.G.set_coordinates(self.coords[:,[0,1]])

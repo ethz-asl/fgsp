@@ -10,6 +10,7 @@ from global_graph import GlobalGraph
 from signal_handler import SignalHandler
 from graph_visualizer import GraphVisualizer
 from signal_synchronizer import SignalSynchronizer
+from wavelet_evaluator import WaveletEvaluator
 
 
 class GraphMonitor(object):
@@ -40,6 +41,7 @@ class GraphMonitor(object):
         # Key management to keep track of the received messages.
         self.optimized_keys = []
         self.keys = []
+        self.eval = WaveletEvaluator()
 
         rospy.loginfo("[GraphMonitor] Graph monitor is set up.")
         self.is_initialized = True

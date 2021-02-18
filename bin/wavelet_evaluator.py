@@ -60,14 +60,28 @@ class WaveletEvaluator(object):
         W = np.zeros((n_values, self.n_scales))
         for i in range(0, n_values):
             for j in range(0, self.n_scales):
-                W[i,j] = np.matmul(wavelet[i,:,j].transpose(), x_opt)
+                W[i,j] = np.matmul(wavelet[i,:,j].transpose(), x_signal)
 
         return W
 
 if __name__ == '__main__':
     print(f" --- Test Driver for the Wavelet Evaluator ----------------------")
-    G = graphs.Bunny()
-    G.compute_fourier_basis()
     eval = WaveletEvaluator()
-    psi = eval.compute_wavelets(G)
+
+    # Create a reduced graph for quicker tests.
+    G = graphs.Bunny()
+    ind = np.arange(0, G.N, 5)
+    Gs = reduction.kron_reduction(G, ind)
+    Gs.compute_fourier_basis()
+
+
+    # Compute wavelets.
+    psi = eval.compute_wavelets(Gs)
     print(f" psi = {psi.shape}")
+
+    # Compute wavelet coefficients for a signal.
+    x = Gs.coords
+    x = np.linalg.norm(x, ord=2, axis=1)
+
+    W = eval.compute_wavelets_coeffs(psi, x)
+    print(f" W = {W.shape}")

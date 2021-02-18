@@ -64,13 +64,34 @@ class WaveletEvaluator(object):
 
         return W
 
+    def check_submap(self, coeffs_1, coeffs_2, submap_ids):
+        submap_coeffs_1 = coeffs_1[submap_ids, :]
+        submap_coeffs_2 = coeffs_2[submap_ids, :]
+
+        D = self.compute_cosine_distance(submap_coeffs_1, submap_coeffs_2)
+        print(f"Cosine distance is {D}")
+
+
+    def compute_cosine_distance(self, coeffs_1, coeffs_2):
+        print(f"c1 {coeffs_1.shape} and c2 {coeffs_2.shape}")
+        cosine_distance = np.zeros((self.n_scales, 1))
+        for j in range(0, self.n_scales):
+            cross = np.dot(coeffs_1[:,j], coeffs_2[:,j])
+            n_1 = np.linalg.norm(coeffs_1[:,j])
+            n_2 = np.linalg.norm(coeffs_2[:,j])
+
+
+            cosine_similarity = cross/(n_1*n_2)
+            cosine_distance[j] = 1 - cosine_similarity
+        return cosine_distance
+
 if __name__ == '__main__':
     print(f" --- Test Driver for the Wavelet Evaluator ----------------------")
     eval = WaveletEvaluator()
 
     # Create a reduced graph for quicker tests.
     G = graphs.Bunny()
-    ind = np.arange(0, G.N, 5)
+    ind = np.arange(0, G.N, 10)
     Gs = reduction.kron_reduction(G, ind)
     Gs.compute_fourier_basis()
 
@@ -85,3 +106,7 @@ if __name__ == '__main__':
 
     W = eval.compute_wavelets_coeffs(psi, x)
     print(f" W = {W.shape}")
+
+    ids = np.array([0,1,2,3,4,5], dtype=np.intp)
+    print(f"Checking submap for indices: {ids}")
+    eval.check_submap(W, W, ids)

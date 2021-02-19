@@ -34,7 +34,6 @@ class GlobalGraph(object):
         self.is_built = True
         rospy.loginfo("[Graph] Building complete")
 
-
     def read_coordinates(self, graph_msg):
         n_coords = len(graph_msg.coords)
         coords = np.zeros((n_coords,3))

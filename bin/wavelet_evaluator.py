@@ -3,6 +3,13 @@
 import rospy
 import numpy as np
 from pygsp import graphs, filters, reduction
+from enum import Enum
+
+class SubmapState(Enum):
+    ALL_GOOD = 1
+    LOW_GOOD = 2
+    HIGH_GOOD = 3
+    NO_GOOD = 4
 
 class WaveletEvaluator(object):
 
@@ -69,8 +76,8 @@ class WaveletEvaluator(object):
         submap_coeffs_2 = coeffs_2[submap_ids, :]
 
         D = self.compute_cosine_distance(submap_coeffs_1, submap_coeffs_2)
-        print(f"Cosine distance is {D}")
-
+        print(f"Similarity distance: {D.transpose()}")
+        return self.evaluate_scales(D)
 
     def compute_cosine_distance(self, coeffs_1, coeffs_2):
         print(f"c1 {coeffs_1.shape} and c2 {coeffs_2.shape}")
@@ -84,6 +91,22 @@ class WaveletEvaluator(object):
             cosine_similarity = cross/(n_1*n_2)
             cosine_distance[j] = 1 - cosine_similarity
         return cosine_distance
+
+    def evaluate_scales(self, D):
+        k_eps = 0.5
+
+        sum_lower = np.sum(D[0:1])
+        sum_higher = np.sum(D[2:])
+        sum_total = sum_lower + sum_higher
+
+        if (sum_total < k_eps):
+            return SubmapState.ALL_GOOD
+        elif (sum_lower < k_eps and sum_higher >= k_eps):
+            return SubmapState.LOW_GOOD
+        elif (sum_lower >= k_eps and sum_higher < k_eps):
+            return SubmapState.HIGH_GOOD
+        else:
+            return SubmapState.NO_GOOD
 
 if __name__ == '__main__':
     print(f" --- Test Driver for the Wavelet Evaluator ----------------------")
@@ -100,13 +123,17 @@ if __name__ == '__main__':
     psi = eval.compute_wavelets(Gs)
     print(f" psi = {psi.shape}")
 
-    # Compute wavelet coefficients for a signal.
-    x = Gs.coords
-    x = np.linalg.norm(x, ord=2, axis=1)
+    # Compute wavelet coefficients for two signals.
+    x_1 = Gs.coords
+    x_1 = np.linalg.norm(x_1, ord=2, axis=1)
+    x_2 = Gs.coords + 10
+    x_2 = np.linalg.norm(x_2, ord=2, axis=1)
 
-    W = eval.compute_wavelets_coeffs(psi, x)
-    print(f" W = {W.shape}")
+    W_1 = eval.compute_wavelets_coeffs(psi, x_1)
+    W_2 = eval.compute_wavelets_coeffs(psi, x_2)
+    print(f" W_1 = {W_1.shape} andd W_2 = {W_2.shape}")
 
     ids = np.array([0,1,2,3,4,5], dtype=np.intp)
     print(f"Checking submap for indices: {ids}")
-    eval.check_submap(W, W, ids)
+    eval_code = eval.check_submap(W_1, W_2, ids)
+    print(f"Submap state code: {eval_code}")

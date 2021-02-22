@@ -15,6 +15,7 @@ from sklearn.tree import export_graphviz
 import pydot
 import pickle
 from joblib import dump, load
+from random_forest_predictor import RandomForestPredictor
 
 class SubmapState(Enum):
     ALL_GOOD = 1
@@ -24,9 +25,9 @@ class SubmapState(Enum):
 
 class WaveletEvaluator(object):
 
-    def __init__(self, n_scales = 7, random_forest_model='../config/forest.joblib'):
+    def __init__(self, n_scales = 7):
         self.n_scales = n_scales
-        self.clf = load(random_forest_model)
+        self.clf = RandomForestPredictor()
         self.feature_names = ['Cosine_L', 'Cosine_B', 'Cosine_H','Euclidean_L', 'Euclidean_B', 'Euclidean_H','BrayCurtis_L', 'BrayCurtis_B', 'BrayCurtis_H','Correlation_L', 'Correlation_B', 'Correlation_H', 'Canberra_L', 'Canberra_B', 'Canberra_H', 'JSD_L', 'JSD_B', 'JSD_H', 'Minkowski_L', 'Minkowski_B', 'Minkowski_H', 'Manhattan_L', 'Manhattan_B', 'Manhattan_H', 'Chebyshev_L', 'Chebyshev_B', 'Chebyshev_H']
 
     def set_scales(self, n_scales):
@@ -164,10 +165,9 @@ class WaveletEvaluator(object):
         return data
 
     def classify_submap(self, features):
-        features = features.fillna(1)
-        features = features.replace(float('inf'), 1)
+        (prediction, pred_prob) = self.clf.predict(features)
 
-        return self.clf.predict(features)
+        return prediction
 
 if __name__ == '__main__':
     print(f" --- Test Driver for the Wavelet Evaluator ----------------------")

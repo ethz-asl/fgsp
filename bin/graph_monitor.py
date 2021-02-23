@@ -33,15 +33,16 @@ class GraphMonitor(object):
         rospy.loginfo("[GraphMonitor] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphMonitor] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
 
+        # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=True)
         self.signal = SignalHandler()
         self.optimized_signal = SignalHandler()
         self.synchronizer = SignalSynchronizer()
+        self.eval = WaveletEvaluator()
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
         self.keys = []
-        self.eval = WaveletEvaluator()
 
         rospy.loginfo("[GraphMonitor] Graph monitor is set up.")
         self.is_initialized = True
@@ -50,13 +51,10 @@ class GraphMonitor(object):
     def graph_callback(self, msg):
         if self.is_initialized is False:
             return
-
         self.mutex.acquire()
-        rospy.loginfo("[GraphMonitor] Received graph message.")
+        rospy.loginfo("[GraphMonitor] Received new graph.")
         self.graph.build(msg)
         self.mutex.release()
-        #GraphVisualizer.visualize_adjacency(self.graph)
-        #GraphVisualizer.visualize_graph(self.graph)
 
     def traj_opt_callback(self, msg):
         if self.is_initialized is False:
@@ -108,9 +106,17 @@ class GraphMonitor(object):
             assert(len(est_nodes) == len(opt_nodes))
 
             # Compute the signal using the synchronized estimated nodes.
-            x = self.signal.compute_signal(est_nodes)
-            y = self.signal.compute_signal(opt_nodes)
-            #GraphVisualizer.visualize_signal(self.graph, x)
+            x_est = self.signal.compute_signal(est_nodes)
+            x_opt = self.signal.compute_signal(opt_nodes)
+
+            # Compute the coeffs and the features.
+            W_est = self.eval.compute_wavelets_coeffs(x_est)
+            W_opt = self.eval.compute_wavelets_coeffs(x_opt)
+            features = eval.compute_features_for_submap(W_1, W_2, ids)
+
+            # Predict the state of the submap.
+            label = eval.classify_submap(features)
+
 
         self.mutex.release()
 

@@ -27,6 +27,7 @@ class WaveletEvaluator(object):
 
     def __init__(self, n_scales = 7):
         self.n_scales = n_scales
+        self.psi = None
         self.clf = RandomForestPredictor()
         self.feature_names = ['Cosine_L', 'Cosine_B', 'Cosine_H','Euclidean_L', 'Euclidean_B', 'Euclidean_H','BrayCurtis_L', 'BrayCurtis_B', 'BrayCurtis_H','Correlation_L', 'Correlation_B', 'Correlation_H', 'Canberra_L', 'Canberra_B', 'Canberra_H', 'JSD_L', 'JSD_B', 'JSD_H', 'Minkowski_L', 'Minkowski_B', 'Minkowski_H', 'Manhattan_L', 'Manhattan_B', 'Manhattan_H', 'Chebyshev_L', 'Chebyshev_B', 'Chebyshev_H']
 
@@ -40,8 +41,8 @@ class WaveletEvaluator(object):
         rospy.logdebug(f"[WaveletEvaluator] psi = {psi.shape}")
 
         # Compute the wavelet coefficients for x_1 and x_2.
-        W_1 = self.compute_wavelet_coefficients(psi, x_1)
-        W_2 = self.compute_wavelet_coefficients(psi, x_2)
+        W_1 = self.compute_wavelet_coeffs(psi, x_1)
+        W_2 = self.compute_wavelet_coeffs(psi, x_2)
         rospy.logdebug(f"[WaveletEvaluator] W_1 = {W_1.shape}")
         rospy.logdebug(f"[WaveletEvaluator] W_2 = {W_2.shape}")
 
@@ -53,7 +54,7 @@ class WaveletEvaluator(object):
         # Evalute filter bank on the frequencies (eigenvalues).
         f = g.evaluate(G.e)
         f = np.expand_dims(f.T, 1)
-        psi = np.zeros((G.N, G.N, self.n_scales))
+        self.psi = np.zeros((G.N, G.N, self.n_scales))
 
         for i in range(0, G.N):
 
@@ -72,11 +73,14 @@ class WaveletEvaluator(object):
             s = np.matmul(s, f)
 
             # Transform back the features to the vertex domain.
-            psi[i, :, :] = G.igft(s).squeeze()
+            self.psi[i, :, :] = G.igft(s).squeeze()
 
-        return psi
+        return self.psi
 
-    def compute_wavelets_coeffs(self, wavelet, x_signal):
+    def compute_wavelet_coeffs(self, x_signal):
+        return self.compute_wavelet_coefficients(self.psi, x_signal)
+
+    def compute_wavelet_coeffs(self, wavelet, x_signal):
         n_values = x_signal.shape[0]
         W = np.zeros((n_values, self.n_scales))
         for i in range(0, n_values):
@@ -190,8 +194,8 @@ if __name__ == '__main__':
     x_2 = Gs.coords + 10
     x_2 = np.linalg.norm(x_2, ord=2, axis=1)
 
-    W_1 = eval.compute_wavelets_coeffs(psi, x_1)
-    W_2 = eval.compute_wavelets_coeffs(psi, x_2)
+    W_1 = eval.compute_wavelet_coeffs(psi, x_1)
+    W_2 = eval.compute_wavelet_coeffs(psi, x_2)
     print(f" W_1 = {W_1.shape} andd W_2 = {W_2.shape}")
 
     ids = np.arange(0, 27, 1)

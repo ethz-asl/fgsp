@@ -21,6 +21,7 @@ class RandomForestPredictor(object):
         self.clf = load(random_forest_model)
 
     def predict(self, X):
+        print(f"Prediction for: {X}")
         X = X.fillna(0)
         X = X.replace(float('inf'), 1)
 

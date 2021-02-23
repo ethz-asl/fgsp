@@ -30,6 +30,27 @@ class SignalHandler(object):
     def get_all_nodes(self, key):
         return self.signals[key]
 
+    def get_number_of_submaps(self, key):
+        return self.signals[key][-1].id + 1
+
+    def get_nodes_for_submap(self, key, id):
+        nodes = self.get_all_nodes(key)
+        filtered_nodes = []
+        for node in nodes:
+            if node.id == id:
+                filtered_nodes.append(node)
+        return filtered_nodes
+
+    def get_mask_for_submap(self, key, id):
+        nodes = self.get_all_nodes(key)
+        n_nodes = len(nodes)
+        mask = [False] * n_nodes
+        for i in range(0, n_nodes):
+            if nodes[i].id == id:
+                mask[i] = True
+        return mask
+
+
     def convert_trajectory_node(self, node_msg):
         id = node_msg.id;
         robot_name = node_msg.robot_name

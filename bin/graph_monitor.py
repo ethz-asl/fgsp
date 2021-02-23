@@ -4,7 +4,7 @@ import rospy
 from std_msgs.msg import Header
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
 from multiprocessing import Lock
-
+import pandas
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
@@ -34,7 +34,7 @@ class GraphMonitor(object):
         rospy.loginfo("[GraphMonitor] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
 
         # Handlers and evaluators.
-        self.graph = GlobalGraph(reduced=True)
+        self.graph = GlobalGraph(reduced=False)
         self.signal = SignalHandler()
         self.optimized_signal = SignalHandler()
         self.synchronizer = SignalSynchronizer()
@@ -85,9 +85,7 @@ class GraphMonitor(object):
 
     def update(self):
         self.mutex.acquire()
-        rospy.loginfo(f"[GraphMonitor] Checking graph updates for {len(self.keys)} keys")
         if self.graph.is_built is False:
-            rospy.loginfo("[GraphMonitor] Graph is not built yet.")
             self.mutex.release()
             return
 
@@ -100,27 +98,47 @@ class GraphMonitor(object):
                 continue
             rospy.loginfo(f"[GraphMonitor] Comparing trajectories for {key}.")
 
-            est_nodes = self.signal.get_all_nodes(key)
-            opt_nodes = self.optimized_signal.get_all_nodes(key)
+            all_est_nodes = self.signal.get_all_nodes(key)
+            all_opt_nodes = self.optimized_signal.get_all_nodes(key)
+            n_submaps = self.optimized_signal.get_number_of_submaps(key)
+            psi = self.eval.get_wavelets()
 
-            # If the graph is reduced, we need to reduce the optimized nodes too.
-            if self.graph.is_reduced:
-                opt_nodes = [opt_nodes[i] for i in self.graph.reduced_ind]
-            est_nodes = self.synchronizer.syncrhonize(opt_nodes, est_nodes)
-            assert(len(est_nodes) == len(opt_nodes))
 
-            # Compute the signal using the synchronized estimated nodes.
-            x_est = self.signal.compute_signal(est_nodes)
-            x_opt = self.signal.compute_signal(opt_nodes)
+            all_features = pandas.DataFrame({})
+            for i in range(0, n_submaps):
+                submap_mask = self.optimized_signal.get_mask_for_submap(key, i)
+                opt_nodes = [all_opt_nodes[i] for i in range(0,len(all_opt_nodes)) if submap_mask[i]]
+                submap_psi = psi[submap_mask, submap_mask, :]
 
-            # Compute the coeffs and the features.
-            W_est = self.eval.compute_wavelet_coeffs(x_est)
-            W_opt = self.eval.compute_wavelet_coeffs(x_opt)
-            features = self.eval.compute_features_for_submap(W_opt, W_est, ids)
+                print(f"size of opt_nodes {len(opt_nodes)} size of psi {submap_psi.shape} ")
 
-            # Predict the state of the submap.
-            labels = self.eval.classify_submap(features)
-            self.commander.publish_update_messages(est_nodes, opt_nodes, labels)
+                # If the graph is reduced, we need to reduce the optimized nodes too.
+                if self.graph.is_reduced:
+                    # TODO(lbern): this is bugged with the new submapping logic.
+                    opt_nodes = [opt_nodes[i] for i in self.graph.reduced_ind]
+                est_nodes = self.synchronizer.syncrhonize(opt_nodes, all_est_nodes)
+                n_nodes = len(opt_nodes)
+                assert(len(est_nodes) == n_nodes)
+                print(f"size of est_nodes {len(opt_nodes)}")
+
+                # Compute the signal using the synchronized estimated nodes.
+                x_est = self.signal.compute_signal(est_nodes)
+                x_opt = self.signal.compute_signal(opt_nodes)
+
+                # Compute the coeffs and the features.
+                W_est = self.eval.compute_wavelet_coeffs_using_wavelet(submap_psi, x_est)
+                W_opt = self.eval.compute_wavelet_coeffs_using_wavelet(submap_psi, x_opt)
+                features = self.eval.compute_features(W_opt, W_est)
+                all_features = all_features.append(features)
+
+            if all_features.empty:
+                continue
+            # Predict the state of all the submaps.
+            labels = self.eval.classify_submap(all_features)
+
+            # Publish the update message.
+            all_opt_nodes = self.optimized_signal.get_all_nodes(key)
+            self.commander.publish_update_messages(all_est_nodes, all_opt_nodes, labels)
 
         self.mutex.release()
 

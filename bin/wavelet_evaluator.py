@@ -46,9 +46,11 @@ class WaveletEvaluator(object):
         rospy.logdebug(f"[WaveletEvaluator] W_1 = {W_1.shape}")
         rospy.logdebug(f"[WaveletEvaluator] W_2 = {W_2.shape}")
 
+    def get_wavelets(self):
+        return self.psi
 
     def compute_wavelets(self, G):
-        rospy.loginfo(f"[WaveletEvaluator] Computing wavelets for {self.n_scales}")
+        rospy.loginfo(f"[WaveletEvaluator] Computing wavelets for {self.n_scales} scales.")
         g = filters.Meyer(G, self.n_scales)
 
         # Evalute filter bank on the frequencies (eigenvalues).
@@ -116,9 +118,10 @@ class WaveletEvaluator(object):
     def compute_features_for_submap(self, coeffs_1, coeffs_2, submap_ids):
         submap_coeffs_1 = coeffs_1[submap_ids, :]
         submap_coeffs_2 = coeffs_2[submap_ids, :]
+        return self.compute_features(submap_coeffs_1, submap_coeffs_2)
 
+    def compute_features(self, submap_coeffs_1, submap_coeffs_2):
         D = self.compute_distances(submap_coeffs_1, submap_coeffs_2)
-
         data = pandas.DataFrame({
             # Cosine distance.
             self.feature_names[0]:[np.sum(D[0, 0:2])],

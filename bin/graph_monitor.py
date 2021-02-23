@@ -100,44 +100,35 @@ class GraphMonitor(object):
 
             all_est_nodes = self.signal.get_all_nodes(key)
             all_opt_nodes = self.optimized_signal.get_all_nodes(key)
+            # If the graph is reduced, we need to reduce the optimized nodes too.
+            if self.graph.is_reduced:
+                all_opt_nodes = [all_opt_nodes[i] for i in self.graph.reduced_ind]
+            all_est_nodes = self.synchronizer.syncrhonize(all_opt_nodes, all_est_nodes)
+            assert(len(all_est_nodes) == len(all_opt_nodes))
+
+            # Compute the signal using the synchronized estimated nodes.
+            x_est = self.signal.compute_signal(all_est_nodes)
+            x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
+
+            # Compute all the wavelet coefficients.
+            # We will filter them later per submap.
+            W_est = self.eval.compute_wavelet_coeffs(x_est)
+            W_opt = self.eval.compute_wavelet_coeffs(x_opt)
+
             n_submaps = self.optimized_signal.get_number_of_submaps(key)
             psi = self.eval.get_wavelets()
 
-
             all_features = pandas.DataFrame({})
             for i in range(0, n_submaps):
-                submap_mask = self.optimized_signal.get_mask_for_submap(key, i)
-                opt_nodes = [all_opt_nodes[i] for i in range(0,len(all_opt_nodes)) if submap_mask[i]]
-                submap_psi = psi[submap_mask, submap_mask, :]
-
-                print(f"size of opt_nodes {len(opt_nodes)} size of psi {submap_psi.shape} ")
-
-                # If the graph is reduced, we need to reduce the optimized nodes too.
-                if self.graph.is_reduced:
-                    # TODO(lbern): this is bugged with the new submapping logic.
-                    opt_nodes = [opt_nodes[i] for i in self.graph.reduced_ind]
-                est_nodes = self.synchronizer.syncrhonize(opt_nodes, all_est_nodes)
-                n_nodes = len(opt_nodes)
-                assert(len(est_nodes) == n_nodes)
-                print(f"size of est_nodes {len(opt_nodes)}")
-
-                # Compute the signal using the synchronized estimated nodes.
-                x_est = self.signal.compute_signal(est_nodes)
-                x_opt = self.signal.compute_signal(opt_nodes)
-
-                # Compute the coeffs and the features.
-                W_est = self.eval.compute_wavelet_coeffs_using_wavelet(submap_psi, x_est)
-                W_opt = self.eval.compute_wavelet_coeffs_using_wavelet(submap_psi, x_opt)
-                features = self.eval.compute_features(W_opt, W_est)
+                # Compute the submap features.
+                submap_ids = self.optimized_signal.get_indices_for_submap(key, i)
+                features = self.eval.compute_features_for_submap(W_opt, W_est, submap_ids)
                 all_features = all_features.append(features)
 
             if all_features.empty:
                 continue
-            # Predict the state of all the submaps.
+            # Predict the state of all the submaps and publish an update.
             labels = self.eval.classify_submap(all_features)
-
-            # Publish the update message.
-            all_opt_nodes = self.optimized_signal.get_all_nodes(key)
             self.commander.publish_update_messages(all_est_nodes, all_opt_nodes, labels)
 
         self.mutex.release()

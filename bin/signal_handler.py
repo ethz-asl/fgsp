@@ -50,6 +50,14 @@ class SignalHandler(object):
                 mask[i] = True
         return mask
 
+    def get_indices_for_submap(self, key, id):
+        nodes = self.get_all_nodes(key)
+        n_nodes = len(nodes)
+        indices = []
+        for i in range(0, n_nodes):
+            if nodes[i].id == id:
+                indices.append(i)
+        return indices
 
     def convert_trajectory_node(self, node_msg):
         id = node_msg.id;

@@ -16,8 +16,6 @@ class SignalHandler(object):
             return ""
 
         signals = [SignalNode] * n_nodes
-        rospy.loginfo("[SignalHandler] Computing signal for " + str(n_nodes) + " nodes")
-
         signals[0] = self.convert_trajectory_node(signal_msg.nodes[0])
         key = signals[0].robot_name
 
@@ -37,11 +35,12 @@ class SignalHandler(object):
         robot_name = node_msg.robot_name
         pose_msg = node_msg.pose
         ts = pose_msg.header.stamp
-        pose = np.array([pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
+        position = np.array([pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
+        orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
         residual = node_msg.signal
 
         signal = SignalNode()
-        signal.init(ts, id, robot_name, pose, residual)
+        signal.init(ts, id, robot_name, position, orientation, residual)
         return signal
 
     def compute_signal_from_key(self, key):
@@ -68,6 +67,6 @@ class SignalHandler(object):
         n_nodes = len(nodes)
         trajectory = np.zeros((n_nodes, 3))
         for i in range(n_nodes):
-            trajectory[i,0:3] = nodes[i].pose
+            trajectory[i,0:3] = nodes[i].position
 
         return trajectory

@@ -7,12 +7,14 @@ class SignalNode(object):
         self.ts = None
         self.id = None
         self.robot_name = None
-        self.pose = None
+        self.position = None
+        self.orientation = None
         self.residual = None
 
-    def init(self, ts, id, robot_name, pose, residual):
+    def init(self, ts, id, robot_name, position, orientation, residual):
         self.ts = ts
         self.id = id
         self.robot_name = robot_name
-        self.pose = pose
+        self.position = position
+        self.orientation = orientation
         self.residual = residual

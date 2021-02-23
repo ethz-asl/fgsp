@@ -15,6 +15,14 @@ class GlobalGraph(object):
         self.is_built = False
         self.reduced_ind = []
         self.submap_ind = []
+        self.graph_seq = None
+
+    def msg_contains_updates(self, graph_msg):
+        if self.is_built is False:
+            return True
+
+        return graph_msg.header.seq > self.graph_seq
+
 
     def build(self, graph_msg):
         self.coords = self.read_coordinates(graph_msg)
@@ -31,6 +39,7 @@ class GlobalGraph(object):
         if (self.is_reduced):
             self.reduce_graph()
 
+        self.graph_seq = graph_msg.header.seq
         self.is_built = True
         rospy.loginfo("[Graph] Building complete")
 

@@ -11,7 +11,7 @@ from signal_handler import SignalHandler
 from graph_visualizer import GraphVisualizer
 from signal_synchronizer import SignalSynchronizer
 from wavelet_evaluator import WaveletEvaluator
-
+from command_post import CommandPost
 
 class GraphMonitor(object):
 
@@ -39,6 +39,7 @@ class GraphMonitor(object):
         self.optimized_signal = SignalHandler()
         self.synchronizer = SignalSynchronizer()
         self.eval = WaveletEvaluator()
+        self.commander = CommandPost()
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -52,8 +53,12 @@ class GraphMonitor(object):
         if self.is_initialized is False:
             return
         self.mutex.acquire()
-        rospy.loginfo("[GraphMonitor] Received new graph.")
-        self.graph.build(msg)
+
+        # We only trigger the graph building if the msg contains new information.
+        if self.graph.msg_contains_updates(msg) is True:
+            self.graph.build(msg)
+            self.eval.compute_wavelets(self.graph.G)
+
         self.mutex.release()
 
     def traj_opt_callback(self, msg):
@@ -72,7 +77,6 @@ class GraphMonitor(object):
             return
 
         key = self.signal.convert_signal(msg)
-        rospy.loginfo(f"[GraphMonitor] Received trajectory message from {key}.")
 
         if self.key_in_keys(key):
             return
@@ -110,13 +114,13 @@ class GraphMonitor(object):
             x_opt = self.signal.compute_signal(opt_nodes)
 
             # Compute the coeffs and the features.
-            W_est = self.eval.compute_wavelets_coeffs(x_est)
-            W_opt = self.eval.compute_wavelets_coeffs(x_opt)
-            features = eval.compute_features_for_submap(W_1, W_2, ids)
+            W_est = self.eval.compute_wavelet_coeffs(x_est)
+            W_opt = self.eval.compute_wavelet_coeffs(x_opt)
+            features = self.eval.compute_features_for_submap(W_opt, W_est, ids)
 
             # Predict the state of the submap.
-            label = eval.classify_submap(features)
-
+            labels = self.eval.classify_submap(features)
+            self.commander.publish_update_messages(est_nodes, opt_nodes, labels)
 
         self.mutex.release()
 

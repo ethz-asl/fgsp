@@ -6,3 +6,4 @@ opt_key:              optimized
 update_rate:          0.2
 
 random_forest_model:  "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
+update_good_topic:    '/graph_monitor/anchor_nodes'

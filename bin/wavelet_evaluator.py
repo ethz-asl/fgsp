@@ -78,9 +78,9 @@ class WaveletEvaluator(object):
         return self.psi
 
     def compute_wavelet_coeffs(self, x_signal):
-        return self.compute_wavelet_coefficients(self.psi, x_signal)
+        return self.compute_wavelet_coeffs_using_wavelet(self.psi, x_signal)
 
-    def compute_wavelet_coeffs(self, wavelet, x_signal):
+    def compute_wavelet_coeffs_using_wavelet(self, wavelet, x_signal):
         n_values = x_signal.shape[0]
         W = np.zeros((n_values, self.n_scales))
         for i in range(0, n_values):

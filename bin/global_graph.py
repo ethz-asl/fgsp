@@ -14,12 +14,23 @@ class GlobalGraph(object):
         self.is_reduced = reduced
         self.is_built = False
         self.reduced_ind = []
+        self.submap_ind = []
+        self.graph_seq = None
+
+    def msg_contains_updates(self, graph_msg):
+        if self.is_built is False:
+            return True
+
+        return graph_msg.header.seq > self.graph_seq
+
 
     def build(self, graph_msg):
         self.coords = self.read_coordinates(graph_msg)
         rospy.loginfo("[Graph] Building with coords " + str(self.coords.shape))
         self.adj = self.read_adjacency(graph_msg)
         rospy.loginfo("[Graph] Building with adj: " + str(self.adj.shape))
+        self.submap_ind = self.read_submap_indices(graph_msg)
+        rospy.loginfo("[Graph] Building with ind: " + str(len(self.submap_ind)))
 
         self.G = graphs.Graph(self.adj)
         self.G.set_coordinates(self.coords[:,[0,1]])
@@ -28,9 +39,9 @@ class GlobalGraph(object):
         if (self.is_reduced):
             self.reduce_graph()
 
+        self.graph_seq = graph_msg.header.seq
         self.is_built = True
         rospy.loginfo("[Graph] Building complete")
-
 
     def read_coordinates(self, graph_msg):
         n_coords = len(graph_msg.coords)
@@ -50,6 +61,9 @@ class GlobalGraph(object):
                 adj[i,j] = graph_msg.adjacency_matrix[j + i * n_coords]
 
         return adj
+
+    def read_submap_indices(self, graph_msg):
+        return graph_msg.submap_indices
 
     def reduce_graph(self):
         #self.reduced_ind = self.reduce_every_other()

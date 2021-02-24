@@ -41,8 +41,10 @@ class CommandPost(object):
     def publish_update_messages(self):
         if self.good_path_msg == None or self.bad_path_msg == None:
             return
-        rospy.loginfo("[CommandPost] Publishing evaluation results.")
-        if len(self.good_path_msg.poses) > 0:
+        n_good = len(self.good_path_msg.poses)
+        n_bad = len(self.bad_path_msg.poses)
+        rospy.loginfo(f"[CommandPost] Publishing evaluation results ({n_good}/{n_bad}).")
+        if n_good > 0:
             self.pub_good.publish(self.good_path_msg)
-        if len(self.bad_path_msg.poses) > 0:
+        if n_bad > 0:
             self.pub_bad.publish(self.bad_path_msg)

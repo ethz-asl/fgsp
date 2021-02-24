@@ -113,7 +113,6 @@ class GraphMonitor(object):
         all_features = self.compute_all_submap_features(key, all_opt_nodes, all_est_nodes)
         self.evaluate_and_publish_features(all_features)
 
-
         return True
 
     def reduce_and_synchronize(self, all_opt_nodes, all_est_nodes):
@@ -155,10 +154,12 @@ class GraphMonitor(object):
 
         for submap_features in all_features:
             # Predict the state of all the submaps and publish an update.
+            print(f"Labels: {submap_features.features}")
             submap_features.label = self.eval.classify_submap(submap_features.features)
+            print(f"Labels: {submap_features.label}")
             self.commander.accumulate_update_messages(submap_features)
         self.commander.publish_update_messages()
-        
+
     def key_in_optimized_keys(self, key):
        return any(key in k for k in self.optimized_keys)
 

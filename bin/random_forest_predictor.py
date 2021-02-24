@@ -3,7 +3,6 @@
 import rospy
 import numpy as np
 from pygsp import graphs, filters, reduction
-from enum import Enum
 
 import scipy.spatial
 from sklearn.ensemble import RandomForestClassifier
@@ -21,7 +20,6 @@ class RandomForestPredictor(object):
         self.clf = load(random_forest_model)
 
     def predict(self, X):
-        print(f"Prediction for: {X}")
         X = X.fillna(0)
         X = X.replace(float('inf'), 1)
 

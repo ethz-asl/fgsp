@@ -96,7 +96,6 @@ class WaveletEvaluator(object):
         submap_coeffs_2 = coeffs_2[submap_ids, :]
 
         D = self.compute_cosine_distance(submap_coeffs_1, submap_coeffs_2)
-        print(f"Similarity distance: {D.transpose()}")
         return self.evaluate_scales(D)
 
     def compute_distances(self, coeffs_1, coeffs_2):
@@ -122,6 +121,7 @@ class WaveletEvaluator(object):
 
     def compute_features(self, submap_coeffs_1, submap_coeffs_2):
         D = self.compute_distances(submap_coeffs_1, submap_coeffs_2)
+
         data = pandas.DataFrame({
             # Cosine distance.
             self.feature_names[0]:[np.sum(D[0, 0:2])],

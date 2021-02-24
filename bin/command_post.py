@@ -15,12 +15,16 @@ class CommandPost(object):
         self.bad_path_msg = None
         rospy.loginfo("[CommandPost] Initialized command post center.")
 
+    def reset_msgs(self):
+        self.good_path_msg = Path()
+        self.bad_path_msg = Path()
+
+
     def accumulate_update_messages(self, submap_features):
         # Should always publish for all states as we don't know
         # whether they reached the clients.
         n_nodes = len(submap_features.nodes)
-        self.good_path_msg = Path()
-        self.bad_path_msg = Path()
+        rospy.loginfo(f"[CommandPost] Got {n_nodes} nodes in the submap.")
         for i in range(0, n_nodes):
             cur_opt = submap_features.nodes[i]
             pose_msg = PoseStamped()
@@ -37,6 +41,8 @@ class CommandPost(object):
                 self.good_path_msg.poses.append(pose_msg)
             elif submap_features.label == 1:
                 self.bad_path_msg.poses.append(pose_msg)
+            else:
+                rospy.logerror(f"Found an unknown label {submap_features.label}")
 
     def publish_update_messages(self):
         if self.good_path_msg == None or self.bad_path_msg == None:

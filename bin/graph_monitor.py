@@ -142,7 +142,6 @@ class GraphMonitor(object):
         for i in range(0, n_submaps):
             # Compute the submap features.
             submap_ids = self.optimized_signal.get_indices_for_submap(key, i)
-            print(f"---------- SUBMAPS: {submap_ids} --------------------")
             features = self.eval.compute_features_for_submap(W_opt, W_est, submap_ids)
             if features.empty:
                 continue
@@ -157,7 +156,6 @@ class GraphMonitor(object):
         for submap_features in all_features:
             # Predict the state of all the submaps and publish an update.
             submap_features.label = self.eval.classify_submap(submap_features.features)[0]
-            print(f"Labels: {submap_features.label}")
             self.commander.accumulate_update_messages(submap_features)
         self.commander.publish_update_messages()
 

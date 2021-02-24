@@ -24,7 +24,6 @@ class CommandPost(object):
         # Should always publish for all states as we don't know
         # whether they reached the clients.
         n_nodes = len(submap_features.nodes)
-        rospy.loginfo(f"[CommandPost] Got {n_nodes} nodes in the submap.")
         for i in range(0, n_nodes):
             cur_opt = submap_features.nodes[i]
             pose_msg = PoseStamped()
@@ -51,6 +50,8 @@ class CommandPost(object):
         n_bad = len(self.bad_path_msg.poses)
         rospy.loginfo(f"[CommandPost] Publishing evaluation results ({n_good}/{n_bad}).")
         if n_good > 0:
+            self.good_path_msg.header.stamp = rospy.Time.now()
             self.pub_good.publish(self.good_path_msg)
         if n_bad > 0:
+            self.bad_path_msg.header.stamp = rospy.Time.now()
             self.pub_bad.publish(self.bad_path_msg)

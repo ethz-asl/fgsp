@@ -2,11 +2,11 @@
 import rospy
 import numpy as np
 from pygsp import graphs, filters, reduction
+from geometry_msgs.msg import Point
 from maplab_msgs.msg import Graph
 
 
 class GlobalGraph(object):
-
     def __init__(self, reduced=False):
         rospy.loginfo("[Graph] Initializing graph builder..")
         self.adj = None
@@ -103,6 +103,8 @@ class GlobalGraph(object):
         n_coords = self.G.N
 
         # Write coordinates and adjacency.
+        graph_msg.coords = [Point()] * n_coords
+        graph_msg.adjacency_matrix = [0] * (n_coords*n_coords)
         for i in range(n_coords):
             graph_msg.coords[i].x = self.coords[i,0]
             graph_msg.coords[i].y = self.coords[i,1]

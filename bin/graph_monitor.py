@@ -6,7 +6,6 @@ from multiprocessing import Lock
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
-from graph_visualizer import GraphVisualizer
 
 class GraphMonitor(object):
 
@@ -42,6 +41,7 @@ class GraphMonitor(object):
         self.mutex.release()
 
     def graph_callback(self, msg):
+        rospy.loginfo(f"[GraphMonitor] Received graph message.")
         if self.is_initialized is False:
             return
         self.mutex.acquire()
@@ -74,9 +74,13 @@ class GraphMonitor(object):
     def publish_graph_and_traj(self):
         graph_msg = self.graph.to_graph_msg()
         self.pub_graph.publish(graph_msg)
+
         for key in self.optimized_keys:
-            traj_msg = self.graph.to_graph_msg(key)
+            traj_msg = self.optimized_signal.to_signal_msg(key)
             self.pub_traj.publish(traj_msg)
+
+    def key_in_optimized_keys(self, key):
+       return any(key in k for k in self.optimized_keys)
 
 
 if __name__ == '__main__':

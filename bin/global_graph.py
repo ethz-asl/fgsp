@@ -2,6 +2,7 @@
 import rospy
 import numpy as np
 from pygsp import graphs, filters, reduction
+from maplab_msgs.msg import Graph
 
 
 class GlobalGraph(object):
@@ -95,3 +96,21 @@ class GlobalGraph(object):
             if (self.G.U[i,idx_fourier] < 0):
                 indices.append(i)
         return indices
+
+    def to_graph_msg(self):
+        graph_msg = Graph()
+        graph_msg.header.seq = self.graph_seq
+        n_coords = self.G.N
+
+        # Write coordinates and adjacency.
+        for i in range(n_coords):
+            graph_msg.coords[i].x = self.coords[i,0]
+            graph_msg.coords[i].y = self.coords[i,1]
+            graph_msg.coords[i].z = self.coords[i,2]
+            for j in range(n_coords):
+                graph_msg.adjacency_matrix[j + i * n_coords] = self.adj[i,j]
+
+        graph_msg.submap_indices = self.submap_ind
+        graph_msg.reduced_indices = self.reduced_ind
+
+        return graph_msg

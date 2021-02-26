@@ -2,7 +2,7 @@
 <launch>
 
   <!-- Config file -->
-  <arg name="config_file"             default="$(find graph_monitor)/config/default.yaml"/>
+  <arg name="config_file"             default="$(find graph_monitor)/config/monitor_config.yaml"/>
 
   <!-- Node name -->
   <arg name="node_name"               default="graph_client"/>

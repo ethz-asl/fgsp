@@ -31,7 +31,7 @@ class GraphClient(object):
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
         rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
-        
+
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=False)
         self.signal = SignalHandler()
@@ -100,8 +100,6 @@ class GraphClient(object):
         all_est_nodes = self.signal.get_all_nodes(key)
         all_opt_nodes = self.optimized_signal.get_all_nodes(key)
         n_opt_nodes = len(all_opt_nodes)
-        if n_opt_nodes <= self.min_node_count:
-            return False
 
         # Compute the features and publish the results.
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)

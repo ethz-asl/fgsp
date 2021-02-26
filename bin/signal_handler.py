@@ -2,6 +2,8 @@
 import rospy
 import numpy as np
 from pygsp import graphs, filters, reduction
+from maplab_msgs.msg import Trajectory, TrajectoryNode
+from geometry_msgs.msg import PoseStamped
 
 from signal_node import SignalNode
 
@@ -99,3 +101,29 @@ class SignalHandler(object):
             trajectory[i,0:3] = nodes[i].position
 
         return trajectory
+
+    def to_signal_msg(self, key):
+        traj_msg = Trajectory()
+        nodes = self.get_all_nodes(key)
+        n_nodes = len(nodes)
+
+        for i in range(n_nodes):
+            node_msg = TrajectoryNode()
+            node_msg.id = nodes[i].id;
+            node_msg.robot_name = nodes[i].robot_name
+
+            pose_msg = PoseStamped()
+            pose_msg.header.stamp = nodes[i].ts
+            pose_msg.pose.position.x = nodes[i].position[0]
+            pose_msg.pose.position.y = nodes[i].position[1]
+            pose_msg.pose.position.z = nodes[i].position[2]
+            pose_msg.pose.orientation.w = nodes[i].orientation[0]
+            pose_msg.pose.orientation.x = nodes[i].orientation[1]
+            pose_msg.pose.orientation.y = nodes[i].orientation[2]
+            pose_msg.pose.orientation.z = nodes[i].orientation[3]
+
+            node_msg.pose = pose_msg
+            node_msg.signal = nodes[i].residual
+            traj_msg.nodes.append(node_msg)
+
+        return traj_msg

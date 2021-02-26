@@ -105,11 +105,9 @@ class SignalHandler(object):
     def to_signal_msg(self, key):
         traj_msg = Trajectory()
         node_msg = TrajectoryNode()
-        #nodes = self.get_all_nodes(key)
-        #n_nodes = len(nodes)
+        nodes = self.get_all_nodes(key)
+        n_nodes = len(nodes)
 
-
-        '''
         for i in range(n_nodes):
             node_msg = TrajectoryNode()
             node_msg.id = nodes[i].id;
@@ -128,7 +126,6 @@ class SignalHandler(object):
             node_msg.pose = pose_msg
             node_msg.signal = nodes[i].residual
             traj_msg.nodes.append(node_msg)
-        '''
 
         return traj_msg
 

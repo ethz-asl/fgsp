@@ -2,10 +2,10 @@
 <launch>
 
   <!-- Config file -->
-  <arg name="config_file"             default="$(find graph_monitor)/config/monitor_config.yaml"/>
+  <arg name="config_file" default="$(find graph_monitor)/config/client_config.yaml"/>
 
   <!-- Node name -->
-  <arg name="node_name"               default="graph_client"/>
+  <arg name="node_name" default="graph_client"/>
 
   <node name="$(arg node_name)" pkg="graph_monitor" type="graph_client.py" output="screen" respawn="true">
     <rosparam command="load" file="$(arg config_file)"/>

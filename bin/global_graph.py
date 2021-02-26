@@ -27,11 +27,11 @@ class GlobalGraph(object):
 
     def build(self, graph_msg):
         self.coords = self.read_coordinates(graph_msg)
-        rospy.loginfo("[Graph] Building with coords " + str(self.coords.shape))
+        rospy.logdebug("[Graph] Building with coords " + str(self.coords.shape))
         self.adj = self.read_adjacency(graph_msg)
-        rospy.loginfo("[Graph] Building with adj: " + str(self.adj.shape))
+        rospy.logdebug("[Graph] Building with adj: " + str(self.adj.shape))
         self.submap_ind = self.read_submap_indices(graph_msg)
-        rospy.loginfo("[Graph] Building with ind: " + str(len(self.submap_ind)))
+        rospy.logdebug("[Graph] Building with ind: " + str(len(self.submap_ind)))
 
         self.G = graphs.Graph(self.adj)
         self.G.set_coordinates(self.coords[:,[0,1]])

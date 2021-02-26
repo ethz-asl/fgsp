@@ -64,7 +64,7 @@ class GraphClient(object):
             return
 
         key = self.optimized_signal.convert_signal(msg)
-        rospy.loginfo(f"[GraphMonitor] Received opt trajectory message from {key}.")
+        rospy.loginfo(f"[GraphClient] Received opt trajectory message from {key}.")
 
         if self.key_in_optimized_keys(key):
             return
@@ -89,7 +89,7 @@ class GraphClient(object):
         for key in self.keys:
             # Check whether we have an optimized version of it.
             if not self.key_in_optimized_keys(key):
-                rospy.logwarn(f"[GraphMonitor] Found no optimized version of {key}.")
+                rospy.logwarn(f"[GraphClient] Found no optimized version of {key}.")
                 continue
             self.compare_stored_signals(key)
 

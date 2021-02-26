@@ -1,0 +1,11 @@
+graph_topic:          /maplab_server/sparse_graph/graph
+traj_opt_topic:       /maplab_server/sparse_graph/trajectory
+traj_topic:           /trajectory
+opt_key:              optimized
+min_node_count:       1
+
+update_rate:          0.2
+
+random_forest_model:  "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
+update_good_topic:    '/graph_monitor/anchor_nodes'
+update_bad_topic:     '/graph_monitor/update_nodes'

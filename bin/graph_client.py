@@ -14,26 +14,24 @@ from wavelet_evaluator import WaveletEvaluator
 from command_post import CommandPost
 from feature_node import FeatureNode
 
-class GraphMonitor(object):
-
+class GraphClient(object):
     def __init__(self):
         self.is_initialized = False
         self.mutex = Lock()
         self.mutex.acquire()
-        rospy.loginfo("[GraphMonitor] Initializing monitor node...")
         self.rate = rospy.Rate(rospy.get_param("~update_rate"))
 
+        rospy.loginfo("[GraphClient] Initializing client node...")
         graph_topic = rospy.get_param("~graph_topic")
         traj_opt_topic = rospy.get_param("~traj_opt_topic")
         traj_topic = rospy.get_param("~traj_topic")
-        self.min_node_count = rospy.get_param("~min_node_count")
 
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
-        rospy.loginfo("[GraphMonitor] Listening for graphs from " + graph_topic)
-        rospy.loginfo("[GraphMonitor] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
-
+        rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)
+        rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
+        
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=False)
         self.signal = SignalHandler()
@@ -46,9 +44,8 @@ class GraphMonitor(object):
         self.optimized_keys = []
         self.keys = []
 
-        rospy.loginfo("[GraphMonitor] Graph monitor is set up.")
-        self.is_initialized = True
         self.mutex.release()
+        self.is_initialized = True
 
     def graph_callback(self, msg):
         if self.is_initialized is False:
@@ -83,7 +80,6 @@ class GraphMonitor(object):
             return
         self.keys.append(key)
 
-
     def update(self):
         self.mutex.acquire()
         if self.graph.is_built is False:
@@ -113,16 +109,6 @@ class GraphMonitor(object):
         self.evaluate_and_publish_features(all_features)
 
         return True
-
-    def reduce_and_synchronize(self, all_opt_nodes, all_est_nodes):
-        # If the graph is reduced, we need to reduce the optimized nodes too.
-        # Synchronize the node lists based on their TS.
-        # We always sync to the optimized nodes.
-        if self.graph.is_reduced:
-            all_opt_nodes = [all_opt_nodes[i] for i in self.graph.reduced_ind]
-        all_est_nodes = self.synchronizer.syncrhonize(all_opt_nodes, all_est_nodes)
-        assert(len(all_est_nodes) == len(all_opt_nodes))
-        return (all_opt_nodes, all_est_nodes)
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
         # Compute the signal using the synchronized estimated nodes.
@@ -165,8 +151,8 @@ class GraphMonitor(object):
        return any(key in k for k in self.keys)
 
 if __name__ == '__main__':
-    rospy.init_node('graph_monitor')
-    node = GraphMonitor()
+    rospy.init_node('graph_client')
+    node = GraphClient()
     while not rospy.is_shutdown():
         node.update()
         node.rate.sleep()

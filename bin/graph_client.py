@@ -108,6 +108,16 @@ class GraphClient(object):
 
         return True
 
+    def reduce_and_synchronize(self, all_opt_nodes, all_est_nodes):
+        # If the graph is reduced, we need to reduce the optimized nodes too.
+        # Synchronize the node lists based on their TS.
+        # We always sync to the optimized nodes.
+        if self.graph.is_reduced:
+            all_opt_nodes = [all_opt_nodes[i] for i in self.graph.reduced_ind]
+        (all_opt_nodes, all_est_nodes) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
+        assert(len(all_est_nodes) == len(all_opt_nodes))
+        return (all_opt_nodes, all_est_nodes)
+
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)

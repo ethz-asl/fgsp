@@ -68,6 +68,10 @@ class GraphMonitor(object):
         if self.graph.is_built is False:
             self.mutex.release()
             return
+        if self.graph.graph_size() < self.min_node_count:
+            rospy.loginfo(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()})")
+            self.mutex.release()
+            return;
         self.publish_graph_and_traj()
         self.mutex.release()
 

@@ -24,6 +24,11 @@ class GlobalGraph(object):
 
         return graph_msg.header.seq > self.graph_seq
 
+    def graph_size(self):
+        if self.G is not None:
+            return self.G.N
+        else:
+            return 0
 
     def build(self, graph_msg):
         self.coords = self.read_coordinates(graph_msg)

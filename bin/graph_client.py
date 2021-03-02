@@ -148,9 +148,14 @@ class GraphClient(object):
         psi = self.eval.get_wavelets()
 
         all_features = []
+        rospy.loginfo(f"[GraphClient] Computing features for {n_submaps} submaps")
+        rospy.loginfo(f"[GraphClient] Got {W_est.shape} est wavelets")
+        rospy.loginfo(f"[GraphClient] Got {W_opt.shape} opt wavelets")
         for i in range(0, n_submaps):
             # Compute the submap features.
             submap_ids = self.optimized_signal.get_indices_for_submap(key, i)
+            rospy.loginfo(f"[GraphClient] Checking the submap nr: {i}")
+            rospy.loginfo(f"[GraphClient] Got these IDs: {submap_ids}")
             features = self.eval.compute_features_for_submap(W_opt, W_est, submap_ids)
             if features.empty:
                 continue

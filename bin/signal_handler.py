@@ -29,6 +29,20 @@ class SignalHandler(object):
 
         return key
 
+    def convert_signal_from_path(self, path_msg):
+        n_poses = len(path_msg.poses)
+        if (n_poses <= 0):
+            return ""
+
+        key = path_msg.header.frame_id
+        signals = [SignalNode] * n_poses
+        for i in range(1, n_poses):
+            signals[i] = self.convert_path_node(path_msg.poses[i], key)
+
+        self.signals[key] = signals
+
+        return key
+
     def get_all_nodes(self, key):
         return self.signals[key]
 
@@ -72,6 +86,16 @@ class SignalHandler(object):
 
         signal = SignalNode()
         signal.init(ts, id, robot_name, position, orientation, residual)
+        return signal
+
+    def convert_path_node(self, pose_msg, robot_name):
+        pose_msg = pose_msg
+        ts = pose_msg.header.stamp
+        position = np.array([pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
+        orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
+
+        signal = SignalNode()
+        signal.init_onboard(ts, robot_name, position, orientation)
         return signal
 
     def compute_signal_from_key(self, key):

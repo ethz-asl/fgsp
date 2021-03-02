@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import rospy
-from std_msgs.msg import Header
+from nav_msgs.msg import Path
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
 from multiprocessing import Lock
 import pandas
@@ -25,10 +25,12 @@ class GraphClient(object):
         graph_topic = rospy.get_param("~graph_topic")
         traj_opt_topic = rospy.get_param("~traj_opt_topic")
         traj_topic = rospy.get_param("~traj_topic")
+        traj_path_topic = rospy.get_param("~traj_path_topic")
 
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
+        rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
         rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
 
@@ -75,6 +77,20 @@ class GraphClient(object):
             return
 
         key = self.signal.convert_signal(msg)
+
+        if self.key_in_keys(key):
+            return
+        self.keys.append(key)
+
+    def traj_path_callback(self, msg):
+        if self.is_initialized is False:
+            rospy.loginfo("[GraphClient] Received path message before being initialized.")
+            return
+
+        key = self.signal.convert_signal_from_path(msg)
+        if not key:
+            rospy.logerror("[GraphClient] Unable to convert msg to signal.")
+            return
 
         if self.key_in_keys(key):
             return

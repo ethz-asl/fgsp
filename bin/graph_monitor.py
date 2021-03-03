@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
 
 import rospy
-from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
+from maplab_msgs.msg import *
+from maplab_msgs.srv import Verification
 from multiprocessing import Lock
 
 from global_graph import GlobalGraph
@@ -21,9 +22,11 @@ class GraphMonitor(object):
         out_graph_topic = rospy.get_param("~out_graph_topic")
         out_traj_opt_topic = rospy.get_param("~out_traj_opt_topic")
         self.min_node_count = rospy.get_param("~min_node_count")
+        verification_service_topic = rospy.get_param("~verification_service")
 
         rospy.Subscriber(in_graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(in_traj_opt_topic, Trajectory, self.traj_opt_callback)
+        rospy.Subscriber(verification_service_topic, VerificationCheckRequest, self.verification_callback)
         self.pub_graph = rospy.Publisher(out_graph_topic, Graph, queue_size=10)
         self.pub_traj = rospy.Publisher(out_traj_opt_topic, Trajectory, queue_size=10)
         rospy.loginfo("[GraphMonitor] Listening for graphs from " + in_graph_topic)
@@ -62,6 +65,9 @@ class GraphMonitor(object):
         if self.key_in_optimized_keys(key):
             return
         self.optimized_keys.append(key)
+
+    def verification_callback(self, req):
+        rospy.loginfo(f"[GraphMonitor] verification")
 
     def update(self):
         self.mutex.acquire()

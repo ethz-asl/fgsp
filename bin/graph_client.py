@@ -153,13 +153,13 @@ class GraphClient(object):
         rospy.loginfo(f"[GraphClient] Got {W_opt.shape} opt wavelets")
         for i in range(0, n_submaps):
             # Compute the submap features.
-            submap_ids = self.optimized_signal.get_indices_for_submap(key, i)
+            node_ids = self.optimized_signal.get_indices_for_submap(key, i)
             rospy.loginfo(f"[GraphClient] Checking the submap nr: {i}")
-            rospy.loginfo(f"[GraphClient] Got these IDs: {submap_ids}")
-            features = self.eval.compute_features_for_submap(W_opt, W_est, submap_ids)
+            rospy.loginfo(f"[GraphClient] Got these IDs: {node_ids}")
+            features = self.eval.compute_features_for_submap(W_opt, W_est, node_ids)
             if features.empty:
                 continue
-            all_features.append(FeatureNode(all_opt_nodes, features, submap_ids))
+            all_features.append(FeatureNode(i, key, all_opt_nodes, features, node_ids))
         return all_features
 
     def evaluate_and_publish_features(self, all_features):

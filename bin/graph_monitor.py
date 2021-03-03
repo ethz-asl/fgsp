@@ -2,11 +2,11 @@
 
 import rospy
 from maplab_msgs.msg import *
-from maplab_msgs.srv import Verification
 from multiprocessing import Lock
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
+from verification_handler import VerificationHandler
 
 class GraphMonitor(object):
 
@@ -35,6 +35,7 @@ class GraphMonitor(object):
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=False)
         self.optimized_signal = SignalHandler()
+        self.verification_handler = VerificationHandler()
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -66,11 +67,12 @@ class GraphMonitor(object):
             return
         self.optimized_keys.append(key)
 
-    def verification_callback(self, req):
-        rospy.loginfo(f"[GraphMonitor] verification")
+    def verification_callback(self, msg):
+        self.verification_handler.handle_verification(msg)
 
     def update(self):
         self.mutex.acquire()
+
         if self.graph.is_built is False:
             self.mutex.release()
             return
@@ -78,7 +80,13 @@ class GraphMonitor(object):
             rospy.loginfo(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()})")
             self.mutex.release()
             return;
+
+        # Publish the graph to the clients.
         self.publish_graph_and_traj()
+
+        # Publish verifications to the server.
+        self.verification_handler.send_verification_request()
+
         self.mutex.release()
 
     def publish_graph_and_traj(self):

@@ -42,11 +42,11 @@ class CommandPost(object):
             pose_msg.pose.orientation.y = cur_opt.orientation[2]
             pose_msg.pose.orientation.z = cur_opt.orientation[3]
 
+            self.append_verification_request(submap_features)
             if submap_features.label == 0:
                 self.good_path_msg.poses.append(pose_msg)
             elif submap_features.label == 1:
                 self.bad_path_msg.poses.append(pose_msg)
-                self.append_verification_request(submap_features)
             else:
                 rospy.logerror(f"Found an unknown label {submap_features.label}")
 
@@ -65,12 +65,12 @@ class CommandPost(object):
             self.pub_bad.publish(self.bad_path_msg)
 
             # Publish verification request
-            self.send_verification_request()
+        self.send_verification_request()
 
     def append_verification_request(self, submap_features):
         if not self.verification_request.robot_name:
-            self.verification_request.robot_name == submap_features.robot_name
-        elif self.verification_request.robot_name != submap_features.robot_name:
+            self.verification_request.robot_name = submap_features.robot_name
+        elif submap_features.robot_name and self.verification_request.robot_name != submap_features.robot_name:
             rospy.logerror(f"[CommandPost] Trying to add verifiction for {submap_features.robot_name} but previous was {self.verification_request.robot_name}")
             return False
         if submap_features.id not in self.verification_request.submap_ids:

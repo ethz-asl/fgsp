@@ -2,6 +2,8 @@
 import rospy
 import numpy as np
 from pygsp import graphs, filters, reduction
+from maplab_msgs.msg import Trajectory, TrajectoryNode
+from geometry_msgs.msg import PoseStamped
 
 from signal_node import SignalNode
 
@@ -22,6 +24,20 @@ class SignalHandler(object):
 
         for i in range(1, n_nodes):
             signals[i] = self.convert_trajectory_node(signal_msg.nodes[i])
+
+        self.signals[key] = signals
+
+        return key
+
+    def convert_signal_from_path(self, path_msg):
+        n_poses = len(path_msg.poses)
+        if (n_poses <= 0):
+            return ""
+
+        key = path_msg.header.frame_id
+        signals = [SignalNode] * n_poses
+        for i in range(0, n_poses):
+            signals[i] = self.convert_path_node(path_msg.poses[i], key)
 
         self.signals[key] = signals
 
@@ -72,6 +88,16 @@ class SignalHandler(object):
         signal.init(ts, id, robot_name, position, orientation, residual)
         return signal
 
+    def convert_path_node(self, pose_msg, robot_name):
+        pose_msg = pose_msg
+        ts = pose_msg.header.stamp
+        position = np.array([pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
+        orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
+
+        signal = SignalNode()
+        signal.init_onboard(ts, robot_name, position, orientation)
+        return signal
+
     def compute_signal_from_key(self, key):
         nodes = self.signals[key]
         traj = self.compute_trajectory(nodes)
@@ -99,3 +125,34 @@ class SignalHandler(object):
             trajectory[i,0:3] = nodes[i].position
 
         return trajectory
+
+    def to_signal_msg(self, key):
+        traj_msg = Trajectory()
+        node_msg = TrajectoryNode()
+        nodes = self.get_all_nodes(key)
+        n_nodes = len(nodes)
+
+        for i in range(n_nodes):
+            node_msg = TrajectoryNode()
+            node_msg.id = nodes[i].id;
+            node_msg.robot_name = nodes[i].robot_name
+
+            pose_msg = PoseStamped()
+            pose_msg.header.stamp = nodes[i].ts
+            pose_msg.pose.position.x = nodes[i].position[0]
+            pose_msg.pose.position.y = nodes[i].position[1]
+            pose_msg.pose.position.z = nodes[i].position[2]
+            pose_msg.pose.orientation.w = nodes[i].orientation[0]
+            pose_msg.pose.orientation.x = nodes[i].orientation[1]
+            pose_msg.pose.orientation.y = nodes[i].orientation[2]
+            pose_msg.pose.orientation.z = nodes[i].orientation[3]
+
+            node_msg.pose = pose_msg
+            node_msg.signal = nodes[i].residual
+            traj_msg.nodes.append(node_msg)
+
+        return traj_msg
+
+if __name__ == '__main__':
+    sh = SignalHandler()
+    sh.to_signal_msg("foo")

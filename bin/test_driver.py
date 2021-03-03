@@ -5,7 +5,7 @@ import pandas
 import numpy as np
 
 from maplab_msgs.msg import Trajectory, TrajectoryNode
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Pose
 
 class TestDriver(object):
 

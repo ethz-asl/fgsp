@@ -2,10 +2,11 @@
 import rospy
 import numpy as np
 from pygsp import graphs, filters, reduction
+from geometry_msgs.msg import Point
+from maplab_msgs.msg import Graph
 
 
 class GlobalGraph(object):
-
     def __init__(self, reduced=False):
         rospy.loginfo("[Graph] Initializing graph builder..")
         self.adj = None
@@ -23,14 +24,19 @@ class GlobalGraph(object):
 
         return graph_msg.header.seq > self.graph_seq
 
+    def graph_size(self):
+        if self.G is not None:
+            return self.G.N
+        else:
+            return 0
 
     def build(self, graph_msg):
         self.coords = self.read_coordinates(graph_msg)
-        rospy.loginfo("[Graph] Building with coords " + str(self.coords.shape))
+        rospy.logdebug("[Graph] Building with coords " + str(self.coords.shape))
         self.adj = self.read_adjacency(graph_msg)
-        rospy.loginfo("[Graph] Building with adj: " + str(self.adj.shape))
+        rospy.logdebug("[Graph] Building with adj: " + str(self.adj.shape))
         self.submap_ind = self.read_submap_indices(graph_msg)
-        rospy.loginfo("[Graph] Building with ind: " + str(len(self.submap_ind)))
+        rospy.logdebug("[Graph] Building with ind: " + str(len(self.submap_ind)))
 
         self.G = graphs.Graph(self.adj)
         self.G.set_coordinates(self.coords[:,[0,1]])
@@ -95,3 +101,23 @@ class GlobalGraph(object):
             if (self.G.U[i,idx_fourier] < 0):
                 indices.append(i)
         return indices
+
+    def to_graph_msg(self):
+        graph_msg = Graph()
+        graph_msg.header.seq = self.graph_seq
+        n_coords = self.G.N
+
+        # Write coordinates and adjacency.
+        graph_msg.coords = [Point()] * n_coords
+        graph_msg.adjacency_matrix = [0] * (n_coords*n_coords)
+        for i in range(n_coords):
+            graph_msg.coords[i].x = self.coords[i,0]
+            graph_msg.coords[i].y = self.coords[i,1]
+            graph_msg.coords[i].z = self.coords[i,2]
+            for j in range(n_coords):
+                graph_msg.adjacency_matrix[j + i * n_coords] = self.adj[i,j]
+
+        graph_msg.submap_indices = self.submap_ind
+        graph_msg.reduced_indices = self.reduced_ind
+
+        return graph_msg

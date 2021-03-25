@@ -2,7 +2,7 @@ in_graph_topic:              /maplab_server/sparse_graph/graph
 in_traj_opt_topic:           /maplab_server/sparse_graph/trajectory
 out_graph_topic:             /graph_monitor/sparse_graph/graph
 out_traj_opt_topic:          /graph_monitor/sparse_graph/trajectory
-min_node_count:              1
+min_node_count:              100
 
 update_rate:                 0.2
 

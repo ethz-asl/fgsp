@@ -1,14 +1,14 @@
 #! /usr/bin/env python3
 
 import rospy
-from maplab_msgs.srv import Verification
+from maplab_msgs.msg import VerificationCheckRequest
 
 class VerificationHandler(object):
     def __init__(self):
         self.robot_requests = {}
         self.server_acks = []
-        self.verification_server_topic = rospy.get_param("~verification_server_request")
-        #self.pub_to_server = rospy.Publisher(verification_server_topic, Path, queue_size=10)
+        verification_server_topic = rospy.get_param("~verification_server_request")
+        self.pub_to_server = rospy.Publisher(verification_server_topic, VerificationCheckRequest, queue_size=10)
         rospy.loginfo("[VerificationHandler] Handler initialized.")
 
     def handle_verification(self, msg):
@@ -29,5 +29,4 @@ class VerificationHandler(object):
         msg.robot_name = 'monitor'
         msg.submap_ids = list(set(submap_ids))
 
-        verification_proxy = rospy.ServiceProxy(verification_server_topic, Verification)
-        verification_proxy(msg)
+        self.pub_to_server.publish(msg)

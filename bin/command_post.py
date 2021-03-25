@@ -42,11 +42,11 @@ class CommandPost(object):
             pose_msg.pose.orientation.y = cur_opt.orientation[2]
             pose_msg.pose.orientation.z = cur_opt.orientation[3]
 
-            self.append_verification_request(submap_features)
             if submap_features.label == 0:
                 self.good_path_msg.poses.append(pose_msg)
             elif submap_features.label == 1:
                 self.bad_path_msg.poses.append(pose_msg)
+                self.append_verification_request(submap_features)
             else:
                 rospy.logerror(f"Found an unknown label {submap_features.label}")
 

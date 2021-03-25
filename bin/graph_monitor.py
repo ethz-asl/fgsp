@@ -1,11 +1,12 @@
 #! /usr/bin/env python3
 
 import rospy
-from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
+from maplab_msgs.msg import *
 from multiprocessing import Lock
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
+from verification_handler import VerificationHandler
 
 class GraphMonitor(object):
 
@@ -21,9 +22,11 @@ class GraphMonitor(object):
         out_graph_topic = rospy.get_param("~out_graph_topic")
         out_traj_opt_topic = rospy.get_param("~out_traj_opt_topic")
         self.min_node_count = rospy.get_param("~min_node_count")
+        verification_service_topic = rospy.get_param("~verification_service")
 
         rospy.Subscriber(in_graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(in_traj_opt_topic, Trajectory, self.traj_opt_callback)
+        rospy.Subscriber(verification_service_topic, VerificationCheckRequest, self.verification_callback)
         self.pub_graph = rospy.Publisher(out_graph_topic, Graph, queue_size=10)
         self.pub_traj = rospy.Publisher(out_traj_opt_topic, Trajectory, queue_size=10)
         rospy.loginfo("[GraphMonitor] Listening for graphs from " + in_graph_topic)
@@ -32,6 +35,7 @@ class GraphMonitor(object):
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=False)
         self.optimized_signal = SignalHandler()
+        self.verification_handler = VerificationHandler()
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -63,8 +67,12 @@ class GraphMonitor(object):
             return
         self.optimized_keys.append(key)
 
+    def verification_callback(self, msg):
+        self.verification_handler.handle_verification(msg)
+
     def update(self):
         self.mutex.acquire()
+
         if self.graph.is_built is False:
             self.mutex.release()
             return
@@ -72,7 +80,13 @@ class GraphMonitor(object):
             rospy.loginfo(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()})")
             self.mutex.release()
             return;
+
+        # Publish the graph to the clients.
         self.publish_graph_and_traj()
+
+        # Publish verifications to the server.
+        self.verification_handler.send_verification_request()
+
         self.mutex.release()
 
     def publish_graph_and_traj(self):

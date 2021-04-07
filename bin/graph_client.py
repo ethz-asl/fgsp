@@ -2,7 +2,7 @@
 
 import rospy
 from nav_msgs.msg import Path
-from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
+from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
 from multiprocessing import Lock
 import pandas
 
@@ -26,13 +26,16 @@ class GraphClient(object):
         traj_opt_topic = rospy.get_param("~traj_opt_topic")
         traj_topic = rospy.get_param("~traj_topic")
         traj_path_topic = rospy.get_param("~traj_path_topic")
+        submap_constraint_topic = rospy.get_param("~submap_constraint_topic")
 
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
         rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
+        rospy.Subscriber(submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
         rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
+        rospy.loginfo("[GraphClient] Listening for submap constraints from " + submap_constraint_topic)
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=False)
@@ -95,6 +98,12 @@ class GraphClient(object):
         if self.key_in_keys(key):
             return
         self.keys.append(key)
+
+    def submap_constraint_callback(self, msg):
+        if self.is_initialized is False:
+            rospy.loginfo("[GraphClient] Received submap constraint message before being initialized.")
+            return
+        rospy.loginfo("[GraphClient] Received submap constraint message.")
 
     def update(self):
         self.mutex.acquire()

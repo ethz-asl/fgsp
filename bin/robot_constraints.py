@@ -17,10 +17,13 @@ class RobotConstraints(object):
             self.submap_constraints[ts_ns_from] = []
         self.submap_constraints[ts_ns_from].append(lc)
 
-    def construct_path_msg(self):
+    def construct_path_msgs(self):
+        path_msgs = []
         for ts_ns_from in self.submap_constraints:
             loop_closures = list(self.submap_constraints[ts_ns_from])
-            self.construct_path_msg_for_submap(ts_ns_from, loop_closures)
+            path_msg = self.construct_path_msg_for_submap(ts_ns_from, loop_closures)
+            path_msgs.append(path_msg)
+        return path_msgs
 
     def construct_path_msg_for_submap(self, ts_ns_from, loop_closures):
         path_msg = Path()

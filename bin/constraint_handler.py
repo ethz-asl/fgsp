@@ -42,6 +42,7 @@ class ConstraintHandler(object):
 
     def process_intra_constraints(self, constraint_msg, i):
         robot_name = constraint_msg.robot_name_from[i]
+        rospy.loginfo(f"Processing intra constraints for robot {robot_name}")
 
         # Add the key if it is not present in the dict.
         if robot_name not in self.intra_contraints:
@@ -51,10 +52,14 @@ class ConstraintHandler(object):
         self.intra_contraints[robot_name].add_submap_constraints(
             constraint_msg.timestamp_from[i], constraint_msg.timestamp_to[i], constraint_msg.T_a_b[i])
 
+    def get_constraints_from(self, robot_name):
+        if robot_name not in self.intra_contraints:
+            return []
+        else:
+            return self.intra_contraints[robot_name]
 
     def create_msg_for_intra_constraints(self, robot_name):
         if robot_name not in self.intra_contraints:
             rospy.logerr(f"Robot {robot_name} does not have intra mission constraints.")
-            return None
-        if len(self.intra_contraints[robot_name]) == 0:
-            return None
+            return []
+        return self.intra_contraints[robot_name].construct_path_msgs()

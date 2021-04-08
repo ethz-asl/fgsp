@@ -22,13 +22,12 @@ class GraphClient(object):
         self.mutex.acquire()
         self.rate = rospy.Rate(rospy.get_param("~update_rate"))
 
-        rospy.loginfo("[GraphClient] Initializing client node...")
+        # Subscribers.
         graph_topic = rospy.get_param("~graph_topic")
         traj_opt_topic = rospy.get_param("~traj_opt_topic")
         traj_topic = rospy.get_param("~traj_topic")
         traj_path_topic = rospy.get_param("~traj_path_topic")
         submap_constraint_topic = rospy.get_param("~submap_constraint_topic")
-
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
@@ -37,6 +36,10 @@ class GraphClient(object):
         rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
         rospy.loginfo("[GraphClient] Listening for submap constraints from " + submap_constraint_topic)
+
+        # Publishers
+        intra_constraint_topic = rospy.get_param("~intra_constraints")
+        self.intra_constraint_pub = rospy.Publisher(intra_constraint_topic, Path, queue_size=20)
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=False)
@@ -128,7 +131,9 @@ class GraphClient(object):
 
     def check_for_submap_constraints(self):
         robot_name = "cerberus"
-        path_msg = self.constraint_handler.create_msg_for_intra_constraints(robot_name)
+        path_msgs = self.constraint_handler.create_msg_for_intra_constraints(robot_name)
+        for msg in path_msgs:
+            self.intra_constraint_pub.publish(msg)
 
 
     def compare_stored_signals(self, key):

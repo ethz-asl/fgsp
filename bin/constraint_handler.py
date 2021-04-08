@@ -11,8 +11,8 @@ class ConstraintHandler(object):
 
     def add_constraints(self, constraint_msg):
         self.verify_constraint_msg(constraint_msg)
-        rospy.loginfo("Submap constraint message is verified.")
         n_constraints  = len(constraint_msg.id_from)
+        rospy.loginfo(f"Submap constraint message is verified. Processing {n_constraints} constraints")
 
         # Received new message, reinitialize the constraints.
         # Each message contains all currently used constraints.
@@ -42,7 +42,6 @@ class ConstraintHandler(object):
 
     def process_intra_constraints(self, constraint_msg, i):
         robot_name = constraint_msg.robot_name_from[i]
-        rospy.loginfo(f"Processing intra constraints for robot {robot_name}")
 
         # Add the key if it is not present in the dict.
         if robot_name not in self.intra_contraints:

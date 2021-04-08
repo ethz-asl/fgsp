@@ -6,6 +6,7 @@ import numpy as np
 
 from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import Pose
+from utils import Utils
 
 class TestDriver(object):
 
@@ -45,7 +46,7 @@ class TestDriver(object):
         ts = 0
         for i in range(0, n_nodes):
             cur_node = nodes[i,:]
-            ts = self.create_ros_time(cur_node[0])
+            ts = Utils.ts_ns_to_ros_time(cur_node[0])
 
             pose_msg = PoseStamped()
             pose_msg.header.stamp = ts
@@ -61,13 +62,6 @@ class TestDriver(object):
 
         traj_msg.header.stamp = ts
         return traj_msg
-
-    def create_ros_time(self, ts):
-      k_ns_per_s = 1e9;
-      ros_timestamp_sec = ts / k_ns_per_s;
-      ros_timestamp_nsec = ts - (ros_timestamp_sec * k_ns_per_s);
-      return rospy.Time(ros_timestamp_sec, ros_timestamp_nsec)
-
 
 if __name__ == '__main__':
     rospy.init_node('test_driver')

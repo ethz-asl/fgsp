@@ -3,6 +3,8 @@
 import rospy
 import numpy as np
 
+from utils import Utils
+
 class SignalSynchronizer(object):
 
     def __init__(self):
@@ -39,10 +41,6 @@ class SignalSynchronizer(object):
         n_nodes = len(signals)
         ts = np.zeros((n_nodes, 1))
         for i in range(0, n_nodes):
-            ts[i] = self.ros_time_to_ns(signals[i].ts)
+            ts[i] = Utils.ros_time_to_ns(signals[i].ts)
 
         return ts
-
-    def ros_time_to_ns(self, time):
-        k_s_to_ns = 1e9
-        return time.secs * k_s_to_ns + time.nsecs

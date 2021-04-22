@@ -13,6 +13,7 @@ from signal_synchronizer import SignalSynchronizer
 from wavelet_evaluator import WaveletEvaluator
 from command_post import CommandPost
 from feature_node import FeatureNode
+from constraint_handler import ConstraintHandler
 
 class GraphClient(object):
     def __init__(self):
@@ -21,13 +22,12 @@ class GraphClient(object):
         self.mutex.acquire()
         self.rate = rospy.Rate(rospy.get_param("~update_rate"))
 
-        rospy.loginfo("[GraphClient] Initializing client node...")
+        # Subscribers.
         graph_topic = rospy.get_param("~graph_topic")
         traj_opt_topic = rospy.get_param("~traj_opt_topic")
         traj_topic = rospy.get_param("~traj_topic")
         traj_path_topic = rospy.get_param("~traj_path_topic")
         submap_constraint_topic = rospy.get_param("~submap_constraint_topic")
-
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
@@ -37,6 +37,10 @@ class GraphClient(object):
         rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
         rospy.loginfo("[GraphClient] Listening for submap constraints from " + submap_constraint_topic)
 
+        # Publishers
+        intra_constraint_topic = rospy.get_param("~intra_constraints")
+        self.intra_constraint_pub = rospy.Publisher(intra_constraint_topic, Path, queue_size=20)
+
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=False)
         self.signal = SignalHandler()
@@ -44,6 +48,7 @@ class GraphClient(object):
         self.synchronizer = SignalSynchronizer()
         self.eval = WaveletEvaluator()
         self.commander = CommandPost()
+        self.constraint_handler = ConstraintHandler()
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -104,8 +109,13 @@ class GraphClient(object):
             rospy.loginfo("[GraphClient] Received submap constraint message before being initialized.")
             return
         rospy.loginfo("[GraphClient] Received submap constraint message.")
+        self.constraint_handler.add_constraints(msg)
 
     def update(self):
+        self.compare_estimations()
+        self.check_for_submap_constraints()
+
+    def compare_estimations(self):
         self.mutex.acquire()
         if self.graph.is_built is False:
             self.mutex.release()
@@ -117,8 +127,14 @@ class GraphClient(object):
                 rospy.logwarn(f"[GraphClient] Found no optimized version of {key}.")
                 continue
             self.compare_stored_signals(key)
-
         self.mutex.release()
+
+    def check_for_submap_constraints(self):
+        robot_name = "cerberus"
+        path_msgs = self.constraint_handler.create_msg_for_intra_constraints(robot_name)
+        for msg in path_msgs:
+            self.intra_constraint_pub.publish(msg)
+
 
     def compare_stored_signals(self, key):
         # Retrieve the estimated and optimized versions of the trajectory.

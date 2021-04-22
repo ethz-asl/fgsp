@@ -1,13 +1,17 @@
+# Subscribers.
 graph_topic:             /graph_monitor/sparse_graph/graph
 traj_opt_topic:          /graph_monitor/sparse_graph/trajectory
 traj_topic:              /trajectory
 traj_path_topic:         /trajectory_path
 submap_constraint_topic: /s2loc/submaps
 
-update_rate:             0.2
-
-random_forest_model:     "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
+# Publishers.
 update_good_topic:       '/graph_client/anchor_nodes'
 update_bad_topic:        '/graph_client/update_nodes'
-
 verification_service:    /grap_monitor/verification
+intra_constraints:       '/graph_client/intra_constraints'
+
+
+# Div
+random_forest_model:     "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
+update_rate:             0.2

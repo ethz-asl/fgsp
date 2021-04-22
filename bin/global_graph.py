@@ -17,6 +17,7 @@ class GlobalGraph(object):
         self.reduced_ind = []
         self.submap_ind = []
         self.graph_seq = None
+        self.latest_graph_msg = None
 
     def msg_contains_updates(self, graph_msg):
         if self.is_built is False:
@@ -48,6 +49,7 @@ class GlobalGraph(object):
         self.graph_seq = graph_msg.header.seq
         self.is_built = True
         rospy.loginfo("[Graph] Building complete")
+        self.latest_graph_msg = graph_msg
 
     def read_coordinates(self, graph_msg):
         n_coords = len(graph_msg.coords)

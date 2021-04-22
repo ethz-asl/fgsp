@@ -28,11 +28,16 @@ class GraphClient(object):
         traj_topic = rospy.get_param("~traj_topic")
         traj_path_topic = rospy.get_param("~traj_path_topic")
         submap_constraint_topic = rospy.get_param("~submap_constraint_topic")
+        client_update_topic = rospy.get_param("~client_update_sub_topic")
+
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
         rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
         rospy.Subscriber(submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
+        rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
+        rospy.Subscriber(client_update_topic, Graph, self.client_update_callback)
+
         rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
         rospy.loginfo("[GraphClient] Listening for submap constraints from " + submap_constraint_topic)
@@ -68,6 +73,9 @@ class GraphClient(object):
             self.eval.compute_wavelets(self.graph.G)
 
         self.mutex.release()
+
+    def client_update_topic(self, graph_msg):
+        
 
     def traj_opt_callback(self, msg):
         if self.is_initialized is False:

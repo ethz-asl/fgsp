@@ -28,7 +28,7 @@ class GraphClient(object):
         traj_topic = rospy.get_param("~traj_topic")
         traj_path_topic = rospy.get_param("~traj_path_topic")
         submap_constraint_topic = rospy.get_param("~submap_constraint_topic")
-        client_update_topic = rospy.get_param("~client_update_sub_topic")
+        client_update_topic = rospy.get_param("~client_update_topic")
 
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
@@ -75,7 +75,7 @@ class GraphClient(object):
 
         self.mutex.release()
 
-    def client_update_topic(self, graph_msg):
+    def client_update_callback(self, graph_msg):
         if self.is_initialized is False:
             return
         # Theoretically this does exactly the same as the graph_callback, but

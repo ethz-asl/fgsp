@@ -15,3 +15,4 @@ intra_constraints:       '/graph_client/intra_constraints'
 # Div
 random_forest_model:     "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
 update_rate:             0.2
+client_update_topic:     "/graph_client/latest_graph"

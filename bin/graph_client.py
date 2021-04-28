@@ -28,11 +28,16 @@ class GraphClient(object):
         traj_topic = rospy.get_param("~traj_topic")
         traj_path_topic = rospy.get_param("~traj_path_topic")
         submap_constraint_topic = rospy.get_param("~submap_constraint_topic")
+        client_update_topic = rospy.get_param("~client_update_topic")
+
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
         rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
         rospy.Subscriber(submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
+        rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
+        rospy.Subscriber(client_update_topic, Graph, self.client_update_callback)
+
         rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
         rospy.loginfo("[GraphClient] Listening for submap constraints from " + submap_constraint_topic)
@@ -40,6 +45,7 @@ class GraphClient(object):
         # Publishers
         intra_constraint_topic = rospy.get_param("~intra_constraints")
         self.intra_constraint_pub = rospy.Publisher(intra_constraint_topic, Path, queue_size=20)
+        self.client_update_pub = rospy.Publisher(client_update_topic, Graph, queue_size=20)
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=False)
@@ -63,6 +69,21 @@ class GraphClient(object):
         self.mutex.acquire()
 
         # We only trigger the graph building if the msg contains new information.
+        if self.graph.msg_contains_updates(msg) is True:
+            self.graph.build(msg)
+            self.eval.compute_wavelets(self.graph.G)
+
+        self.mutex.release()
+
+    def client_update_callback(self, graph_msg):
+        if self.is_initialized is False:
+            return
+        # Theoretically this does exactly the same as the graph_callback, but
+        # lets separate it for now to be a bit more flexible.
+        rospy.loginfo(f'[GraphClient] Received client update')
+        client_seq = graph_msg.header.seq
+        self.mutex.acquire()
+        graph_seq = self.graph.graph_seq
         if self.graph.msg_contains_updates(msg) is True:
             self.graph.build(msg)
             self.eval.compute_wavelets(self.graph.G)
@@ -114,6 +135,7 @@ class GraphClient(object):
     def update(self):
         self.compare_estimations()
         self.check_for_submap_constraints()
+        self.publish_client_update()
 
     def compare_estimations(self):
         self.mutex.acquire()
@@ -135,6 +157,14 @@ class GraphClient(object):
         for msg in path_msgs:
             self.intra_constraint_pub.publish(msg)
 
+    def publish_client_update(self):
+        if self.graph.is_built is False:
+            return
+        self.mutex.acquire()
+        graph_msg = self.graph.latest_graph_msg
+        if graph_msg is not None:
+            self.client_update_pub.publish(graph_msg)
+        self.mutex.release()
 
     def compare_stored_signals(self, key):
         # Retrieve the estimated and optimized versions of the trajectory.

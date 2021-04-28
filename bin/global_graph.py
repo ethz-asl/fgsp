@@ -17,6 +17,7 @@ class GlobalGraph(object):
         self.reduced_ind = []
         self.submap_ind = []
         self.graph_seq = None
+        self.latest_graph_msg = None
 
     def msg_contains_updates(self, graph_msg):
         if self.is_built is False:
@@ -39,6 +40,14 @@ class GlobalGraph(object):
         rospy.logdebug("[Graph] Building with ind: " + str(len(self.submap_ind)))
 
         self.G = graphs.Graph(self.adj)
+        if self.G.N != self.coords.shape[0]:
+            rospy.logerr(f"[Graph] Graph size is {self.G.N} but coords are {self.coords.shape}")
+            return
+        if self.G.N <= 1:
+            rospy.logdebug("[Graph] Graph vertex count is less than 2.")
+            return
+
+
         self.G.set_coordinates(self.coords[:,[0,1]])
         self.G.compute_fourier_basis()
 
@@ -48,6 +57,7 @@ class GlobalGraph(object):
         self.graph_seq = graph_msg.header.seq
         self.is_built = True
         rospy.loginfo("[Graph] Building complete")
+        self.latest_graph_msg = graph_msg
 
     def read_coordinates(self, graph_msg):
         n_coords = len(graph_msg.coords)

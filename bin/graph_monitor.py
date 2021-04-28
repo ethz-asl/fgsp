@@ -80,7 +80,6 @@ class GraphMonitor(object):
         self.verification_handler.handle_verification(msg)
 
     def update(self):
-        rospy.loginfo(f"[GraphMonitor] --- Performing Update --------------")
         # Compute the submap constraints and publish them.
         self.compute_and_publish_submaps()
 
@@ -102,7 +101,7 @@ class GraphMonitor(object):
 
     def submap_callback(self, submap_msg):
         submap = SubmapModel()
-        submap.construct_data(submap_msg)/self.
+        submap.construct_data(submap_msg)
         submap.compute_dense_map()
         print(f'Received submap from {submap_msg.robot_name} with {len(submap_msg.nodes)} nodes and id {submap_msg.id}.')
         #self.submap_handler.add_submap(submap)
@@ -119,9 +118,9 @@ class GraphMonitor(object):
 
     def compute_submap_constraints(self, submaps):
         n_submaps = len(submaps)
-        print(f"Computing constraints for {n_submaps} submaps.")
         if n_submaps == 0:
             return None
+        print(f"Computing constraints for {n_submaps} submaps.")
         return self.submap_handler.compute_constraints(submaps)
 
     def publish_graph_and_traj(self):

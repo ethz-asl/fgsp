@@ -40,6 +40,14 @@ class GlobalGraph(object):
         rospy.logdebug("[Graph] Building with ind: " + str(len(self.submap_ind)))
 
         self.G = graphs.Graph(self.adj)
+        if self.G.N != self.coords.shape[0]:
+            rospy.logerr(f"[Graph] Graph size is {self.G.N} but coords are {self.coords.shape}")
+            return
+        if self.G.N <= 1:
+            rospy.logdebug("[Graph] Graph vertex count is less than 2.")
+            return
+
+
         self.G.set_coordinates(self.coords[:,[0,1]])
         self.G.compute_fourier_basis()
 

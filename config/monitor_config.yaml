@@ -12,3 +12,7 @@ update_bad_topic:            '/graph_monitor/update_nodes'
 
 verification_service:        /grap_monitor/verification
 verification_server_request: /maplab_server/verification
+
+
+opt_pc_topic:                "/maplab_server/sparse_graph/submap"
+submap_constraint_topic:     "/graph_monitor/submaps"

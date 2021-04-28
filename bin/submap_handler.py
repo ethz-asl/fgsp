@@ -8,14 +8,8 @@ import numpy as np
 from scipy import spatial
 from scipy.spatial.transform import Rotation
 
-import torch
-from base_controller import BaseController
-from evaluation_set import EvaluationSet
-from lc_candidate import LcCandidate
-from model import Model
 from reg_box import RegBox
 from utils import Utils
-from visualize import Visualize
 
 from maplab_msgs.msg import SubmapConstraint
 from std_msgs.msg import Header
@@ -41,9 +35,8 @@ class SubmapHandler(object):
         self.reg_box = RegBox()
 
         #submap_topic = rospy.get_param("~submap_constraint_topic")
-        map_topic = '/s2loc/map'
+        map_topic = '/graph_monitor/map'
         self.map_pub = rospy.Publisher(map_topic, PointCloud2, queue_size=10)
-        self.visualizer = Visualize()
         self.submap_seq = 0
         self.compute_poses_in_LiDAR = False
         self.refine_with_ICP = False
@@ -123,7 +116,6 @@ class SubmapHandler(object):
         n_submaps = len(submaps)
         if n_submaps == 0 or len(candidates) == 0:
             return
-        self.visualizer.resetConstraintVisualization()
         submap_msg = SubmapConstraint()
         for i in range(0, n_submaps):
             submap_msg = self.evaluate_neighbors_for(submaps, candidates, i, submap_msg)
@@ -147,7 +139,6 @@ class SubmapHandler(object):
 
                 # Compute the alignment between the two submaps.
                 T_L_a_L_b = self.compute_alignment(candidate_a, candidate_b)
-                self.visualizer.visualizeCandidates(candidate_a, candidate_b, T_L_a_L_b)
 
                 # Create a submap constraint message
                 submap_msg = self.create_and_append_submap_constraint_msg(

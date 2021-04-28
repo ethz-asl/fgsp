@@ -9,7 +9,6 @@ from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import PointCloud2, PointField
 
 from utils import Utils
-from visualize import Visualize
 
 class SubmapModel(object):
     def __init__(self):

@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import rospy
+import copy
 from maplab_msgs.msg import *
 from multiprocessing import Lock
 
@@ -79,8 +80,11 @@ class GraphMonitor(object):
         self.verification_handler.handle_verification(msg)
 
     def update(self):
-        self.mutex.acquire()
+        rospy.loginfo(f"[GraphMonitor] --- Performing Update --------------")
+        # Compute the submap constraints and publish them.
+        self.compute_and_publish_submaps()
 
+        self.mutex.acquire()
         if self.graph.is_built is False:
             self.mutex.release()
             return
@@ -88,6 +92,7 @@ class GraphMonitor(object):
             rospy.loginfo(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()})")
             self.mutex.release()
             return;
+        self.mutex.release()
 
         # Publish the graph to the clients.
         self.publish_graph_and_traj()
@@ -95,13 +100,9 @@ class GraphMonitor(object):
         # Publish verifications to the server.
         self.verification_handler.send_verification_request()
 
-        self.mutex.release()
-
     def submap_callback(self, submap_msg):
-        if self.is_detecting:
-            return
         submap = SubmapModel()
-        submap.construct_data(submap_msg)
+        submap.construct_data(submap_msg)/self.
         submap.compute_dense_map()
         print(f'Received submap from {submap_msg.robot_name} with {len(submap_msg.nodes)} nodes and id {submap_msg.id}.')
         #self.submap_handler.add_submap(submap)
@@ -111,8 +112,8 @@ class GraphMonitor(object):
     def compute_and_publish_submaps(self):
         submaps = copy.deepcopy(self.submaps)
 
-        self.ctrl.publish_all_submaps(submaps)
-        msg = self.ctrl.compute_submap_constraints(submaps)
+        self.publish_all_submaps(submaps)
+        msg = self.compute_submap_constraints(submaps)
         if msg is not None:
             self.submap_pub.publish(msg)
 

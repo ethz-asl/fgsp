@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <launch>
+  <param name="/use_sim_time" value="true" />
   <!-- Monitor setup -->
   <include file="$(find graph_monitor)/launch/graph_monitor.launch" />
 

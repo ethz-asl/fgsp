@@ -10,7 +10,9 @@ class ConstraintHandler(object):
         self.inter_contraints = {}
 
     def add_constraints(self, constraint_msg):
-        self.verify_constraint_msg(constraint_msg)
+        if not self.verify_constraint_msg(constraint_msg):
+            rospy.logerr("Submap constraint verfication failed.")
+            return False
         n_constraints  = len(constraint_msg.id_from)
         rospy.loginfo(f"Submap constraint message is verified. Processing {n_constraints} constraints")
 
@@ -22,6 +24,7 @@ class ConstraintHandler(object):
         for i in range(0, n_constraints):
             if constraint_msg.robot_name_to[i] == constraint_msg.robot_name_from[i]:
                 self.process_intra_constraints(constraint_msg, i)
+        return True
 
     def verify_constraint_msg(self, constraint_msg):
         n_id_from = len(constraint_msg.id_from)
@@ -35,10 +38,28 @@ class ConstraintHandler(object):
 
         n_poses = len(constraint_msg.T_a_b)
 
-        assert(n_id_from == n_id_to)
-        assert(n_id_from == n_ts_from)
-        assert(n_id_from == n_ts_to)
-        assert(n_id_from == n_poses)
+        if n_id_from != n_id_to:
+            return False
+        if n_id_from != n_ts_from:
+            return False
+        if n_id_from != n_ts_to:
+            return False
+        if n_id_from != n_poses:
+            return False
+
+        time_now = rospy.Time.now()
+        rospy.loginfo(f'Current time is {time_now.to_nsec()}')
+        for i in range(0, n_ts_from):
+            rospy.loginfo(f' - Time from {constraint_msg.timestamp_from[i].to_nsec()}')
+            rospy.loginfo(f' - Time to {constraint_msg.timestamp_to[i].to_nsec()}')
+
+            diff_from = time_now - constraint_msg.timestamp_from[i]
+            diff_to = time_now - constraint_msg.timestamp_to[i]
+            rospy.loginfo(f'diff_from is {diff_from} and diff_to is {diff_to}')
+            if diff_from.to_nsec() < 0 or diff_to.to_nsec() < 0:
+                return False
+
+        return True
 
     def process_intra_constraints(self, constraint_msg, i):
         robot_name = constraint_msg.robot_name_from[i]

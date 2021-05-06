@@ -49,6 +49,9 @@ class SubmapHandler(object):
         map_points = np.zeros((1,4))
 
         for i in range(0, n_submaps):
+            if i not in submaps:
+                rospy.logerr(f'Submap with key {i} not found.')
+                continue
             T_G_L = submaps[i].get_pivot_pose_LiDAR()
             submap = submaps[i].compute_dense_map()
             submap[:,3] = i

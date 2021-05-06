@@ -19,6 +19,7 @@ class GraphClient(object):
     def __init__(self):
         self.is_initialized = False
         self.mutex = Lock()
+        self.constraint_mutex = Lock()
         self.mutex.acquire()
         self.rate = rospy.Rate(rospy.get_param("~update_rate"))
 
@@ -84,8 +85,8 @@ class GraphClient(object):
         client_seq = graph_msg.header.seq
         self.mutex.acquire()
         graph_seq = self.graph.graph_seq
-        if self.graph.msg_contains_updates(msg) is True:
-            self.graph.build(msg)
+        if self.graph.msg_contains_updates(graph_msg) is True:
+            self.graph.build(graph_msg)
             self.eval.compute_wavelets(self.graph.G)
 
         self.mutex.release()
@@ -130,7 +131,9 @@ class GraphClient(object):
             rospy.loginfo("[GraphClient] Received submap constraint message before being initialized.")
             return
         rospy.loginfo("[GraphClient] Received submap constraint message.")
+        self.constraint_mutex.acquire()
         self.constraint_handler.add_constraints(msg)
+        self.constraint_mutex.release()
 
     def update(self):
         self.compare_estimations()
@@ -153,7 +156,9 @@ class GraphClient(object):
 
     def check_for_submap_constraints(self):
         robot_name = "cerberus"
+        self.constraint_mutex.acquire()
         path_msgs = self.constraint_handler.create_msg_for_intra_constraints(robot_name)
+        self.constraint_mutex.release()
         for msg in path_msgs:
             self.intra_constraint_pub.publish(msg)
 

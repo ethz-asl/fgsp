@@ -48,14 +48,9 @@ class ConstraintHandler(object):
             return False
 
         time_now = rospy.Time.now()
-        rospy.loginfo(f'Current time is {time_now.to_nsec()}')
         for i in range(0, n_ts_from):
-            rospy.loginfo(f' - Time from {constraint_msg.timestamp_from[i].to_nsec()}')
-            rospy.loginfo(f' - Time to {constraint_msg.timestamp_to[i].to_nsec()}')
-
             diff_from = time_now - constraint_msg.timestamp_from[i]
             diff_to = time_now - constraint_msg.timestamp_to[i]
-            rospy.loginfo(f'diff_from is {diff_from} and diff_to is {diff_to}')
             if diff_from.to_nsec() < 0 or diff_to.to_nsec() < 0:
                 return False
 

@@ -36,7 +36,6 @@ class GraphClient(object):
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
         rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
         rospy.Subscriber(submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
-        rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
         rospy.Subscriber(client_update_topic, Graph, self.client_update_callback)
 
         rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)

@@ -5,6 +5,7 @@ from nav_msgs.msg import Path
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
 from multiprocessing import Lock
 import pandas
+import time
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
@@ -160,6 +161,7 @@ class GraphClient(object):
         self.constraint_mutex.release()
         for msg in path_msgs:
             self.intra_constraint_pub.publish(msg)
+            time.sleep(0.10)
 
     def publish_client_update(self):
         if self.graph.is_built is False:

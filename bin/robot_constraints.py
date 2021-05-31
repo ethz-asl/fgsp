@@ -12,13 +12,20 @@ class RobotConstraints(object):
 
     def add_submap_constraints(self, ts_from, ts_to, T_a_b):
         lc = LcModel(ts_from, ts_to, T_a_b)
-        ts_ns_from = Utils.ros_time_to_ns(ts_from)
-        if ts_ns_from not in self.submap_constraints:
-            self.submap_constraints[ts_ns_from] = []
-        self.submap_constraints[ts_ns_from].append(lc)
+        ts_from_ns = Utils.ros_time_to_ns(ts_from)
+        ts_to_ns = Utils.ros_time_to_ns(ts_to)
+        if ts_from_ns == ts_to_ns:
+            print(f'Timestamp from and to are identical.')
+            return
+
+        print(f'Received submap constraint at time {ts_from_ns}')
+        if ts_from_ns not in self.submap_constraints:
+            self.submap_constraints[ts_from_ns] = []
+        self.submap_constraints[ts_from_ns].append(lc)
 
     def construct_path_msgs(self):
         path_msgs = []
+        print(f'Constructing path message for {len(self.submap_constraints)} different submaps.')
         for ts_ns_from in self.submap_constraints:
             loop_closures = list(self.submap_constraints[ts_ns_from])
             path_msg = self.construct_path_msg_for_submap(ts_ns_from, loop_closures)

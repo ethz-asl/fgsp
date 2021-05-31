@@ -2,7 +2,7 @@ in_graph_topic:              /maplab_server/sparse_graph/graph
 in_traj_opt_topic:           /maplab_server/sparse_graph/trajectory
 out_graph_topic:             /graph_monitor/sparse_graph/graph
 out_traj_opt_topic:          /graph_monitor/sparse_graph/trajectory
-min_node_count:              100
+min_node_count:              10
 
 update_rate:                 0.2
 
@@ -14,5 +14,6 @@ verification_service:        /grap_monitor/verification
 verification_server_request: /maplab_server/verification
 
 
+enable_submap_constraints:   false
 opt_pc_topic:                "/maplab_server/sparse_graph/submap"
 submap_constraint_topic:     "/graph_monitor/submaps"

@@ -28,8 +28,11 @@ class GraphMonitor(object):
         verification_service_topic = rospy.get_param("~verification_service")
         pc_topic = rospy.get_param("~opt_pc_topic")
         submap_topic = rospy.get_param("~submap_constraint_topic")
+        self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
 
-        rospy.Subscriber(pc_topic, Submap, self.submap_callback)
+        # Publishers and subscribers.
+        if self.enable_submap_constraints:
+            rospy.Subscriber(pc_topic, Submap, self.submap_callback)
         rospy.Subscriber(in_graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(in_traj_opt_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(verification_service_topic, VerificationCheckRequest, self.verification_callback)
@@ -80,8 +83,10 @@ class GraphMonitor(object):
         self.verification_handler.handle_verification(msg)
 
     def update(self):
-        # Compute the submap constraints and publish them.
-        self.compute_and_publish_submaps()
+        rospy.loginfo(f'[GraphMonitor] updating...')
+        # Compute the submap constraints and publish them if enabled.
+        if self.enable_submap_constraints:
+            self.compute_and_publish_submaps()
 
         self.mutex.acquire()
         if self.graph.is_built is False:

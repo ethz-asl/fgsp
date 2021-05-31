@@ -34,7 +34,8 @@ class SignalHandler(object):
         if (n_poses <= 0):
             return ""
 
-        key = path_msg.header.frame_id
+        #key = path_msg.header.frame_id
+        key = "cerberus"
         signals = [SignalNode] * n_poses
         for i in range(0, n_poses):
             signals[i] = self.convert_path_node(path_msg.poses[i], key)

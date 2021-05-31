@@ -31,17 +31,20 @@ class GraphClient(object):
         traj_path_topic = rospy.get_param("~traj_path_topic")
         submap_constraint_topic = rospy.get_param("~submap_constraint_topic")
         client_update_topic = rospy.get_param("~client_update_topic")
+        self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
 
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
         rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
-        rospy.Subscriber(submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
         rospy.Subscriber(client_update_topic, Graph, self.client_update_callback)
+        if self.enable_submap_constraints:
+            rospy.Subscriber(submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
+            rospy.loginfo("[GraphClient] Listening for submap constraints from " + submap_constraint_topic)
+            self.constraint_handler = ConstraintHandler()
 
         rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)
         rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
-        rospy.loginfo("[GraphClient] Listening for submap constraints from " + submap_constraint_topic)
 
         # Publishers
         intra_constraint_topic = rospy.get_param("~intra_constraints")
@@ -55,7 +58,6 @@ class GraphClient(object):
         self.synchronizer = SignalSynchronizer()
         self.eval = WaveletEvaluator()
         self.commander = CommandPost()
-        self.constraint_handler = ConstraintHandler()
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -127,7 +129,7 @@ class GraphClient(object):
         self.keys.append(key)
 
     def submap_constraint_callback(self, msg):
-        if self.is_initialized is False:
+        if not self.is_initialized and not self.enable_submap_constraints:
             rospy.loginfo("[GraphClient] Received submap constraint message before being initialized.")
             return
         rospy.loginfo("[GraphClient] Received submap constraint message.")
@@ -155,6 +157,8 @@ class GraphClient(object):
         self.mutex.release()
 
     def check_for_submap_constraints(self):
+        if not self.enable_submap_constraints:
+            return
         robot_name = "cerberus"
         self.constraint_mutex.acquire()
         path_msgs = self.constraint_handler.create_msg_for_intra_constraints(robot_name)

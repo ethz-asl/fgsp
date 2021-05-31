@@ -1,19 +1,24 @@
-in_graph_topic:              /maplab_server/sparse_graph/graph
-in_traj_opt_topic:           /maplab_server/sparse_graph/trajectory
-out_graph_topic:             /graph_monitor/sparse_graph/graph
-out_traj_opt_topic:          /graph_monitor/sparse_graph/trajectory
-min_node_count:              10
+in_graph_topic:                       /maplab_server/sparse_graph/graph
+in_traj_opt_topic:                    /maplab_server/sparse_graph/trajectory
+out_graph_topic:                      /graph_monitor/sparse_graph/graph
+out_traj_opt_topic:                   /graph_monitor/sparse_graph/trajectory
+min_node_count:                       10
 
-update_rate:                 0.2
+update_rate:                          0.2
 
-random_forest_model:         "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
-update_good_topic:           '/graph_monitor/anchor_nodes'
-update_bad_topic:            '/graph_monitor/update_nodes'
+random_forest_model:                  "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
+update_good_topic:                    '/graph_monitor/anchor_nodes'
+update_bad_topic:                     '/graph_monitor/update_nodes'
 
-verification_service:        /grap_monitor/verification
-verification_server_request: /maplab_server/verification
+verification_service:                 /grap_monitor/verification
+verification_server_request:          /maplab_server/verification
 
 
-enable_submap_constraints:   false
-opt_pc_topic:                "/maplab_server/sparse_graph/submap"
-submap_constraint_topic:     "/graph_monitor/submaps"
+opt_pc_topic:                         "/maplab_server/sparse_graph/submap"
+enable_submap_constraints:            True
+submap_constraint_topic:              "/graph_monitor/submaps"
+submap_constraint_pivot_distance:     20
+submap_constraint_knn:                50
+submap_constraint_p_norm:             2
+submap_constraint_refine_icp:         False
+submap_constraint_export_lidar_poses: False

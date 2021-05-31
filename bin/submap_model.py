@@ -19,6 +19,7 @@ class SubmapModel(object):
         self.id = 0
         self.poses = []
         self.pointclouds = []
+        self.mission_id = ""
         self.T_B_L = np.array(
             [[1, 0, 0, 0.005303],
              [0, 1, 0, 0.037340],
@@ -50,11 +51,12 @@ class SubmapModel(object):
         ts = msg.header.stamp
         seq = msg.header.seq
         robot_name = msg.robot_name
+        mission_id = msg.mission_id
         id = msg.id
 
-        self.set_submap_information(ts, seq, robot_name, id)
+        self.set_submap_information(ts, seq, robot_name, mission_id, id)
 
-    def set_submap_information(self, ts, seq_nr, robot_name, id):
+    def set_submap_information(self, ts, seq_nr, robot_name, mission_id, id):
         self.submap_ts = ts
         self.seq_nr = seq_nr
         self.robot_name = robot_name

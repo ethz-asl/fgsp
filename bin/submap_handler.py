@@ -29,17 +29,17 @@ FIELDS_XYZI = [
 
 class SubmapHandler(object):
     def __init__(self):
-        self.pivot_distance = 8
-        self.n_nearest_neighbors = 50
-        self.p_norm = 2
+        self.pivot_distance = rospy.get_param("~submap_constraint_pivot_distance")
+        self.n_nearest_neighbors = rospy.get_param("~submap_constraint_knn")
+        self.p_norm = rospy.get_param("~submap_constraint_p_norm")
         self.reg_box = RegBox()
 
         #submap_topic = rospy.get_param("~submap_constraint_topic")
         map_topic = '/graph_monitor/map'
         self.map_pub = rospy.Publisher(map_topic, PointCloud2, queue_size=10)
         self.submap_seq = 0
-        self.compute_poses_in_LiDAR = False
-        self.refine_with_ICP = False
+        self.compute_poses_in_LiDAR = rospy.get_param("~submap_constraint_export_lidar_poses")
+        self.refine_with_ICP = rospy.get_param("~submap_constraint_refine_icp")
 
     def publish_submaps(self, submaps):
         n_submaps = len(submaps)

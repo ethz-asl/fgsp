@@ -73,6 +73,8 @@ class GraphMonitor(object):
             return
 
         key = self.optimized_signal.convert_signal(msg)
+        if key == "":
+            rospy.logerr("[GraphMonitor] Unable to convert signal.")
         rospy.loginfo(f"[GraphMonitor] Received opt trajectory message from {key}.")
 
         if self.key_in_optimized_keys(key):

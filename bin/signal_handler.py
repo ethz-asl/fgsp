@@ -20,6 +20,8 @@ class SignalHandler(object):
         signals = [SignalNode] * n_nodes
         signals[0] = self.convert_trajectory_node(signal_msg.nodes[0])
         key = signals[0].robot_name
+        if key == "":
+            return ""
 
 
         for i in range(1, n_nodes):
@@ -45,10 +47,16 @@ class SignalHandler(object):
         return key
 
     def get_all_nodes(self, key):
-        return self.signals[key]
+        if key in self.signals:
+            return self.signals[key]
+        else:
+            return []
 
     def get_number_of_submaps(self, key):
-        return self.signals[key][-1].id + 1
+        if key in self.signals:
+            return self.signals[key][-1].id + 1
+        else:
+            return 0
 
     def get_nodes_for_submap(self, key, id):
         nodes = self.get_all_nodes(key)

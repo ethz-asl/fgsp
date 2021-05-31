@@ -39,6 +39,9 @@ class GlobalGraph(object):
         self.submap_ind = self.read_submap_indices(graph_msg)
         rospy.logdebug("[Graph] Building with ind: " + str(len(self.submap_ind)))
 
+        if len(self.adj.tolist()) == 0:
+            rospy.loginfo(f"[Graph] Adjacency matrix is empty. Aborting graph building.")
+            return
         self.G = graphs.Graph(self.adj)
         if self.G.N != self.coords.shape[0]:
             rospy.logerr(f"[Graph] Graph size is {self.G.N} but coords are {self.coords.shape}")

@@ -31,6 +31,7 @@ class GraphClient(object):
         traj_path_topic = rospy.get_param("~traj_path_topic")
         submap_constraint_topic = rospy.get_param("~submap_constraint_topic")
         client_update_topic = rospy.get_param("~client_update_topic")
+        self.robot_name = rospy.get_param("~robot_name")
         self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
 
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
@@ -119,6 +120,7 @@ class GraphClient(object):
             rospy.loginfo("[GraphClient] Received path message before being initialized.")
             return
 
+        msg.header.frame_id = self.robot_name
         key = self.signal.convert_signal_from_path(msg)
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")

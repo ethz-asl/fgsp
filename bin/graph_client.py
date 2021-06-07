@@ -33,6 +33,8 @@ class GraphClient(object):
         client_update_topic = rospy.get_param("~client_update_topic")
         self.robot_name = rospy.get_param("~robot_name")
         self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
+        self.enable_signal_recording = rospy.get_param("~enable_signal_recording")
+        self.signal_export_fmt = rospy.get_param("~signal_export_path")
 
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
@@ -143,6 +145,31 @@ class GraphClient(object):
         self.compare_estimations()
         self.check_for_submap_constraints()
         self.publish_client_update()
+        self.record_all_signals()
+
+    def record_all_signals(self):
+        if not self.enable_signal_recording:
+            return
+        for key in self.keys:
+            self.record_est_signal_for_key(key)
+            self.record_opt_signal_for_key(key)
+
+    def record_opt_signal_for_key(self, key):
+        if not self.key_in_optimized_keys(key):
+            return
+
+        all_opt_nodes = self.optimized_signal.get_all_nodes(key)
+        x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
+        filename = os.path.join(self.dataroot, self.signal_export_fmt.format(key=key, src='opt'))
+
+    def record_est_signal_for_key(self, key):
+        if not self.key_in_keys(key):
+            return
+
+        all_est_nodes = self.signal.get_all_nodes(key)
+        x_est = self.signal.compute_signal(all_est_nodes)
+
+        filename = os.path.join(self.dataroot, self.signal_export_fmt.format(key=key, src='est'))
 
     def compare_estimations(self):
         self.mutex.acquire()
@@ -153,7 +180,7 @@ class GraphClient(object):
         for key in self.keys:
             # Check whether we have an optimized version of it.
             if not self.key_in_optimized_keys(key):
-                rospy.logwarn(f"[GraphClient] Found no optimized version of {key}.")
+                rospy.logwarn(f"[GraphClient] Found no optimized version of {key} for comparison.")
                 continue
             self.compare_stored_signals(key)
         self.mutex.release()

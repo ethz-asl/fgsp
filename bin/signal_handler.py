@@ -23,7 +23,6 @@ class SignalHandler(object):
         if key == "":
             return ""
 
-
         for i in range(1, n_nodes):
             signals[i] = self.convert_trajectory_node(signal_msg.nodes[i])
 
@@ -42,7 +41,6 @@ class SignalHandler(object):
             signals[i] = self.convert_path_node(path_msg.poses[i], self.robot_name)
 
         self.signals[key] = signals
-
         return key
 
     def get_all_nodes(self, key):

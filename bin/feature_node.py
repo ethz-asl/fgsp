@@ -11,6 +11,12 @@ class FeatureNode(object):
         self.node_ids = node_ids
         self.nodes = self._retrieve_nodes_in_submap(opt_nodes, node_ids)
         self.label = None
+        self.initialized = False
 
     def _retrieve_nodes_in_submap(self, opt_nodes, node_ids):
-        return [opt_nodes[id] for id in self.node_ids]
+        nodes = []
+        for id in self.node_ids:
+            if id in opt_nodes:
+                nodes.append(opt_nodes[id])
+
+        return nodes

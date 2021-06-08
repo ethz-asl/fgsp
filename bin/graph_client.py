@@ -236,13 +236,17 @@ class GraphClient(object):
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
         self.record_all_signals(key, x_est, x_opt)
 
+        psi = self.eval.get_wavelets()
+        n_dim = psi.shape[0]
+        if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
+            return []
+
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.
         W_est = self.eval.compute_wavelet_coeffs(x_est)
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
 
         n_submaps = self.optimized_signal.get_number_of_submaps(key)
-        psi = self.eval.get_wavelets()
 
         all_features = []
         rospy.loginfo(f"[GraphClient] Computing features for {n_submaps} submaps")
@@ -251,12 +255,15 @@ class GraphClient(object):
         for i in range(0, n_submaps):
             # Compute the submap features.
             node_ids = self.optimized_signal.get_indices_for_submap(key, i)
+            if len(node_ids) == 0:
+                continue;
             rospy.loginfo(f"[GraphClient] Checking the submap nr: {i}")
             rospy.loginfo(f"[GraphClient] Got these IDs: {node_ids}")
             features = self.eval.compute_features_for_submap(W_opt, W_est, node_ids)
             if features.empty:
                 continue
-            all_features.append(FeatureNode(i, key, all_opt_nodes, features, node_ids))
+            feature_node = FeatureNode(i, key, all_opt_nodes, features, node_ids)
+            all_features.append(feature_node)
         return all_features
 
     def evaluate_and_publish_features(self, all_features):

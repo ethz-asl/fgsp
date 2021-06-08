@@ -15,7 +15,7 @@ class RandomForestPredictor(object):
         if rospy.has_param('~random_forest_model'):
             dataroot = rospy.get_param("~dataroot")
             path_to_model = rospy.get_param("~random_forest_model")
-            random_forest_model = os.path.join(dataroot, path_to_model)
+            random_forest_model = dataroot + path_to_model
         else:
             random_forest_model = "../config/forest.joblib"
 

@@ -38,7 +38,7 @@ class SignalHandler(object):
         key = path_msg.header.frame_id
         signals = [SignalNode] * n_poses
         for i in range(0, n_poses):
-            signals[i] = self.convert_path_node(path_msg.poses[i], self.robot_name)
+            signals[i] = self.convert_path_node(path_msg.poses[i], key)
 
         self.signals[key] = signals
         return key

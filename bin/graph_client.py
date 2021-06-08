@@ -1,11 +1,13 @@
 #! /usr/bin/env python3
+import os
+import time
 
+import numpy as np
+import pandas
 import rospy
 from nav_msgs.msg import Path
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
 from multiprocessing import Lock
-import pandas
-import time
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
@@ -23,6 +25,7 @@ class GraphClient(object):
         self.constraint_mutex = Lock()
         self.mutex.acquire()
         self.rate = rospy.Rate(rospy.get_param("~update_rate"))
+        self.dataroot = rospy.get_param("~dataroot")
 
         # Subscribers.
         graph_topic = rospy.get_param("~graph_topic")
@@ -142,34 +145,33 @@ class GraphClient(object):
         self.constraint_mutex.release()
 
     def update(self):
+        rospy.loginfo("[GraphClient] Updating...")
         self.compare_estimations()
         self.check_for_submap_constraints()
         self.publish_client_update()
-        self.record_all_signals()
 
-    def record_all_signals(self):
+    def record_all_signals(self, key, x_est, x_opt):
         if not self.enable_signal_recording:
             return
-        for key in self.keys:
-            self.record_est_signal_for_key(key)
-            self.record_opt_signal_for_key(key)
+        self.record_est_signal_for_key(key, x_est)
+        self.record_opt_signal_for_key(key, x_opt)
 
-    def record_opt_signal_for_key(self, key):
+    def record_opt_signal_for_key(self, key, x_opt):
         if not self.key_in_optimized_keys(key):
+            rospy.logerr(f"[GraphClient] Found no key {key} in optimized keys.")
             return
 
-        all_opt_nodes = self.optimized_signal.get_all_nodes(key)
-        x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
-        filename = os.path.join(self.dataroot, self.signal_export_fmt.format(key=key, src='opt'))
+        filename = self.dataroot + self.signal_export_fmt.format(key=key, src='opt')
+        rospy.loginfo(f'Writing optimized signals to {filename}')
+        np.save(filename, x_opt)
 
-    def record_est_signal_for_key(self, key):
+    def record_est_signal_for_key(self, key, x_est):
         if not self.key_in_keys(key):
             return
 
-        all_est_nodes = self.signal.get_all_nodes(key)
-        x_est = self.signal.compute_signal(all_est_nodes)
-
-        filename = os.path.join(self.dataroot, self.signal_export_fmt.format(key=key, src='est'))
+        filename = self.dataroot + self.signal_export_fmt.format(key=key, src='est')
+        rospy.logdebug(f'Writing estimated signals to {filename}')
+        np.save(filename, x_est)
 
     def compare_estimations(self):
         self.mutex.acquire()
@@ -232,6 +234,7 @@ class GraphClient(object):
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
+        self.record_all_signals(key, x_est, x_opt)
 
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.

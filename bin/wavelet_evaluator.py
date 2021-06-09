@@ -117,9 +117,12 @@ class WaveletEvaluator(object):
     def compute_features_for_submap(self, coeffs_1, coeffs_2, submap_ids):
         n_coeffs_1 = coeffs_1.shape[0]
         n_coeffs_2 = coeffs_2.shape[0]
+        if n_coeffs_1 != n_coeffs_2:
+            return pandas.DataFrame({})
+
         submap_ids = np.array(submap_ids, dtype=np.int)
-        mask_oob = submap_ids <= n_coeffs_1
-        mask_oob = np.logical_and(mask_oob, submap_ids <= n_coeffs_2)
+        mask_oob = submap_ids < n_coeffs_1
+        mask_oob = np.logical_and(mask_oob, submap_ids < n_coeffs_2)
         submap_ids = submap_ids[mask_oob]
 
         submap_coeffs_1 = coeffs_1[submap_ids, :]

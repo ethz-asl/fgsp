@@ -9,14 +9,16 @@ class FeatureNode(object):
         self.robot_name = robot_name
         self.features = features
         self.node_ids = node_ids
-        self.nodes = self._retrieve_nodes_in_submap(opt_nodes, node_ids)
+        self.nodes, self.initialized = self._retrieve_nodes_in_submap(opt_nodes, node_ids)
         self.label = None
-        self.initialized = False
+
 
     def _retrieve_nodes_in_submap(self, opt_nodes, node_ids):
         nodes = []
+        initialized = True
         for id in self.node_ids:
             if id in opt_nodes:
                 nodes.append(opt_nodes[id])
-
-        return nodes
+            else:
+                return None, False
+        return nodes, True

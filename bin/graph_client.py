@@ -256,13 +256,16 @@ class GraphClient(object):
             # Compute the submap features.
             node_ids = self.optimized_signal.get_indices_for_submap(key, i)
             if len(node_ids) == 0:
-                continue;
+                continue
             rospy.loginfo(f"[GraphClient] Checking the submap nr: {i}")
             rospy.loginfo(f"[GraphClient] Got these IDs: {node_ids}")
             features = self.eval.compute_features_for_submap(W_opt, W_est, node_ids)
             if features.empty:
                 continue
             feature_node = FeatureNode(i, key, all_opt_nodes, features, node_ids)
+            if not feature_node.initialized:
+                continue
+
             all_features.append(feature_node)
         return all_features
 

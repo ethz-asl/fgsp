@@ -38,6 +38,8 @@ class GraphClient(object):
         self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
         self.enable_signal_recording = rospy.get_param("~enable_signal_recording")
         self.signal_export_fmt = rospy.get_param("~signal_export_path")
+        self.enable_traj_recording = rospy.get_param("~enable_trajectory_recording")
+        self.traj_export_fmt = rospy.get_param("~trajectory_export_path")
 
         rospy.Subscriber(graph_topic, Graph, self.graph_callback)
         rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
@@ -153,25 +155,24 @@ class GraphClient(object):
     def record_all_signals(self, key, x_est, x_opt):
         if not self.enable_signal_recording:
             return
-        self.record_est_signal_for_key(key, x_est)
-        self.record_opt_signal_for_key(key, x_opt)
+        self.record_signal_for_key(key, x_est, 'est')
+        self.record_signal_for_key(key, x_opt, 'opt')
 
-    def record_opt_signal_for_key(self, key, x_opt):
-        if not self.key_in_optimized_keys(key):
-            rospy.logerr(f"[GraphClient] Found no key {key} in optimized keys.")
+    def record_all_trajectories(self, key, traj_est, traj_opt):
+        if not self.enable_traj_recording:
             return
+        self.record_traj_for_key(key, traj_est, 'est')
+        self.record_traj_for_key(key, traj_opt, 'opt')
 
-        filename = self.dataroot + self.signal_export_fmt.format(key=key, src='opt')
+    def record_signal_for_key(self, key, x, src):
+        filename = self.dataroot + self.signal_export_fmt.format(key=key, src=src)
         rospy.loginfo(f'Writing optimized signals to {filename}')
-        np.save(filename, x_opt)
+        np.save(filename, x)
 
-    def record_est_signal_for_key(self, key, x_est):
-        if not self.key_in_keys(key):
-            return
-
-        filename = self.dataroot + self.signal_export_fmt.format(key=key, src='est')
-        rospy.logdebug(f'Writing estimated signals to {filename}')
-        np.save(filename, x_est)
+    def record_traj_for_key(self, key, traj, src):
+        filename = self.dataroot + self.signal_export_fmt.format(key=key, src=src)
+        rospy.loginfo(f'Writing optimized signals to {filename}')
+        np.save(filename, traj)
 
     def compare_estimations(self):
         self.mutex.acquire()
@@ -235,6 +236,7 @@ class GraphClient(object):
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
         self.record_all_signals(key, x_est, x_opt)
+        self.record_all_trajectories(key, self.signal.compute_trajectory(all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
 
         psi = self.eval.get_wavelets()
         n_dim = psi.shape[0]

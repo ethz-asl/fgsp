@@ -18,7 +18,6 @@ class RobotConstraints(object):
             print(f'Timestamp from and to are identical.')
             return
 
-        print(f'Received submap constraint at time {ts_from_ns}')
         if ts_from_ns not in self.submap_constraints:
             self.submap_constraints[ts_from_ns] = []
         self.submap_constraints[ts_from_ns].append(lc)

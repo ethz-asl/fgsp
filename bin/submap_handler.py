@@ -111,8 +111,11 @@ class SubmapHandler(object):
         if n_submaps == 0:
             return
         positions = np.empty((n_submaps, 3))
-        for i in range(0, n_submaps):
-            positions[i, 0:3] = np.transpose(submaps[i].get_pivot_pose_IMU()[0:3, 3])
+        # for i in range(0, n_submaps):
+        i = 0
+        for key in submaps:
+            positions[i, 0:3] = np.transpose(submaps[key].get_pivot_pose_IMU()[0:3, 3])
+            i += 1
         return positions
 
     def evaluate_candidates(self, submaps, candidates):
@@ -138,6 +141,8 @@ class SubmapHandler(object):
         n_neighbors = len(neighbors)
         for j in range(0, n_neighbors):
             if neighbors[j] > 0:
+                if not j in submaps:
+                    continue
                 candidate_b = submaps[j]
 
                 # Compute the alignment between the two submaps.

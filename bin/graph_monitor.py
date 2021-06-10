@@ -113,10 +113,14 @@ class GraphMonitor(object):
         print(f'Received submap from {submap_msg.robot_name} with {len(submap_msg.nodes)} nodes and id {submap_msg.id}.')
         #self.submap_handler.add_submap(submap)
         id = submap.id
+        self.mutex.acquire()
         self.submaps[id] = submap
+        self.mutex.release()
 
     def compute_and_publish_submaps(self):
+        self.mutex.acquire()
         submaps = copy.deepcopy(self.submaps)
+        self.mutex.release()
 
         self.publish_all_submaps(submaps)
         msg = self.compute_submap_constraints(submaps)

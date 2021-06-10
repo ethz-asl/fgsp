@@ -23,7 +23,6 @@ class SignalHandler(object):
         if key == "":
             return ""
 
-
         for i in range(1, n_nodes):
             signals[i] = self.convert_trajectory_node(signal_msg.nodes[i])
 
@@ -39,10 +38,9 @@ class SignalHandler(object):
         key = path_msg.header.frame_id
         signals = [SignalNode] * n_poses
         for i in range(0, n_poses):
-            signals[i] = self.convert_path_node(path_msg.poses[i], self.robot_name)
+            signals[i] = self.convert_path_node(path_msg.poses[i], key)
 
         self.signals[key] = signals
-
         return key
 
     def get_all_nodes(self, key):
@@ -122,9 +120,7 @@ class SignalHandler(object):
 
         pos_signal = (traj - traj_origin).squeeze()
 
-        x = np.linalg.norm(pos_signal, ord=2, axis=1)
-        return x
-
+        return np.linalg.norm(pos_signal, ord=2, axis=1)
 
     def compute_trajectory(self, nodes):
         n_nodes = len(nodes)

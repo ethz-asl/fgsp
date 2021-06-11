@@ -39,12 +39,16 @@ class ConstraintHandler(object):
         n_poses = len(constraint_msg.T_a_b)
 
         if n_id_from != n_id_to:
+            rospy.logerr("[ConstraintHandler] We have a ID mismatch.")
             return False
         if n_id_from != n_ts_from:
+            rospy.logerr("[ConstraintHandler] We have a TS (from) mismatch.")
             return False
         if n_id_from != n_ts_to:
+            rospy.logerr("[ConstraintHandler] We have a TS (to) mismatch.")
             return False
         if n_id_from != n_poses:
+            rospy.logerr("[ConstraintHandler] We have a poses mismatch.")
             return False
 
         time_now = rospy.Time.now()
@@ -52,7 +56,9 @@ class ConstraintHandler(object):
             diff_from = time_now - constraint_msg.timestamp_from[i]
             diff_to = time_now - constraint_msg.timestamp_to[i]
             if diff_from.to_nsec() < 0 or diff_to.to_nsec() < 0:
+                rospy.logerr(f"[ConstraintHandler] Difference is negative. From is {diff_from.to_nsec()} and to is {diff_to.to_nsec()}.")                
                 return False
+
 
         return True
 

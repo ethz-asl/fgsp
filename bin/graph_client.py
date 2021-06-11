@@ -193,7 +193,7 @@ class GraphClient(object):
     def check_for_submap_constraints(self):
         if not self.enable_submap_constraints:
             return
-        robot_name = "cerberus"
+        robot_name = "anymal_1"
         self.constraint_mutex.acquire()
         path_msgs = self.constraint_handler.create_msg_for_intra_constraints(robot_name)
         self.constraint_mutex.release()

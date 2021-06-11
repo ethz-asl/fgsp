@@ -11,7 +11,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 from sklearn.tree import export_graphviz
-import pydot
 import pickle
 from joblib import dump, load
 from random_forest_predictor import RandomForestPredictor

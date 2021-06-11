@@ -110,7 +110,7 @@ class GraphMonitor(object):
         submap = SubmapModel()
         submap.construct_data(submap_msg)
         submap.compute_dense_map()
-        print(f'Received submap from {submap_msg.robot_name} with {len(submap_msg.nodes)} nodes and id {submap_msg.id}.')
+        
         #self.submap_handler.add_submap(submap)
         id = submap.id
         self.mutex.acquire()

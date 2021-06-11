@@ -10,7 +10,6 @@ import scipy.spatial
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
-import seaborn as sns
 from sklearn.tree import export_graphviz
 import pydot
 import pickle

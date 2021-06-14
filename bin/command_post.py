@@ -8,11 +8,11 @@ from nav_msgs.msg import Path
 
 class CommandPost(object):
     def __init__(self):
-        update_good_topic = rospy.get_param("~update_good_topic")
-        update_bad_topic = rospy.get_param("~update_bad_topic")
+        anchor_node_topic = rospy.get_param("~anchor_node_topic")
+        relative_node_topic = rospy.get_param("~relative_node_topic")
         verification_service = rospy.get_param("~verification_service")
-        self.pub_good = rospy.Publisher(update_good_topic, Path, queue_size=10)
-        self.pub_bad = rospy.Publisher(update_bad_topic, Path, queue_size=10)
+        self.pub_anchor = rospy.Publisher(anchor_node_topic, Path, queue_size=10)
+        self.pub_relative = rospy.Publisher(relative_node_topic, Path, queue_size=10)
         self.pub_verify = rospy.Publisher(verification_service, VerificationCheckRequest, queue_size=10)
         #self.verification_proxy = rospy.ServiceProxy(verification_service, Verification)
 
@@ -58,11 +58,11 @@ class CommandPost(object):
         rospy.loginfo(f"[CommandPost] Publishing evaluation results ({n_good}/{n_bad}).")
         if n_good > 0:
             self.good_path_msg.header.stamp = rospy.Time.now()
-            self.pub_good.publish(self.good_path_msg)
+            self.pub_anchor.publish(self.good_path_msg)
         if n_bad > 0:
             # Publish bad message
             self.bad_path_msg.header.stamp = rospy.Time.now()
-            self.pub_bad.publish(self.bad_path_msg)
+            self.pub_relative.publish(self.bad_path_msg)
 
             # Publish verification request
         self.send_verification_request()

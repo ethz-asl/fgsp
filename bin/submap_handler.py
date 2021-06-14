@@ -32,6 +32,8 @@ class SubmapHandler(object):
         self.pivot_distance = rospy.get_param("~submap_constraint_pivot_distance")
         self.n_nearest_neighbors = rospy.get_param("~submap_constraint_knn")
         self.p_norm = rospy.get_param("~submap_constraint_p_norm")
+        self.enable_submap_map_publishing = rospy.get_param("~enable_submap_map_publishing")
+
         self.reg_box = RegBox()
 
         #submap_topic = rospy.get_param("~submap_constraint_topic")
@@ -42,6 +44,8 @@ class SubmapHandler(object):
         self.refine_with_ICP = rospy.get_param("~submap_constraint_refine_icp")
 
     def publish_submaps(self, submaps):
+        if not self.enable_submap_map_publishing:
+            return
         n_submaps = len(submaps)
         header = Header()
         header.stamp = rospy.Time.now()
@@ -126,7 +130,7 @@ class SubmapHandler(object):
         for i in range(0, n_submaps):
             submap_msg = self.evaluate_neighbors_for(submaps, candidates, i, submap_msg)
 
-        submap_msg.header.stamp = rospy.get_rostime()
+        submap_msg.header.stamp = rospy.Time.now()
         submap_msg.header.seq = self.submap_seq
         self.submap_seq += 1
         return submap_msg

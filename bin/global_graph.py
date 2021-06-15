@@ -8,7 +8,6 @@ from maplab_msgs.msg import Graph
 
 class GlobalGraph(object):
     def __init__(self, reduced=False):
-        rospy.loginfo("[Graph] Initializing graph builder..")
         self.adj = None
         self.coords = None
         self.G = None
@@ -18,6 +17,7 @@ class GlobalGraph(object):
         self.submap_ind = []
         self.graph_seq = None
         self.latest_graph_msg = None
+        rospy.loginfo("[GlobalGraph] Initialized.")
 
     def msg_contains_updates(self, graph_msg):
         if self.is_built is False:

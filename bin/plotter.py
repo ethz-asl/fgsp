@@ -49,6 +49,11 @@ class Plotter(object):
         print(f'{font.BOLD} Reduce optimized graph using Kron:{font.END} {config.reduce_global_graph}')
         print(f'{font.BOLD} Minimal node count in optimized graph:{font.END} {config.min_node_count}')
         print(f'{font.BOLD} Minimal submap count:{font.END} {config.submap_min_count}')
+        print(f'{font.BOLD} Submap pivot distance:{font.END} {config.pivot_distance}')
+        print(f'{font.BOLD} Submap k-nearest neighbors:{font.END} {config.n_nearest_neighbors}')
+        print(f'{font.BOLD} Submap visualize map:{font.END} {config.enable_submap_map_publishing}')
+        print(f'{font.BOLD} Submap compute LiDAR poses:{font.END} {config.compute_poses_in_LiDAR}')
+        print(f'{font.BOLD} Submap ICP refinement:{font.END} {config.refine_with_ICP}')
         print('\n')
 
         print(f'{font.YELLOW} --- Subscriber Configuration (Input) --------------------------------------- {font.END}')

@@ -34,6 +34,7 @@ class SubmapHandler(object):
 
         self.map_pub = rospy.Publisher(config.accumulated_map_topic, PointCloud2, queue_size=10)
         self.submap_seq = 0
+        rospy.loginfo("[SubmapHandler] Initialized.")
 
     def publish_submaps(self, submaps):
         if not self.config.enable_submap_map_publishing:

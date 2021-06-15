@@ -5,7 +5,7 @@ from utils import Utils
 class MonitorConfig(object):
     def __init__(self):
         # general config
-        self.rate = 0.1
+        self.rate = rospy.Rate(0.1)
         self.enable_submap_constraints = True
         self.min_node_count = 10
         self.reduce_global_graph = False
@@ -59,9 +59,72 @@ class MonitorConfig(object):
         self.accumulated_map_topic = rospy.get_param("~accumulated_map_topic")
 
 
+class ClientConfig(object):
+    def __init__(self):
+        # general config
+        self.rate = rospy.Rate(0.2)
+        self.dataroot = "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp"
+        self.random_forest_model = "/config/forest.joblib"
+        self.robot_name = "cerberus"
+        self.enable_submap_constraints = True
+        self.enable_anchor_constraints = False
+        self.enable_signal_recording = False
+        self.enable_trajectory_recording = False
+        self.signal_export_path = "/data/{key}_{src}_signal.npy"
+        self.trajectory_export_path = "/data/{key}_{src}_trajectory.npy"
+
+
+        # input
+        self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
+        self.opt_traj_topic = "/graph_monitor/sparse_graph/trajectory"
+        self.est_traj_topic = "/trajectory"
+        self.est_traj_path_topic = "/incremental_trajectory"
+        self.submap_constraint_topic = "/graph_monitor/submaps"
+
+        # output
+        self.anchor_node_topic = "/graph_client/anchor_nodes"
+        self.relative_node_topic = "/graph_client/relative_nodes"
+        self.intra_constraint_topic = "/graph_client/intra_constraints"
+        self.verification_service_topic = "/graph_monitor/verification"
+
+        # input and output
+        self.client_update_topic = "/graph_client/latest_graph"
+
+    def init_from_config(self):
+        # general config
+        self.rate = rospy.Rate(rospy.get_param("~update_rate"))
+        self.dataroot = rospy.get_param("~dataroot")
+        self.random_forest_model = rospy.get_param("~random_forest_model")
+        self.robot_name = rospy.get_param("~robot_name")
+        self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
+        self.enable_anchor_constraints = rospy.get_param("~enable_anchor_constraints")
+        self.enable_signal_recording = rospy.get_param("~enable_signal_recording")
+        self.enable_trajectory_recording = rospy.get_param("~enable_trajectory_recording")
+        self.signal_export_path = rospy.get_param("~signal_export_path")
+        self.trajectory_export_path = rospy.get_param("~trajectory_export_path")
+
+
+        # input
+        self.opt_graph_topic = rospy.get_param("~opt_graph_topic")
+        self.opt_traj_topic = rospy.get_param("~opt_traj_topic")
+        self.est_traj_topic = rospy.get_param("~est_traj_topic")
+        self.est_traj_path_topic = rospy.get_param("~est_traj_path_topic")
+        self.submap_constraint_topic = rospy.get_param("~opt_submap_constraint_topic")
+
+        # output
+        self.anchor_node_topic = rospy.get_param("~anchor_node_topic")
+        self.relative_node_topic = rospy.get_param("~relative_node_topic")
+        self.intra_constraint_topic = rospy.get_param("~intra_constraints")
+        self.verification_service_topic = rospy.get_param("~verification_service")
+
+        # input and output
+        self.client_update_topic = rospy.get_param("~client_update_topic")
 
 if __name__ == '__main__':
     from plotter import Plotter
 
-    monitor_cfg = MonitorConfig()
-    Plotter.PrintMonitorConfig(monitor_cfg)
+    # cfg = MonitorConfig()
+    # Plotter.PrintMonitorConfig(cfg)
+
+    cfg = ClientConfig()
+    Plotter.PrintClientConfig(cfg)

@@ -70,6 +70,36 @@ class Plotter(object):
         print('\n')
 
     @staticmethod
+    def PrintClientConfig(config):
+        print(f'{font.BLUE} --- General Configuration -------------------------------------------------- {font.END}')
+        print(f'{font.BOLD} Update rate:{font.END} {1e9/config.rate.sleep_dur.to_nsec()}hz')
+        print(f'{font.BOLD} Dataroot:{font.END} {config.dataroot}')
+        print(f'{font.BOLD} Path to the random forest model:{font.END} {config.random_forest_model}')
+        print(f'{font.BOLD} Robot name:{font.END} {config.robot_name}')
+        print(f'{font.BOLD} Enable submap constraints:{font.END} {config.enable_submap_constraints}')
+        print(f'{font.BOLD} Enable anchor constraints:{font.END} {config.enable_anchor_constraints}')
+        print(f'{font.BOLD} Enable signal recording:{font.END} {config.enable_signal_recording}')
+        print(f'{font.BOLD} Enable trajectory recording:{font.END} {config.enable_trajectory_recording}')
+        print(f'{font.BOLD} Signal export path:{font.END} {config.signal_export_path}')
+        print(f'{font.BOLD} Trajectory export path:{font.END} {config.trajectory_export_path}')
+        print('\n')
+
+        print(f'{font.YELLOW} --- Subscriber Configuration (Input) --------------------------------------- {font.END}')
+        print(f'{font.BOLD} Optimized graph topic:{font.END} {config.opt_graph_topic}')
+        print(f'{font.BOLD} Optimized trajectory topic:{font.END} {config.opt_traj_topic}')
+        print(f'{font.BOLD} Estimated trajectory topic:{font.END} {config.est_traj_topic}')
+        print(f'{font.BOLD} Estimated trajectory (Path) topic:{font.END} {config.est_traj_path_topic}')
+        print(f'{font.BOLD} Client update topic:{font.END} {config.client_update_topic}')
+        print('\n')
+
+        print(f'{font.GREEN} --- Publisher Configuration (Output) --------------------------------------- {font.END}')
+        print(f'{font.BOLD} Anchor node topic:{font.END} {config.anchor_node_topic}')
+        print(f'{font.BOLD} Relative node topic:{font.END} {config.relative_node_topic}')
+        print(f'{font.BOLD} Intra constraints topic:{font.END} {config.intra_constraint_topic}')
+        print(f'{font.BOLD} Verifcation service topic:{font.END} {config.verification_service_topic}')
+        print('\n')
+
+    @staticmethod
     def PrintSeparator():
         print(f"{font.BOLD} ===================================================================================================== {font.END}")
 

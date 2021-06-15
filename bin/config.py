@@ -1,5 +1,6 @@
 import rospy
 
+from utils import Utils
 
 class MonitorConfig(object):
     def __init__(self):
@@ -8,6 +9,7 @@ class MonitorConfig(object):
         self.enable_submap_constraints = True
         self.min_node_count = 10
         self.reduce_global_graph = False
+        self.submap_min_ts_diff_ns = 10000000000
 
         # input
         self.in_graph_topic = '/maplab_server/sparse_graph/graph'
@@ -26,6 +28,7 @@ class MonitorConfig(object):
         self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
         self.min_node_count = rospy.get_param("~min_node_count")
         self.reduce_global_graph = rospy.get_param("~reduce_global_graph")
+        self.submap_min_ts_diff = Utils.ts_ns_to_ros_time(rospy.get_param("~submap_min_ts_diff_ns") * 1e9)
 
         # input
         self.in_graph_topic = rospy.get_param("~in_graph_topic")

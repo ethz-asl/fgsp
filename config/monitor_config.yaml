@@ -20,3 +20,4 @@ submap_constraint_knn:                50
 submap_constraint_p_norm:             2
 submap_constraint_refine_icp:         False
 submap_constraint_export_lidar_poses: False
+submap_min_ts_diff_s:                 20 

@@ -48,6 +48,7 @@ class Plotter(object):
         print(f'{font.BOLD} Compute submap-to-submap constraints:{font.END} {config.enable_submap_constraints}')
         print(f'{font.BOLD} Reduce optimized graph using Kron:{font.END} {config.reduce_global_graph}')
         print(f'{font.BOLD} Minimal node count in optimized graph:{font.END} {config.min_node_count}')
+        print(f'{font.BOLD} Minimal timestamp difference for submaps:{font.END} {config.submap_min_ts_diff_ns.to_nsec()}ns')
         print('\n')
 
         print(f'{font.YELLOW} --- Subscriber Configuration (Input) --------------------------------------- {font.END}')

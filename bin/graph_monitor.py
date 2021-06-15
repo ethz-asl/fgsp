@@ -45,6 +45,7 @@ class GraphMonitor(object):
         # Key management to keep track of the received messages.
         self.optimized_keys = []
         self.submaps = {}
+        self.submap_buffer = []
         self.is_initialized = True
         self.mutex.release()
 
@@ -81,6 +82,7 @@ class GraphMonitor(object):
         rospy.loginfo(f'[GraphMonitor] updating...')
         # Compute the submap constraints and publish them if enabled.
         if self.config.enable_submap_constraints:
+            self.add_submaps_from_buffer()
             self.compute_and_publish_submaps()
 
         self.mutex.acquire()
@@ -103,8 +105,14 @@ class GraphMonitor(object):
         submap = SubmapModel()
         submap.construct_data(submap_msg)
         submap.compute_dense_map()
+        self.submap_buffer.append(submap)
 
-        #self.submap_handler.add_submap(submap)
+    def add_submaps_from_buffer(self):
+        ts_now = rospy.Time.now()
+        for submap in self.submap_buffer:
+            diff = ts_now - submap.submap_ts
+            if diff.to_nsec() > self.config.submap_min_ts_diff_ns
+
         id = submap.id
         self.mutex.acquire()
         self.submaps[id] = submap

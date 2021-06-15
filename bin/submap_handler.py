@@ -28,23 +28,15 @@ FIELDS_XYZI = [
 ]
 
 class SubmapHandler(object):
-    def __init__(self):
-        self.pivot_distance = rospy.get_param("~submap_constraint_pivot_distance")
-        self.n_nearest_neighbors = rospy.get_param("~submap_constraint_knn")
-        self.p_norm = rospy.get_param("~submap_constraint_p_norm")
-        self.enable_submap_map_publishing = rospy.get_param("~enable_submap_map_publishing")
-
+    def __init__(self, config):
+        self.config = config
         self.reg_box = RegBox()
 
-        #submap_topic = rospy.get_param("~submap_constraint_topic")
-        map_topic = '/graph_monitor/map'
-        self.map_pub = rospy.Publisher(map_topic, PointCloud2, queue_size=10)
+        self.map_pub = rospy.Publisher(config.accumulated_map_topic, PointCloud2, queue_size=10)
         self.submap_seq = 0
-        self.compute_poses_in_LiDAR = rospy.get_param("~submap_constraint_export_lidar_poses")
-        self.refine_with_ICP = rospy.get_param("~submap_constraint_refine_icp")
 
     def publish_submaps(self, submaps):
-        if not self.enable_submap_map_publishing:
+        if not self.config.enable_submap_map_publishing:
             return
         n_submaps = len(submaps)
         header = Header()
@@ -98,12 +90,12 @@ class SubmapHandler(object):
 
     def lookup_closest_submap(self, submaps, tree, idx):
         current_submap = submaps[idx, :]
-        n_neighbors = min(len(submaps), self.n_nearest_neighbors)
+        n_neighbors = min(len(submaps), self.config.n_nearest_neighbors)
         nn_dists, nn_indices = tree.query(
             current_submap,
-            p=self.p_norm,
+            p=self.config.p_norm,
             k=n_neighbors,
-            distance_upper_bound=self.pivot_distance)
+            distance_upper_bound=self.config.pivot_distance)
 
         # Remove self and fix output.
         nn_dists, nn_indices = Utils.fix_nn_output(n_neighbors, idx, nn_dists, nn_indices)
@@ -165,7 +157,7 @@ class SubmapHandler(object):
 
         # Compute prior transformation.
         T_a_b = None
-        if self.compute_poses_in_LiDAR:
+        if self.config.compute_poses_in_LiDAR:
             T_L_G_a = np.linalg.inv(candidate_a.get_pivot_pose_LiDAR())
             T_G_L_b = candidate_b.get_pivot_pose_LiDAR()
             T_a_b = np.matmul(T_L_G_a, T_G_L_b)
@@ -174,7 +166,7 @@ class SubmapHandler(object):
             T_G_B_b = candidate_b.get_pivot_pose_IMU()
             T_a_b = np.matmul(T_B_G_a, T_G_B_b)
 
-        if not self.refine_with_ICP:
+        if not self.config.refine_with_ICP:
             return T_a_b
 
         # Register the submaps.

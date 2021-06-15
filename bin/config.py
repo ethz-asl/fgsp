@@ -11,6 +11,14 @@ class MonitorConfig(object):
         self.reduce_global_graph = False
         self.submap_min_ts_diff_ns = 10000000000
 
+        # submap constraints
+        self.pivot_distance = 20
+        self.n_nearest_neighbors = 50
+        self.p_norm = 2
+        self.enable_submap_map_publishing = False
+        self.compute_poses_in_LiDAR = False
+        self.refine_with_ICP = False
+
         # input
         self.in_graph_topic = '/maplab_server/sparse_graph/graph'
         self.in_traj_opt_topic = '/maplab_server/sparse_graph/trajectory'
@@ -28,7 +36,15 @@ class MonitorConfig(object):
         self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
         self.min_node_count = rospy.get_param("~min_node_count")
         self.reduce_global_graph = rospy.get_param("~reduce_global_graph")
-        self.submap_min_ts_diff = Utils.ts_ns_to_ros_time(rospy.get_param("~submap_min_ts_diff_ns") * 1e9)
+        self.submap_min_count = rospy.get_param("~submap_min_count")
+
+        # submap constraints
+        self.pivot_distance = rospy.get_param("~submap_constraint_pivot_distance")
+        self.n_nearest_neighbors = rospy.get_param("~submap_constraint_knn")
+        self.p_norm = rospy.get_param("~submap_constraint_p_norm")
+        self.enable_submap_map_publishing = rospy.get_param("~enable_submap_map_publishing")
+        self.compute_poses_in_LiDAR = rospy.get_param("~submap_constraint_export_lidar_poses")
+        self.refine_with_ICP = rospy.get_param("~submap_constraint_refine_icp")
 
         # input
         self.in_graph_topic = rospy.get_param("~in_graph_topic")
@@ -40,6 +56,8 @@ class MonitorConfig(object):
         self.out_graph_topic = rospy.get_param("~out_graph_topic")
         self.out_traj_opt_topic = rospy.get_param("~out_traj_opt_topic")
         self.submap_topic = rospy.get_param("~submap_constraint_topic")
+        self.accumulated_map_topic = rospy.get_param("~accumulated_map_topic")
+
 
 
 if __name__ == '__main__':

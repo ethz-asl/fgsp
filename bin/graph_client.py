@@ -17,48 +17,35 @@ from wavelet_evaluator import WaveletEvaluator
 from command_post import CommandPost
 from feature_node import FeatureNode
 from constraint_handler import ConstraintHandler
+from config import ClientConfig
+from plotter import Plotter
 
 class GraphClient(object):
     def __init__(self):
         self.is_initialized = False
+        self.config = ClientConfig()
+        self.config.init_from_config()
+        Plotter.PlotClientBanner()
+        Plotter.PrintClientConfig(self.config)
+        Plotter.PrintSeparator()
+
         self.mutex = Lock()
         self.constraint_mutex = Lock()
         self.mutex.acquire()
-        self.rate = rospy.Rate(rospy.get_param("~update_rate"))
-        self.dataroot = rospy.get_param("~dataroot")
 
         # Subscribers.
-        graph_topic = rospy.get_param("~graph_topic")
-        traj_opt_topic = rospy.get_param("~traj_opt_topic")
-        traj_topic = rospy.get_param("~traj_topic")
-        traj_path_topic = rospy.get_param("~traj_path_topic")
-        submap_constraint_topic = rospy.get_param("~submap_constraint_topic")
-        client_update_topic = rospy.get_param("~client_update_topic")
-        self.robot_name = rospy.get_param("~robot_name")
-        self.enable_anchor_constraints = rospy.get_param("~enable_anchor_constraints")
-        self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
-        self.enable_signal_recording = rospy.get_param("~enable_signal_recording")
-        self.signal_export_fmt = rospy.get_param("~signal_export_path")
-        self.enable_traj_recording = rospy.get_param("~enable_trajectory_recording")
-        self.traj_export_fmt = rospy.get_param("~trajectory_export_path")
-
-        rospy.Subscriber(graph_topic, Graph, self.graph_callback)
-        rospy.Subscriber(traj_opt_topic, Trajectory, self.traj_opt_callback)
-        rospy.Subscriber(traj_topic, Trajectory, self.traj_callback)
-        rospy.Subscriber(traj_path_topic, Path, self.traj_path_callback)
-        rospy.Subscriber(client_update_topic, Graph, self.client_update_callback)
-        if self.enable_submap_constraints:
-            rospy.Subscriber(submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
-            rospy.loginfo("[GraphClient] Listening for submap constraints from " + submap_constraint_topic)
+        rospy.Subscriber(self.config.opt_graph_topic, Graph, self.graph_callback)
+        rospy.Subscriber(self.config.opt_traj_topic, Trajectory, self.traj_opt_callback)
+        rospy.Subscriber(self.config.est_traj_topic, Trajectory, self.traj_callback)
+        rospy.Subscriber(self.config.est_traj_path_topic, Path, self.traj_path_callback)
+        rospy.Subscriber(self.config.client_update_topic, Graph, self.client_update_callback)
+        if self.config.enable_submap_constraints:
+            rospy.Subscriber(self.config.submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
             self.constraint_handler = ConstraintHandler()
 
-        rospy.loginfo("[GraphClient] Listening for graphs from " + graph_topic)
-        rospy.loginfo("[GraphClient] Listening for trajectory from " + traj_topic + " and " + traj_opt_topic)
-
         # Publishers
-        intra_constraint_topic = rospy.get_param("~intra_constraints")
-        self.intra_constraint_pub = rospy.Publisher(intra_constraint_topic, Path, queue_size=20)
-        self.client_update_pub = rospy.Publisher(client_update_topic, Graph, queue_size=20)
+        self.intra_constraint_pub = rospy.Publisher(self.config.intra_constraint_topic, Path, queue_size=20)
+        self.client_update_pub = rospy.Publisher(self.config.client_update_topic, Graph, queue_size=20)
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=False)
@@ -76,7 +63,7 @@ class GraphClient(object):
         self.is_initialized = True
 
     def graph_callback(self, msg):
-        if not (self.is_initialized and self.enable_anchor_constraints):
+        if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
         self.mutex.acquire()
 
@@ -88,7 +75,7 @@ class GraphClient(object):
         self.mutex.release()
 
     def client_update_callback(self, graph_msg):
-        if not (self.is_initialized and self.enable_anchor_constraints):
+        if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
         # Theoretically this does exactly the same as the graph_callback, but
         # lets separate it for now to be a bit more flexible.
@@ -103,7 +90,7 @@ class GraphClient(object):
         self.mutex.release()
 
     def traj_opt_callback(self, msg):
-        if not (self.is_initialized and self.enable_anchor_constraints):
+        if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
 
         key = self.optimized_signal.convert_signal(msg)
@@ -124,10 +111,10 @@ class GraphClient(object):
         self.keys.append(key)
 
     def traj_path_callback(self, msg):
-        if not (self.is_initialized and self.enable_anchor_constraints):
+        if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
 
-        msg.header.frame_id = self.robot_name
+        msg.header.frame_id = self.config.robot_name
         key = self.signal.convert_signal_from_path(msg)
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")
@@ -138,7 +125,7 @@ class GraphClient(object):
         self.keys.append(key)
 
     def submap_constraint_callback(self, msg):
-        if not (self.is_initialized and self.enable_submap_constraints):
+        if not (self.is_initialized and self.config.enable_submap_constraints):
             rospy.loginfo("[GraphClient] Received submap constraint message before being initialized.")
             return
         rospy.loginfo("[GraphClient] Received submap constraint message.")
@@ -153,29 +140,29 @@ class GraphClient(object):
         self.publish_client_update()
 
     def record_all_signals(self, key, x_est, x_opt):
-        if not self.enable_signal_recording:
+        if not self.config.enable_signal_recording:
             return
         self.record_signal_for_key(key, x_est, 'est')
         self.record_signal_for_key(key, x_opt, 'opt')
 
     def record_all_trajectories(self, key, traj_est, traj_opt):
-        if not self.enable_traj_recording:
+        if not self.config.enable_trajectory_recording:
             return
         self.record_traj_for_key(key, traj_est, 'est')
         self.record_traj_for_key(key, traj_opt, 'opt')
 
     def record_signal_for_key(self, key, x, src):
-        filename = self.dataroot + self.signal_export_fmt.format(key=key, src=src)
+        filename = self.config.dataroot + self.config.signal_export_path.format(key=key, src=src)
         rospy.loginfo(f'Writing signals ({src}) to {filename}')
         np.save(filename, x)
 
     def record_traj_for_key(self, key, traj, src):
-        filename = self.dataroot + self.traj_export_fmt.format(key=key, src=src)
+        filename = self.config.dataroot + self.trajectory_export_path.format(key=key, src=src)
         rospy.loginfo(f'Writing trajectory ({src}) to {filename}')
         np.save(filename, traj)
 
     def compare_estimations(self):
-        if not self.enable_anchor_constraints:
+        if not self.config.enable_anchor_constraints:
             return
         self.mutex.acquire()
         if self.graph.is_built is False:
@@ -191,18 +178,17 @@ class GraphClient(object):
         self.mutex.release()
 
     def check_for_submap_constraints(self):
-        if not self.enable_submap_constraints:
+        if not self.config.enable_submap_constraints:
             return
-        robot_name = "anymal_1"
         self.constraint_mutex.acquire()
-        path_msgs = self.constraint_handler.create_msg_for_intra_constraints(robot_name)
+        path_msgs = self.constraint_handler.create_msg_for_intra_constraints(self.config.robot_name)
         self.constraint_mutex.release()
         for msg in path_msgs:
             self.intra_constraint_pub.publish(msg)
             time.sleep(0.10)
 
     def publish_client_update(self):
-        if not (self.enable_anchor_constraints and self.graph.is_built):
+        if not (self.config.enable_anchor_constraints and self.graph.is_built):
             return
         self.mutex.acquire()
         graph_msg = self.graph.latest_graph_msg
@@ -295,4 +281,4 @@ if __name__ == '__main__':
     node = GraphClient()
     while not rospy.is_shutdown():
         node.update()
-        node.rate.sleep()
+        node.config.rate.sleep()

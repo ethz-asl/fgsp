@@ -10,54 +10,47 @@ from signal_handler import SignalHandler
 from verification_handler import VerificationHandler
 from submap_handler import SubmapHandler
 from submap_model import SubmapModel
+from config import MonitorConfig
+from plotter import Plotter
 
 class GraphMonitor(object):
 
     def __init__(self):
         self.is_initialized = False
+
+        Plotter.PlotMonitorBanner()
+        self.config = MonitorConfig()
+        self.config.init_from_config()
+        Plotter.PrintMonitorConfig(self.config)
+        Plotter.PrintSeparator()
+
         self.mutex = Lock()
         self.mutex.acquire()
-        rospy.loginfo("[GraphMonitor] Initializing monitor node...")
-        self.rate = rospy.Rate(rospy.get_param("~update_rate"))
-
-        in_graph_topic = rospy.get_param("~in_graph_topic")
-        in_traj_opt_topic = rospy.get_param("~in_traj_opt_topic")
-        out_graph_topic = rospy.get_param("~out_graph_topic")
-        out_traj_opt_topic = rospy.get_param("~out_traj_opt_topic")
-        self.min_node_count = rospy.get_param("~min_node_count")
-        verification_service_topic = rospy.get_param("~verification_service")
-        pc_topic = rospy.get_param("~opt_pc_topic")
-        submap_topic = rospy.get_param("~submap_constraint_topic")
-        self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
-
         # Publishers and subscribers.
-        if self.enable_submap_constraints:
-            rospy.Subscriber(pc_topic, Submap, self.submap_callback)
-        rospy.Subscriber(in_graph_topic, Graph, self.graph_callback)
-        rospy.Subscriber(in_traj_opt_topic, Trajectory, self.traj_opt_callback)
-        rospy.Subscriber(verification_service_topic, VerificationCheckRequest, self.verification_callback)
-        self.pub_graph = rospy.Publisher(out_graph_topic, Graph, queue_size=10)
-        self.pub_traj = rospy.Publisher(out_traj_opt_topic, Trajectory, queue_size=10)
-        self.submap_pub = rospy.Publisher(submap_topic, SubmapConstraint, queue_size=10)
-        rospy.loginfo("[GraphMonitor] Listening for graphs from " + in_graph_topic)
-        rospy.loginfo("[GraphMonitor] Listening for trajectory from " + in_traj_opt_topic)
+        if self.config.enable_submap_constraints:
+            rospy.Subscriber(self.config.opt_pc_topic, Submap, self.submap_callback)
+        rospy.Subscriber(self.config.in_graph_topic, Graph, self.graph_callback)
+        rospy.Subscriber(self.config.in_traj_opt_topic, Trajectory, self.traj_opt_callback)
+        rospy.Subscriber(self.config.verification_service_topic, VerificationCheckRequest, self.verification_callback)
+        self.pub_graph = rospy.Publisher(self.config.out_graph_topic, Graph, queue_size=10)
+        self.pub_traj = rospy.Publisher(self.config.out_traj_opt_topic, Trajectory, queue_size=10)
+        self.submap_pub = rospy.Publisher(self.config.submap_topic, SubmapConstraint, queue_size=10)
 
         # Handlers and evaluators.
-        self.graph = GlobalGraph(reduced=False)
+        self.graph = GlobalGraph(reduced=self.config.reduce_global_graph)
         self.optimized_signal = SignalHandler()
         self.verification_handler = VerificationHandler()
-        self.submap_handler = SubmapHandler()
+        self.submap_handler = SubmapHandler(self.config)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
         self.submaps = {}
-
-        rospy.loginfo("[GraphMonitor] Graph monitor is set up.")
+        self.submap_counter = {}
         self.is_initialized = True
         self.mutex.release()
 
+
     def graph_callback(self, msg):
-        rospy.loginfo(f"[GraphMonitor] Received graph message.")
         if self.is_initialized is False:
             return
         self.mutex.acquire()
@@ -75,7 +68,6 @@ class GraphMonitor(object):
         key = self.optimized_signal.convert_signal(msg)
         if key == "":
             rospy.logerr("[GraphMonitor] Unable to convert signal.")
-        rospy.loginfo(f"[GraphMonitor] Received opt trajectory message from {key}.")
 
         if self.key_in_optimized_keys(key):
             return
@@ -85,16 +77,15 @@ class GraphMonitor(object):
         self.verification_handler.handle_verification(msg)
 
     def update(self):
-        rospy.loginfo(f'[GraphMonitor] updating...')
         # Compute the submap constraints and publish them if enabled.
-        if self.enable_submap_constraints:
+        if self.config.enable_submap_constraints:
             self.compute_and_publish_submaps()
 
         self.mutex.acquire()
         if self.graph.is_built is False:
             self.mutex.release()
             return
-        if self.graph.graph_size() < self.min_node_count:
+        if self.graph.graph_size() < self.config.min_node_count:
             rospy.loginfo(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()})")
             self.mutex.release()
             return;
@@ -110,17 +101,32 @@ class GraphMonitor(object):
         submap = SubmapModel()
         submap.construct_data(submap_msg)
         submap.compute_dense_map()
-        
-        #self.submap_handler.add_submap(submap)
+
         id = submap.id
         self.mutex.acquire()
         self.submaps[id] = submap
+        if not id in self.submap_counter:
+            self.submap_counter[id] = 0
+        else:
+            self.submap_counter[id] += 1
+
         self.mutex.release()
 
     def compute_and_publish_submaps(self):
+        n_submaps = len(self.submaps)
+        if n_submaps != len(self.submap_counter) or n_submaps == 0:
+            return
+
         self.mutex.acquire()
         submaps = copy.deepcopy(self.submaps)
+        submap_counter = copy.deepcopy(self.submap_counter)
         self.mutex.release()
+
+        # Filter out submaps based on min count.
+        if self.config.submap_min_count > 0:
+            for k, v in submap_counter.items():
+                if v < self.config.submap_min_count:
+                    submaps.pop(k)
 
         self.publish_all_submaps(submaps)
         msg = self.compute_submap_constraints(submaps)
@@ -131,7 +137,7 @@ class GraphMonitor(object):
         n_submaps = len(submaps)
         if n_submaps == 0:
             return None
-        print(f"Computing constraints for {n_submaps} submaps.")
+        rospy.loginfo(f"[GraphMonitor] Computing constraints for {n_submaps} submaps.")
         return self.submap_handler.compute_constraints(submaps)
 
     def publish_graph_and_traj(self):
@@ -154,4 +160,4 @@ if __name__ == '__main__':
     node = GraphMonitor()
     while not rospy.is_shutdown():
         node.update()
-        node.rate.sleep()
+        node.config.rate.sleep()

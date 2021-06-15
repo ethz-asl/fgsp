@@ -9,7 +9,7 @@ class VerificationHandler(object):
         self.server_acks = []
         verification_server_topic = rospy.get_param("~verification_server_request")
         self.pub_to_server = rospy.Publisher(verification_server_topic, VerificationCheckRequest, queue_size=10)
-        rospy.loginfo("[VerificationHandler] Handler initialized.")
+        rospy.loginfo("[VerificationHandler] Initialized.")
 
     def handle_verification(self, msg):
         rospy.loginfo(f"[VerificationHandler] From {msg.robot_name}  with {msg.submap_ids}")

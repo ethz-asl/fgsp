@@ -63,8 +63,7 @@ class WaveletEvaluator(object):
             x[i] = 1
 
             # Transform the signal to spectral domain.
-            s = G._check_signal(x)
-            s = G.gft(s)
+            s = G.gft(x)
 
             # Multiply the transformed signal with filter.
             if s.ndim == 1:

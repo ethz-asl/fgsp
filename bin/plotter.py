@@ -26,7 +26,8 @@ class Plotter(object):
  //********       /**        /**//******  ***  /**
   ////////        //         //  //////  ///   // '''
 
-        print(f'{font.CLEAR}\n{banner}\n\n\n')
+        # print(f'{font.CLEAR}\n{banner}\n\n\n')
+        print(f'\n{banner}\n\n\n')
 
     @staticmethod
     def PlotClientBanner():
@@ -40,7 +41,8 @@ class Plotter(object):
  //********        //******  ***/**//****** ***  /**  //**
   ////////          //////  /// //  ////// ///   //    //  '''
 
-        print(f'{font.CLEAR}\n{banner}\n\n\n')
+        # print(f'{font.CLEAR}\n{banner}\n\n\n')
+        print(f'\n{banner}\n\n\n')
 
     @staticmethod
     def PrintMonitorConfig(config):

@@ -6,6 +6,7 @@ class MonitorConfig(object):
     def __init__(self):
         # general config
         self.rate = rospy.Rate(0.1)
+        self.enable_graph_building = True
         self.enable_submap_constraints = True
         self.min_node_count = 10
         self.reduce_global_graph = False
@@ -34,6 +35,7 @@ class MonitorConfig(object):
         # general config
         self.rate = rospy.Rate(rospy.get_param("~update_rate"))
         self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
+        self.enable_graph_building = rospy.get_param("~enable_graph_building")
         self.min_node_count = rospy.get_param("~min_node_count")
         self.reduce_global_graph = rospy.get_param("~reduce_global_graph")
         self.submap_min_count = rospy.get_param("~submap_min_count")

@@ -10,6 +10,7 @@ class font:
    BOLD = '\033[1m'
    UNDERLINE = '\033[4m'
    END = '\033[0m'
+   CLEAR = '\033c'
 
 class Plotter(object):
 
@@ -25,12 +26,12 @@ class Plotter(object):
  //********       /**        /**//******  ***  /**
   ////////        //         //  //////  ///   // '''
 
-        print(f'\n{banner}\n\n\n')
+        print(f'{font.CLEAR}\n{banner}\n\n\n')
 
     @staticmethod
     def PlotClientBanner():
         banner = '''
-   ********          ******   ** **                    **  
+   ********          ******   ** **                    **
   **//////**        **////** /**//                    /**
  **      //        **    //  /** **  *****  *******  ******
 /**          *****/**        /**/** **///**//**///**///**/
@@ -39,7 +40,7 @@ class Plotter(object):
  //********        //******  ***/**//****** ***  /**  //**
   ////////          //////  /// //  ////// ///   //    //  '''
 
-        print(f'\n{banner}\n\n\n')
+        print(f'{font.CLEAR}\n{banner}\n\n\n')
 
     @staticmethod
     def PrintMonitorConfig(config):

@@ -240,19 +240,15 @@ class GraphClient(object):
 
         all_features = []
         rospy.loginfo(f"[GraphClient] Computing features for {n_submaps} submaps")
-        rospy.loginfo(f"[GraphClient] Got {W_est.shape} est wavelets")
-        rospy.loginfo(f"[GraphClient] Got {W_opt.shape} opt wavelets")
         for i in range(0, n_submaps):
-            # Compute the submap features.
-            node_ids = self.optimized_signal.get_indices_for_submap(key, i)
-            if len(node_ids) == 0:
+            # Get all nodes for submap i.
+            node_indices = self.optimized_signal.get_indices_for_submap(key, i)
+            if len(node_indices) == 0:
                 continue
-            rospy.loginfo(f"[GraphClient] Checking the submap nr: {i}")
-            rospy.loginfo(f"[GraphClient] Got these IDs: {node_ids}")
-            features = self.eval.compute_features_for_submap(W_opt, W_est, node_ids)
+            features = self.eval.compute_features_for_submap(W_opt, W_est, node_indices)
             if features.empty:
                 continue
-            feature_node = FeatureNode(i, key, all_opt_nodes, features, node_ids)
+            feature_node = FeatureNode(i, key, all_opt_nodes, features, node_indices)
             if not feature_node.initialized:
                 continue
 

@@ -22,7 +22,7 @@ robot_name:                  "cerberus"
 random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.02
 enable_anchor_constraints:   True
-enable_submap_constraints:   True
+enable_submap_constraints:   False
 enable_signal_recording:     True
 signal_export_path:          "/data/{key}_{src}_signal.npy"
 enable_trajectory_recording: True

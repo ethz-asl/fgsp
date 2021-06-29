@@ -157,7 +157,7 @@ class GraphClient(object):
         np.save(filename, x)
 
     def record_traj_for_key(self, key, traj, src):
-        filename = self.config.dataroot + self.trajectory_export_path.format(key=key, src=src)
+        filename = self.config.dataroot + self.config.trajectory_export_path.format(key=key, src=src)
         rospy.loginfo(f'Writing trajectory ({src}) to {filename}')
         np.save(filename, traj)
 

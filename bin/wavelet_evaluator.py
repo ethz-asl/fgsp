@@ -57,7 +57,6 @@ class WaveletEvaluator(object):
         self.psi = np.zeros((G.N, G.N, self.n_scales))
 
         for i in range(0, G.N):
-
             # Create a Dirac centered at node i.
             x = np.zeros((G.N,1))
             x[i] = 1

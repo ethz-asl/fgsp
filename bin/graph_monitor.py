@@ -29,12 +29,13 @@ class GraphMonitor(object):
         # Publishers and subscribers.
         if self.config.enable_submap_constraints:
             rospy.Subscriber(self.config.opt_pc_topic, Submap, self.submap_callback)
-        rospy.Subscriber(self.config.in_graph_topic, Graph, self.graph_callback)
-        rospy.Subscriber(self.config.in_traj_opt_topic, Trajectory, self.traj_opt_callback)
-        rospy.Subscriber(self.config.verification_service_topic, VerificationCheckRequest, self.verification_callback)
-        self.pub_graph = rospy.Publisher(self.config.out_graph_topic, Graph, queue_size=10)
-        self.pub_traj = rospy.Publisher(self.config.out_traj_opt_topic, Trajectory, queue_size=10)
-        self.submap_pub = rospy.Publisher(self.config.submap_topic, SubmapConstraint, queue_size=10)
+            self.submap_pub = rospy.Publisher(self.config.submap_topic, SubmapConstraint, queue_size=10)
+        if self.config.enable_graph_building:
+            rospy.Subscriber(self.config.in_graph_topic, Graph, self.graph_callback)
+            rospy.Subscriber(self.config.in_traj_opt_topic, Trajectory, self.traj_opt_callback)
+            rospy.Subscriber(self.config.verification_service_topic, VerificationCheckRequest, self.verification_callback)
+            self.pub_graph = rospy.Publisher(self.config.out_graph_topic, Graph, queue_size=10)
+            self.pub_traj = rospy.Publisher(self.config.out_traj_opt_topic, Trajectory, queue_size=10)
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=self.config.reduce_global_graph)
@@ -77,10 +78,18 @@ class GraphMonitor(object):
         self.verification_handler.handle_verification(msg)
 
     def update(self):
+        # Publish verifications to the server.
+        self.verification_handler.send_verification_request()
+
         # Compute the submap constraints and publish them if enabled.
         if self.config.enable_submap_constraints:
             self.compute_and_publish_submaps()
 
+        # Compute the global graph and signal, then publish it
+        if self.config.enable_graph_building:
+            self.compute_and_publish_graph()
+
+    def compute_and_publish_graph(self):
         self.mutex.acquire()
         if self.graph.is_built is False:
             self.mutex.release()
@@ -93,9 +102,6 @@ class GraphMonitor(object):
 
         # Publish the graph to the clients.
         self.publish_graph_and_traj()
-
-        # Publish verifications to the server.
-        self.verification_handler.send_verification_request()
 
     def submap_callback(self, submap_msg):
         submap = SubmapModel()

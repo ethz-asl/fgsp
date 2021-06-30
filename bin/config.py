@@ -6,6 +6,7 @@ class MonitorConfig(object):
     def __init__(self):
         # general config
         self.rate = rospy.Rate(0.1)
+        self.enable_graph_building = True
         self.enable_submap_constraints = True
         self.min_node_count = 10
         self.reduce_global_graph = False
@@ -34,6 +35,7 @@ class MonitorConfig(object):
         # general config
         self.rate = rospy.Rate(rospy.get_param("~update_rate"))
         self.enable_submap_constraints = rospy.get_param("~enable_submap_constraints")
+        self.enable_graph_building = rospy.get_param("~enable_graph_building")
         self.min_node_count = rospy.get_param("~min_node_count")
         self.reduce_global_graph = rospy.get_param("~reduce_global_graph")
         self.submap_min_count = rospy.get_param("~submap_min_count")
@@ -71,6 +73,8 @@ class ClientConfig(object):
         self.enable_signal_recording = False
         self.enable_trajectory_recording = False
         self.signal_export_path = "/data/{key}_{src}_signal.npy"
+        self.graph_coords_export_path = "/data/{key}_{src}_graph_coords.npy"
+        self.graph_adj_export_path = "/data/{key}_{src}_graph_adj.npy"
         self.trajectory_export_path = "/data/{key}_{src}_trajectory.npy"
 
 
@@ -101,8 +105,9 @@ class ClientConfig(object):
         self.enable_signal_recording = rospy.get_param("~enable_signal_recording")
         self.enable_trajectory_recording = rospy.get_param("~enable_trajectory_recording")
         self.signal_export_path = rospy.get_param("~signal_export_path")
+        self.graph_coords_export_path = rospy.get_param("~graph_coords_export_path")
+        self.graph_adj_export_path = rospy.get_param("~graph_adj_export_path")
         self.trajectory_export_path = rospy.get_param("~trajectory_export_path")
-
 
         # input
         self.opt_graph_topic = rospy.get_param("~opt_graph_topic")

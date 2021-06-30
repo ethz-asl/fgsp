@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(graph_monitor)
+project(cdpgo)
 
 add_definitions(-Wall)
 

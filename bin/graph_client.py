@@ -152,13 +152,17 @@ class GraphClient(object):
         self.record_traj_for_key(key, traj_opt, 'opt')
 
     def record_signal_for_key(self, key, x, src):
-        filename = self.config.dataroot + self.config.signal_export_path.format(key=key, src=src)
-        rospy.loginfo(f'Writing signals ({src}) to {filename}')
-        np.save(filename, x)
+        signal_file = self.config.dataroot + self.config.signal_export_path.format(key=key, src=src)
+        rospy.loginfo(f'Writing signals from {src}.')
+        np.save(signal_file, x)
+        if src == 'opt':
+            graph_coords_file = self.config.dataroot + self.config.graph_coords_export_path.format(key=key, src=src)
+            graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(key=key, src=src)
+            self.graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
 
     def record_traj_for_key(self, key, traj, src):
-        filename = self.config.dataroot + self.trajectory_export_path.format(key=key, src=src)
-        rospy.loginfo(f'Writing trajectory ({src}) to {filename}')
+        filename = self.config.dataroot + self.config.trajectory_export_path.format(key=key, src=src)
+        rospy.loginfo(f'Writing trajectory from {src}.')
         np.save(filename, traj)
 
     def compare_estimations(self):
@@ -220,6 +224,9 @@ class GraphClient(object):
         return (all_opt_nodes, all_est_nodes)
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
+        if not self.eval.is_available:
+            return []
+
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
@@ -240,19 +247,15 @@ class GraphClient(object):
 
         all_features = []
         rospy.loginfo(f"[GraphClient] Computing features for {n_submaps} submaps")
-        rospy.loginfo(f"[GraphClient] Got {W_est.shape} est wavelets")
-        rospy.loginfo(f"[GraphClient] Got {W_opt.shape} opt wavelets")
         for i in range(0, n_submaps):
-            # Compute the submap features.
-            node_ids = self.optimized_signal.get_indices_for_submap(key, i)
-            if len(node_ids) == 0:
+            # Get all nodes for submap i.
+            node_indices = self.optimized_signal.get_indices_for_submap(key, i)
+            if len(node_indices) == 0:
                 continue
-            rospy.loginfo(f"[GraphClient] Checking the submap nr: {i}")
-            rospy.loginfo(f"[GraphClient] Got these IDs: {node_ids}")
-            features = self.eval.compute_features_for_submap(W_opt, W_est, node_ids)
+            features = self.eval.compute_features_for_submap(W_opt, W_est, node_indices)
             if features.empty:
                 continue
-            feature_node = FeatureNode(i, key, all_opt_nodes, features, node_ids)
+            feature_node = FeatureNode(i, key, all_opt_nodes, features, node_indices)
             if not feature_node.initialized:
                 continue
 

@@ -20,7 +20,13 @@ class RandomForestPredictor(object):
             random_forest_model = "../config/forest.joblib"
 
         rospy.loginfo(f"[RandomForestPredictor] Loading model from {random_forest_model}")
-        self.clf = load(random_forest_model)
+        try:
+            self.clf = load(random_forest_model)
+            self.initialized = True
+        except:
+            self.initialized = False
+            rospy.logerr(f'[RandomForestPredictor] Failed to load the model.')
+
 
     def predict(self, X):
         X = X.fillna(0)

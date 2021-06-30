@@ -32,6 +32,9 @@ class WaveletEvaluator(object):
     def set_scales(self, n_scales):
         self.n_scales = n_scales
 
+    def is_available(self):
+        return self.clf.initialized
+
     def compare_signals(self, G, x_1, x_2):
 
         # Compute the wavelets for each node and scale.

@@ -152,13 +152,17 @@ class GraphClient(object):
         self.record_traj_for_key(key, traj_opt, 'opt')
 
     def record_signal_for_key(self, key, x, src):
-        filename = self.config.dataroot + self.config.signal_export_path.format(key=key, src=src)
-        rospy.loginfo(f'Writing signals ({src}) to {filename}')
-        np.save(filename, x)
+        signal_file = self.config.dataroot + self.config.signal_export_path.format(key=key, src=src)
+        rospy.loginfo(f'Writing signals from {src}.')
+        np.save(signal_file, x)
+        if src == 'opt':
+            graph_coords_file = self.config.dataroot + self.config.graph_coords_export_path.format(key=key, src=src)
+            graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(key=key, src=src)
+            self.graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
 
     def record_traj_for_key(self, key, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(key=key, src=src)
-        rospy.loginfo(f'Writing trajectory ({src}) to {filename}')
+        rospy.loginfo(f'Writing trajectory from {src}.')
         np.save(filename, traj)
 
     def compare_estimations(self):
@@ -222,7 +226,7 @@ class GraphClient(object):
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
         if not self.eval.is_available:
             return []
-            
+
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)

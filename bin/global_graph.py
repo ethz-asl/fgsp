@@ -121,16 +121,21 @@ class GlobalGraph(object):
         n_coords = self.G.N
 
         # Write coordinates and adjacency.
-        graph_msg.coords = [Point()] * n_coords
+        graph_msg.coords = [None] * n_coords
         graph_msg.adjacency_matrix = [0] * (n_coords*n_coords)
-        for i in range(n_coords):
+        for i in range(0, n_coords):
+            graph_msg.coords[i] = Point()
             graph_msg.coords[i].x = self.coords[i,0]
             graph_msg.coords[i].y = self.coords[i,1]
             graph_msg.coords[i].z = self.coords[i,2]
-            for j in range(n_coords):
+            for j in range(0, n_coords):
                 graph_msg.adjacency_matrix[j + i * n_coords] = self.adj[i,j]
 
         graph_msg.submap_indices = self.submap_ind
         graph_msg.reduced_indices = self.reduced_ind
 
         return graph_msg
+
+    def write_graph_to_disk(self, coords_file, adj_file):
+        np.save(coords_file, self.coords)
+        np.save(adj_file, self.adj)

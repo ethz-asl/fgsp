@@ -73,6 +73,8 @@ class ClientConfig(object):
         self.enable_signal_recording = False
         self.enable_trajectory_recording = False
         self.signal_export_path = "/data/{key}_{src}_signal.npy"
+        self.graph_coords_export_path = "/data/{key}_{src}_graph_coords.npy"
+        self.graph_adj_export_path = "/data/{key}_{src}_graph_adj.npy"
         self.trajectory_export_path = "/data/{key}_{src}_trajectory.npy"
 
 
@@ -103,8 +105,9 @@ class ClientConfig(object):
         self.enable_signal_recording = rospy.get_param("~enable_signal_recording")
         self.enable_trajectory_recording = rospy.get_param("~enable_trajectory_recording")
         self.signal_export_path = rospy.get_param("~signal_export_path")
+        self.graph_coords_export_path = rospy.get_param("~graph_coords_export_path")
+        self.graph_adj_export_path = rospy.get_param("~graph_adj_export_path")
         self.trajectory_export_path = rospy.get_param("~trajectory_export_path")
-
 
         # input
         self.opt_graph_topic = rospy.get_param("~opt_graph_topic")

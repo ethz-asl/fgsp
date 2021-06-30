@@ -23,5 +23,7 @@ enable_anchor_constraints:   True
 enable_submap_constraints:   False
 enable_signal_recording:     True
 signal_export_path:          "/data/{key}_{src}_signal.npy"
+graph_coords_export_path:    "/data/{key}_{src}_graph_coords.npy"
+graph_adj_export_path:       "/data/{key}_{src}_graph_adj.npy"
 enable_trajectory_recording: True
 trajectory_export_path:      "/data/{key}_{src}_trajectory.npy"

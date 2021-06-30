@@ -50,7 +50,6 @@ class GlobalGraph(object):
             rospy.logdebug("[Graph] Graph vertex count is less than 2.")
             return
 
-
         self.G.set_coordinates(self.coords[:,[0,1]])
         self.G.compute_fourier_basis()
 

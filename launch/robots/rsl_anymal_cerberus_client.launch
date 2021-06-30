@@ -4,7 +4,7 @@
   <param name="/use_sim_time" value="true" />
 
   <!-- Config file -->
-  <arg name="config_file" default="$(find graph_monitor)/config/client_config.yaml"/>
+  <arg name="config_file" default="$(find graph_monitor)/config/robots/rsl_anymal_cerberus_client_config.yaml"/>
 
   <!-- Node name -->
   <arg name="node_name" default="graph_client"/>

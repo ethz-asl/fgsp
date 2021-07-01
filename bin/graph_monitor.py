@@ -54,6 +54,7 @@ class GraphMonitor(object):
     def graph_callback(self, msg):
         if self.is_initialized is False:
             return
+        rospy.loginfo(f"[GraphMonitor] Received graph message from server.")
         self.mutex.acquire()
 
         # We only trigger the graph building if the msg contains new information.
@@ -90,12 +91,15 @@ class GraphMonitor(object):
             self.compute_and_publish_graph()
 
     def compute_and_publish_graph(self):
+        rospy.loginfo(f"[GraphMonitor] Computing global graph.")
         self.mutex.acquire()
         if self.graph.is_built is False:
+            rospy.logwarn(f"[GraphMonitor] Graph is not built yet!")
             self.mutex.release()
             return
+        rospy.loginfo(f"[GraphMonitor] Checking size")
         if self.graph.graph_size() < self.config.min_node_count:
-            rospy.loginfo(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()})")
+            rospy.logwarn(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()})")
             self.mutex.release()
             return;
         self.mutex.release()
@@ -149,10 +153,12 @@ class GraphMonitor(object):
     def publish_graph_and_traj(self):
         graph_msg = self.graph.to_graph_msg()
         self.pub_graph.publish(graph_msg)
+        rospy.loginfo(f"[GraphMonitor] Published global graph.")
 
         for key in self.optimized_keys:
             traj_msg = self.optimized_signal.to_signal_msg(key)
             self.pub_traj.publish(traj_msg)
+            rospy.loginfo(f"[GraphMonitor] Published trajectory for {key}.")
 
     def publish_all_submaps(self, submaps):
         self.submap_handler.publish_submaps(submaps)

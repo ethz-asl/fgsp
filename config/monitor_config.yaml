@@ -4,7 +4,7 @@ out_graph_topic:                      /graph_monitor/sparse_graph/graph
 out_traj_opt_topic:                   /graph_monitor/sparse_graph/trajectory
 min_node_count:                       10
 
-update_rate:                          0.02
+update_rate:                          0.1
 random_forest_model:                  "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
 verification_service:                 /graph_monitor/verification
 verification_server_request:          /maplab_server/verification
@@ -12,7 +12,7 @@ verification_server_request:          /maplab_server/verification
 
 opt_pc_topic:                         "/maplab_server/sparse_graph/submap"
 enable_graph_building:                True
-enable_submap_constraints:            False
+enable_submap_constraints:            True
 enable_submap_map_publishing:         False
 reduce_global_graph:                  False
 accumulated_map_topic:                "/graph_monitor/map"

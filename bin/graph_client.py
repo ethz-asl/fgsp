@@ -114,6 +114,7 @@ class GraphClient(object):
         if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
 
+        # TODO(lbern): construct graph from path and compute wavelets
         msg.header.frame_id = self.config.robot_name
         key = self.signal.convert_signal_from_path(msg)
         if not key:

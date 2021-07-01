@@ -18,7 +18,7 @@ client_update_topic:         "/graph_client/latest_graph"
 dataroot:                    "/home/subt/mapping_ws/src/fgsp"
 robot_name:                  "anymal_1"
 random_forest_model:         "/config/forest.joblib"
-update_rate:                 0.02
+update_rate:                 0.01
 enable_anchor_constraints:   True
 enable_submap_constraints:   False
 enable_signal_recording:     True

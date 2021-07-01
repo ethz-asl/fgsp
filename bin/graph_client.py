@@ -138,6 +138,7 @@ class GraphClient(object):
         self.compare_estimations()
         self.check_for_submap_constraints()
         self.publish_client_update()
+        rospy.loginfo("[GraphClient] Updating completed")
 
     def record_all_signals(self, key, x_est, x_opt):
         if not self.config.enable_signal_recording:
@@ -201,6 +202,7 @@ class GraphClient(object):
         self.mutex.release()
 
     def compare_stored_signals(self, key):
+        rospy.logwarn(f"[GraphClient] Comparing signals for {key}.")
         # Retrieve the estimated and optimized versions of the trajectory.
         all_est_nodes = self.signal.get_all_nodes(key)
         all_opt_nodes = self.optimized_signal.get_all_nodes(key)

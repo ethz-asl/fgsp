@@ -65,9 +65,10 @@ class GlobalGraph(object):
         n_poses = len(path_msg.poses)
         if n_poses <= 0:
             rospy.logerr(f"[GlobalGraph] Received empty path message.")
-            return False
-        self.coords = read_coordinates_from_poses(path_msg.poses)
+            return
+        self.coords = self.read_coordinates_from_poses(path_msg.poses)
         rospy.loginfo("[GlobalGraph] Building with coords " + str(self.coords.shape))
+        self.is_built = True
 
     def read_coordinates(self, graph_msg):
         n_coords = len(graph_msg.coords)

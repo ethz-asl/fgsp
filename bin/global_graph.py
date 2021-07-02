@@ -68,6 +68,8 @@ class GlobalGraph(object):
             return
         self.coords = self.read_coordinates_from_poses(path_msg.poses)
         rospy.loginfo("[GlobalGraph] Building with coords " + str(self.coords.shape))
+        self.adj = self.create_adjacency_from_poses(self.coords)
+        rospy.loginfo("[GlobalGraph] Building with adj " + str(self.adj.shape))
         self.is_built = True
 
     def read_coordinates(self, graph_msg):
@@ -103,13 +105,15 @@ class GlobalGraph(object):
         adj = np.zeros((n_coords, n_coords))
         tree = spatial.KDTree(coords)
         max_pos_dist = 5
-        n_nearest_neighbors = 5
+        n_nearest_neighbors = min(5, n_coords)
         sigma = 1
-        normlization = 2*(sigma**2)
+        normalization = 2*(sigma**2)
         for i in range(n_coords):
             nn_dists, nn_indices = tree.query(coords[i,:], p = 2, k = n_nearest_neighbors)
             nn_indices = [nn_indices] if n_nearest_neighbors == 1 else nn_indices
-            for nn_i in range(nn_indices):
+
+            # print(f'Found the following indices: {nn_indices} / {n_coords}')
+            for nn_i in nn_indices:
                 if nn_i == i:
                     continue
                 dist = spatial.distance.euclidean(coords[nn_i,:], coords[i,:])

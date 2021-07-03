@@ -160,10 +160,13 @@ class GraphClient(object):
         signal_file = self.config.dataroot + self.config.signal_export_path.format(key=key, src=src)
         rospy.loginfo(f'Writing signals from {src}.')
         np.save(signal_file, x)
+        graph_coords_file = self.config.dataroot + self.config.graph_coords_export_path.format(key=key, src=src)
+        graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(key=key, src=src)
         if src == 'opt':
-            graph_coords_file = self.config.dataroot + self.config.graph_coords_export_path.format(key=key, src=src)
-            graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(key=key, src=src)
             self.global_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
+        elif src == 'est':
+            self.robot_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
+
 
     def record_traj_for_key(self, key, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(key=key, src=src)

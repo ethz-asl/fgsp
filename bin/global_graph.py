@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 import rospy
+import time
 import numpy as np
 from pygsp import graphs, filters, reduction
 from geometry_msgs.msg import Point
@@ -32,6 +33,7 @@ class GlobalGraph(object):
             return 0
 
     def build(self, graph_msg):
+        start_time = time.time()
         self.coords = self.read_coordinates(graph_msg)
         rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
         self.adj = self.read_adjacency(graph_msg)
@@ -58,19 +60,42 @@ class GlobalGraph(object):
 
         self.graph_seq = graph_msg.header.seq
         self.is_built = True
-        rospy.loginfo("[GlobalGraph] Building complete")
+        execution_time = (time.time() - start_time)
+        rospy.loginfo(f'[GlobalGraph] Building complete ({execution_time} sec)')
         self.latest_graph_msg = graph_msg
 
     def build_from_path(self, path_msg):
+        start_time = time.time()
         n_poses = len(path_msg.poses)
         if n_poses <= 0:
             rospy.logerr(f"[GlobalGraph] Received empty path message.")
             return
         self.coords = self.read_coordinates_from_poses(path_msg.poses)
-        rospy.loginfo("[GlobalGraph] Building with coords " + str(self.coords.shape))
+        rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
         self.adj = self.create_adjacency_from_poses(self.coords)
-        rospy.loginfo("[GlobalGraph] Building with adj " + str(self.adj.shape))
+        rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
+
+        if len(self.adj.tolist()) == 0:
+            rospy.loginfo(f"[GlobalGraph] Path adjacency matrix is empty. Aborting graph building.")
+            return
+        self.G = graphs.Graph(self.adj)
+        if self.G.N != self.coords.shape[0]:
+            rospy.logerr(f"[GlobalGraph] Path graph size is {self.G.N} but coords are {self.coords.shape}")
+            return
+        if self.G.N <= 1:
+            rospy.logdebug("[GlobalGraph] Path graph vertex count is less than 2.")
+            return
+
+        self.G.set_coordinates(self.coords[:,[0,1]])
+        self.G.compute_fourier_basis()
+
+        if (self.is_reduced):
+            self.reduce_graph()
+
+        self.graph_seq = path_msg.header.seq
         self.is_built = True
+        execution_time = (time.time() - start_time)
+        rospy.loginfo(f'[GlobalGraph] Building from path complete ({execution_time} sec)')
 
     def read_coordinates(self, graph_msg):
         n_coords = len(graph_msg.coords)
@@ -104,12 +129,13 @@ class GlobalGraph(object):
         n_coords = coords.shape[0]
         adj = np.zeros((n_coords, n_coords))
         tree = spatial.KDTree(coords)
-        max_pos_dist = 5
-        n_nearest_neighbors = min(5, n_coords)
+        max_pos_dist = 6.0
+        n_nearest_neighbors = min(20, n_coords)
         sigma = 1
         normalization = 2*(sigma**2)
         for i in range(n_coords):
-            nn_dists, nn_indices = tree.query(coords[i,:], p = 2, k = n_nearest_neighbors)
+            # nn_dists, nn_indices = tree.query(coords[i,:], p = 2, k = n_nearest_neighbors)
+            nn_indices = tree.query_ball_point(coords[i,:], r = max_pos_dist, p = 2)
             nn_indices = [nn_indices] if n_nearest_neighbors == 1 else nn_indices
 
             # print(f'Found the following indices: {nn_indices} / {n_coords}')
@@ -117,8 +143,7 @@ class GlobalGraph(object):
                 if nn_i == i:
                     continue
                 dist = spatial.distance.euclidean(coords[nn_i,:], coords[i,:])
-                if dist <= max_pos_dist:
-                    adj[i,nn_i] = np.exp(dist/normalization)
+                adj[i,nn_i] = np.exp(-dist/normalization)
 
         return adj
 

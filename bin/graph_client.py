@@ -50,6 +50,7 @@ class GraphClient(object):
         # Handlers and evaluators.
         self.global_graph = GlobalGraph(reduced=False)
         self.robot_graph = GlobalGraph(reduced=False)
+        self.latest_traj_msg = None
         self.signal = SignalHandler()
         self.optimized_signal = SignalHandler()
         self.synchronizer = SignalSynchronizer()
@@ -114,19 +115,22 @@ class GraphClient(object):
     def traj_path_callback(self, msg):
         if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
-
-        # TODO(lbern): construct graph from path and compute wavelets
-        self.robot_graph.build_from_path(msg)
-
         msg.header.frame_id = self.config.robot_name
-        key = self.signal.convert_signal_from_path(msg)
+        self.latest_traj_msg = msg
+
+    def process_latest_robot_data(self):
+        if self.latest_traj_msg == None:
+            return False
+        self.robot_graph.build_from_path(self.latest_traj_msg)
+        key = self.signal.convert_signal_from_path(self.latest_traj_msg)
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")
-            return
+            return False
 
         if self.key_in_keys(key):
-            return
+            return True
         self.keys.append(key)
+        return True
 
     def submap_constraint_callback(self, msg):
         if not (self.is_initialized and self.config.enable_submap_constraints):
@@ -139,8 +143,12 @@ class GraphClient(object):
 
     def update(self):
         rospy.loginfo("[GraphClient] Updating...")
-        self.compare_estimations()
         self.check_for_submap_constraints()
+
+        if not self.process_latest_robot_data():
+            rospy.logwarn('[GrpahClient] Found no robot data to process')
+            return
+        self.compare_estimations()
         self.publish_client_update()
         rospy.loginfo("[GraphClient] Updating completed")
 

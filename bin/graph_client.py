@@ -55,6 +55,7 @@ class GraphClient(object):
         self.optimized_signal = SignalHandler()
         self.synchronizer = SignalSynchronizer()
         self.eval = WaveletEvaluator()
+        self.robot_eval = WaveletEvaluator()
         self.commander = CommandPost()
 
         # Key management to keep track of the received messages.
@@ -122,6 +123,10 @@ class GraphClient(object):
         if self.latest_traj_msg == None:
             return False
         self.robot_graph.build_from_path(self.latest_traj_msg)
+        if not self.robot_graph.is_built:
+            rospy.logerr(f'[GraphClient] Building robot graph from path failed.')
+            return False
+
         key = self.signal.convert_signal_from_path(self.latest_traj_msg)
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")
@@ -239,7 +244,10 @@ class GraphClient(object):
         assert(len(all_est_nodes) == len(all_opt_nodes))
         assert(len(est_idx) == len(opt_idx))
 
+        # Reduce the robot graph and compute the wavelet basis functions.
         self.robot_graph.reduce_graph_using_indices(est_idx)
+        self.robot_eval.compute_wavelets(self.robot_graph.G)
+
         return (all_opt_nodes, all_est_nodes)
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
@@ -253,13 +261,17 @@ class GraphClient(object):
         self.record_all_trajectories(key, self.signal.compute_trajectory(all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
 
         psi = self.eval.get_wavelets()
+        robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
+            return []
+        if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
+            rospy.logwarn(f'[GraphClient] Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
             return []
 
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.
-        W_est = self.eval.compute_wavelet_coeffs(x_est)
+        W_est = self.robot_eval.compute_wavelet_coeffs(x_est)
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
 
         n_submaps = self.optimized_signal.get_number_of_submaps(key)

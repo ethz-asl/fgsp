@@ -146,7 +146,7 @@ class GraphClient(object):
         self.check_for_submap_constraints()
 
         if not self.process_latest_robot_data():
-            rospy.logwarn('[GrpahClient] Found no robot data to process')
+            rospy.logwarn('[GraphClient] Found no robot data to process')
             return
         self.compare_estimations()
         self.publish_client_update()
@@ -174,7 +174,6 @@ class GraphClient(object):
             self.global_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
         elif src == 'est':
             self.robot_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
-
 
     def record_traj_for_key(self, key, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(key=key, src=src)
@@ -236,8 +235,11 @@ class GraphClient(object):
         # We always sync to the optimized nodes.
         if self.global_graph.is_reduced:
             all_opt_nodes = [all_opt_nodes[i] for i in self.global_graph.reduced_ind]
-        (all_opt_nodes, all_est_nodes) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
+        (all_opt_nodes, all_est_nodes, opt_idx, est_idx) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
         assert(len(all_est_nodes) == len(all_opt_nodes))
+        assert(len(est_idx) == len(opt_idx))
+
+        self.robot_graph.reduce_graph_using_indices(est_idx)
         return (all_opt_nodes, all_est_nodes)
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):

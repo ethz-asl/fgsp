@@ -145,6 +145,7 @@ class GlobalGraph(object):
                 dist = spatial.distance.euclidean(coords[nn_i,:], coords[i,:])
                 adj[i,nn_i] = np.exp(-dist/normalization)
 
+        assert np.all(adj >= 0)
         return adj
 
     def read_submap_indices(self, graph_msg):
@@ -153,11 +154,19 @@ class GlobalGraph(object):
     def reduce_graph(self):
         #self.reduced_ind = self.reduce_every_other()
         self.reduced_ind = self.reduce_largest_ev_positive()
+        self.reduce_graph_using_indices(self.reduced_ind)
 
-        self.coords = self.coords[self.reduced_ind]
-        self.G = reduction.kron_reduction(self.G, self.reduced_ind)
-        self.G.compute_fourier_basis()
+    def reduce_graph_using_indices(self, reduced_ind):
+        rospy.loginfo(f'[GlobalGraph] Reducing graph using {len(reduced_ind)}/{self.G.N} indices.')
+        self.coords = self.coords[reduced_ind]
+        self.G = reduction.kron_reduction(self.G, reduced_ind)
         self.adj = self.G.W.toarray()
+        self.adj[self.adj < 0] = 0
+        self.G = graphs.Graph(self.adj)
+
+        # TODO(lbern): check why kron results in some negative weights.
+        assert np.all(self.adj >= 0)
+        self.G.compute_fourier_basis()
 
     def reduce_every_other(self):
         n_nodes = np.shape(self.coords)[0]

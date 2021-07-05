@@ -34,7 +34,7 @@ class SignalSynchronizer(object):
         est_nodes = [estimated[i] for i in est_idx]
         opt_nodes = [optimized[i] for i in opt_idx]
 
-        return (opt_nodes, est_nodes)
+        return (opt_nodes, est_nodes, opt_idx, est_idx)
 
 
     def extract_timestamps(self, signals):

@@ -34,7 +34,7 @@ class GraphClient(object):
         self.mutex.acquire()
 
         # Subscribers.
-        rospy.Subscriber(self.config.opt_graph_topic, Graph, self.graph_callback)
+        rospy.Subscriber(self.config.opt_graph_topic, Graph, self.global_graph_callback)
         rospy.Subscriber(self.config.opt_traj_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(self.config.est_traj_topic, Trajectory, self.traj_callback)
         rospy.Subscriber(self.config.est_traj_path_topic, Path, self.traj_path_callback)
@@ -48,11 +48,14 @@ class GraphClient(object):
         self.client_update_pub = rospy.Publisher(self.config.client_update_topic, Graph, queue_size=20)
 
         # Handlers and evaluators.
-        self.graph = GlobalGraph(reduced=False)
+        self.global_graph = GlobalGraph(reduced=False)
+        self.robot_graph = GlobalGraph(reduced=False)
+        self.latest_traj_msg = None
         self.signal = SignalHandler()
         self.optimized_signal = SignalHandler()
         self.synchronizer = SignalSynchronizer()
         self.eval = WaveletEvaluator()
+        self.robot_eval = WaveletEvaluator()
         self.commander = CommandPost()
 
         # Key management to keep track of the received messages.
@@ -62,15 +65,15 @@ class GraphClient(object):
         self.mutex.release()
         self.is_initialized = True
 
-    def graph_callback(self, msg):
+    def global_graph_callback(self, msg):
         if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
         self.mutex.acquire()
 
         # We only trigger the graph building if the msg contains new information.
-        if self.graph.msg_contains_updates(msg) is True:
-            self.graph.build(msg)
-            self.eval.compute_wavelets(self.graph.G)
+        if self.global_graph.msg_contains_updates(msg) is True:
+            self.global_graph.build(msg)
+            self.eval.compute_wavelets(self.global_graph.G)
 
         self.mutex.release()
 
@@ -82,10 +85,10 @@ class GraphClient(object):
         rospy.loginfo(f'[GraphClient] Received client update')
         client_seq = graph_msg.header.seq
         self.mutex.acquire()
-        graph_seq = self.graph.graph_seq
-        if self.graph.msg_contains_updates(graph_msg) is True:
-            self.graph.build(graph_msg)
-            self.eval.compute_wavelets(self.graph.G)
+        graph_seq = self.global_graph.graph_seq
+        if self.global_graph.msg_contains_updates(graph_msg) is True:
+            self.global_graph.build(graph_msg)
+            self.eval.compute_wavelets(self.global_graph.G)
 
         self.mutex.release()
 
@@ -113,16 +116,26 @@ class GraphClient(object):
     def traj_path_callback(self, msg):
         if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
-
         msg.header.frame_id = self.config.robot_name
-        key = self.signal.convert_signal_from_path(msg)
+        self.latest_traj_msg = msg
+
+    def process_latest_robot_data(self):
+        if self.latest_traj_msg == None:
+            return False
+        self.robot_graph.build_from_path(self.latest_traj_msg)
+        if not self.robot_graph.is_built:
+            rospy.logerr(f'[GraphClient] Building robot graph from path failed.')
+            return False
+
+        key = self.signal.convert_signal_from_path(self.latest_traj_msg)
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")
-            return
+            return False
 
         if self.key_in_keys(key):
-            return
+            return True
         self.keys.append(key)
+        return True
 
     def submap_constraint_callback(self, msg):
         if not (self.is_initialized and self.config.enable_submap_constraints):
@@ -135,8 +148,12 @@ class GraphClient(object):
 
     def update(self):
         rospy.loginfo("[GraphClient] Updating...")
-        self.compare_estimations()
         self.check_for_submap_constraints()
+
+        if not self.process_latest_robot_data():
+            rospy.logwarn('[GraphClient] Found no robot data to process')
+            return
+        self.compare_estimations()
         self.publish_client_update()
         rospy.loginfo("[GraphClient] Updating completed")
 
@@ -156,10 +173,12 @@ class GraphClient(object):
         signal_file = self.config.dataroot + self.config.signal_export_path.format(key=key, src=src)
         rospy.loginfo(f'Writing signals from {src}.')
         np.save(signal_file, x)
+        graph_coords_file = self.config.dataroot + self.config.graph_coords_export_path.format(key=key, src=src)
+        graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(key=key, src=src)
         if src == 'opt':
-            graph_coords_file = self.config.dataroot + self.config.graph_coords_export_path.format(key=key, src=src)
-            graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(key=key, src=src)
-            self.graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
+            self.global_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
+        elif src == 'est':
+            self.robot_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
 
     def record_traj_for_key(self, key, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(key=key, src=src)
@@ -170,7 +189,7 @@ class GraphClient(object):
         if not self.config.enable_anchor_constraints:
             return
         self.mutex.acquire()
-        if self.graph.is_built is False:
+        if self.global_graph.is_built is False:
             self.mutex.release()
             return
         # Iterate over all estimated trajectories.
@@ -193,10 +212,10 @@ class GraphClient(object):
             time.sleep(0.10)
 
     def publish_client_update(self):
-        if not (self.config.enable_anchor_constraints and self.graph.is_built):
+        if not (self.config.enable_anchor_constraints and self.global_graph.is_built):
             return
         self.mutex.acquire()
-        graph_msg = self.graph.latest_graph_msg
+        graph_msg = self.global_graph.latest_graph_msg
         if graph_msg is not None:
             self.client_update_pub.publish(graph_msg)
         self.mutex.release()
@@ -219,10 +238,16 @@ class GraphClient(object):
         # If the graph is reduced, we need to reduce the optimized nodes too.
         # Synchronize the node lists based on their TS.
         # We always sync to the optimized nodes.
-        if self.graph.is_reduced:
-            all_opt_nodes = [all_opt_nodes[i] for i in self.graph.reduced_ind]
-        (all_opt_nodes, all_est_nodes) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
+        if self.global_graph.is_reduced:
+            all_opt_nodes = [all_opt_nodes[i] for i in self.global_graph.reduced_ind]
+        (all_opt_nodes, all_est_nodes, opt_idx, est_idx) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
         assert(len(all_est_nodes) == len(all_opt_nodes))
+        assert(len(est_idx) == len(opt_idx))
+
+        # Reduce the robot graph and compute the wavelet basis functions.
+        self.robot_graph.reduce_graph_using_indices(est_idx)
+        self.robot_eval.compute_wavelets(self.robot_graph.G)
+
         return (all_opt_nodes, all_est_nodes)
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
@@ -236,13 +261,17 @@ class GraphClient(object):
         self.record_all_trajectories(key, self.signal.compute_trajectory(all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
 
         psi = self.eval.get_wavelets()
+        robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
+            return []
+        if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
+            rospy.logwarn(f'[GraphClient] Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
             return []
 
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.
-        W_est = self.eval.compute_wavelet_coeffs(x_est)
+        W_est = self.robot_eval.compute_wavelet_coeffs(x_est)
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
 
         n_submaps = self.optimized_signal.get_number_of_submaps(key)

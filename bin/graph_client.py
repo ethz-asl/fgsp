@@ -122,10 +122,6 @@ class GraphClient(object):
     def process_latest_robot_data(self):
         if self.latest_traj_msg == None:
             return False
-        self.robot_graph.build_from_path(self.latest_traj_msg)
-        if not self.robot_graph.is_built:
-            rospy.logerr(f'[GraphClient] Building robot graph from path failed.')
-            return False
 
         key = self.signal.convert_signal_from_path(self.latest_traj_msg)
         if not key:
@@ -245,7 +241,11 @@ class GraphClient(object):
         assert(len(est_idx) == len(opt_idx))
 
         # Reduce the robot graph and compute the wavelet basis functions.
-        self.robot_graph.reduce_graph_using_indices(est_idx)
+        positions = np.array([np.array(x.position) for x in all_est_nodes])
+        print(f'positions: {positions.shape[0]}')
+        self.robot_graph.build_from_poses(positions)
+        print(f'graph: {self.robot_graph.G.N}')
+        # self.robot_graph.reduce_graph_using_indices(est_idx)
         self.robot_eval.compute_wavelets(self.robot_graph.G)
 
         return (all_opt_nodes, all_est_nodes)

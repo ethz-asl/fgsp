@@ -19,8 +19,8 @@ dataroot:                    "/home/subt/mapping_ws/src/fgsp"
 robot_name:                  "anymal_5"
 random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.1
-enable_anchor_constraints:   True
-enable_submap_constraints:   False
+enable_anchor_constraints:   False
+enable_submap_constraints:   True
 enable_signal_recording:     True
 signal_export_path:          "/data/{key}_{src}_signal.npy"
 graph_coords_export_path:    "/data/{key}_{src}_graph_coords.npy"

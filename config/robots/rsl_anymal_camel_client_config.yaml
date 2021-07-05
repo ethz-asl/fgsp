@@ -18,10 +18,12 @@ client_update_topic:         "/graph_client/latest_graph"
 dataroot:                    "/home/subt/mapping_ws/src/fgsp"
 robot_name:                  "anymal_5"
 random_forest_model:         "/config/forest.joblib"
-update_rate:                 0.02
+update_rate:                 0.1
 enable_anchor_constraints:   True
 enable_submap_constraints:   False
 enable_signal_recording:     True
 signal_export_path:          "/data/{key}_{src}_signal.npy"
+graph_coords_export_path:    "/data/{key}_{src}_graph_coords.npy"
+graph_adj_export_path:       "/data/{key}_{src}_graph_adj.npy"
 enable_trajectory_recording: True
 trajectory_export_path:      "/data/{key}_{src}_trajectory.npy"

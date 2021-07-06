@@ -6,8 +6,8 @@ est_traj_path_topic:         /incremental_trajectory
 opt_submap_constraint_topic: /graph_monitor/submaps
 
 # Publishers.
-anchor_node_topic:           '/graph_client/anchor_nodes'
-relative_node_topic:         '/graph_client/relative_nodes'
+anchor_node_topic:           '/graph_client/anchor_nodes_old'
+relative_node_topic:         '/graph_client/anchor_nodes'
 intra_constraints:           '/graph_client/intra_constraints'
 verification_service:        '/graph_monitor/verification'
 
@@ -19,7 +19,7 @@ dataroot:                    "/home/subt/mapping_ws/src/darpa_subt_mapping/fgsp"
 robot_name:                  "anymal_5"
 random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.1
-enable_anchor_constraints:   False
+enable_anchor_constraints:   True
 enable_submap_constraints:   True
 enable_signal_recording:     True
 signal_export_path:          "/data/{key}_{src}_signal.npy"

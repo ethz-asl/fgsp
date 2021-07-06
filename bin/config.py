@@ -76,6 +76,7 @@ class ClientConfig(object):
         self.graph_coords_export_path = "/data/{key}_{src}_graph_coords.npy"
         self.graph_adj_export_path = "/data/{key}_{src}_graph_adj.npy"
         self.trajectory_export_path = "/data/{key}_{src}_trajectory.npy"
+        self.trajectory_export_path = "/data/{key}_{src}_raw_trajectory.npy"
 
 
         # input
@@ -108,6 +109,7 @@ class ClientConfig(object):
         self.graph_coords_export_path = rospy.get_param("~graph_coords_export_path")
         self.graph_adj_export_path = rospy.get_param("~graph_adj_export_path")
         self.trajectory_export_path = rospy.get_param("~trajectory_export_path")
+        self.trajectory_raw_export_path = rospy.get_param("~trajectory_raw_export_path")
 
         # input
         self.opt_graph_topic = rospy.get_param("~opt_graph_topic")

@@ -159,7 +159,12 @@ class GraphClient(object):
         self.record_signal_for_key(key, x_est, 'est')
         self.record_signal_for_key(key, x_opt, 'opt')
 
-    def record_all_trajectories(self, key, traj_est, traj_opt):
+    def record_raw_est_trajectory(self, key, traj):
+        filename = self.config.dataroot + self.config.trajectory_raw_export_path.format(key=key, src='est')
+        rospy.loginfo(f'Writing raw trajectory from {key}.')
+        np.save(filename, traj)
+
+    def record_synchronized_trajectories(self, key, traj_est, traj_opt):
         if not self.config.enable_trajectory_recording:
             return
         self.record_traj_for_key(key, traj_est, 'est')
@@ -167,7 +172,7 @@ class GraphClient(object):
 
     def record_signal_for_key(self, key, x, src):
         signal_file = self.config.dataroot + self.config.signal_export_path.format(key=key, src=src)
-        rospy.loginfo(f'Writing signals from {src}.')
+        rospy.loginfo(f'Writing signals from {key}.')
         np.save(signal_file, x)
         graph_coords_file = self.config.dataroot + self.config.graph_coords_export_path.format(key=key, src=src)
         graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(key=key, src=src)
@@ -178,7 +183,7 @@ class GraphClient(object):
 
     def record_traj_for_key(self, key, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(key=key, src=src)
-        rospy.loginfo(f'Writing trajectory from {src}.')
+        rospy.loginfo(f'Writing trajectory from {key}.')
         np.save(filename, traj)
 
     def compare_estimations(self):
@@ -224,6 +229,7 @@ class GraphClient(object):
         n_opt_nodes = len(all_opt_nodes)
 
         # Compute the features and publish the results.
+        self.record_raw_est_trajectory(key, self.signal.compute_trajectory(all_est_nodes))
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
         all_features = self.compute_all_submap_features(key, all_opt_nodes, all_est_nodes)
         self.evaluate_and_publish_features(all_features)
@@ -258,7 +264,7 @@ class GraphClient(object):
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
         self.record_all_signals(key, x_est, x_opt)
-        self.record_all_trajectories(key, self.signal.compute_trajectory(all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
+        self.record_synchronized_trajectories(key, self.signal.compute_trajectory(all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
 
         psi = self.eval.get_wavelets()
         robot_psi = self.robot_eval.get_wavelets()

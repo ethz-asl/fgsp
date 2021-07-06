@@ -5,6 +5,7 @@ from pygsp import graphs, filters, reduction
 from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 
+from utils import Utils
 from signal_node import SignalNode
 
 
@@ -124,9 +125,11 @@ class SignalHandler(object):
 
     def compute_trajectory(self, nodes):
         n_nodes = len(nodes)
-        trajectory = np.zeros((n_nodes, 3))
+        trajectory = np.zeros((n_nodes, 8))
         for i in range(n_nodes):
-            trajectory[i,0:3] = nodes[i].position
+            trajectory[i,0] = Utils.ros_time_to_ns(nodes[i].ts)
+            trajectory[i,1:4] = nodes[i].position
+            trajectory[i,4:8] = nodes[i].orientation
 
         return trajectory
 

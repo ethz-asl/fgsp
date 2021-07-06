@@ -27,3 +27,4 @@ graph_coords_export_path:    "/data/{key}_{src}_graph_coords.npy"
 graph_adj_export_path:       "/data/{key}_{src}_graph_adj.npy"
 enable_trajectory_recording: True
 trajectory_export_path:      "/data/{key}_{src}_trajectory.npy"
+trajectory_raw_export_path:  "/data/{key}_{src}_raw_trajectory.npy"

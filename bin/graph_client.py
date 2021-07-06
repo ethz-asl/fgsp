@@ -136,7 +136,6 @@ class GraphClient(object):
         if self.latest_traj_msg == None:
             return False
 
-        rospy.logwarn(f'[GraphClient] Processing latest traj message ')
         key = self.signal.convert_signal_from_path(self.latest_traj_msg, self.config.robot_name)
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")
@@ -163,9 +162,9 @@ class GraphClient(object):
         if not self.process_latest_robot_data():
             rospy.logwarn('[GraphClient] Unable to process latest robot data.')
             return
-
         self.compare_estimations()
         self.publish_client_update()
+
         rospy.loginfo("[GraphClient] Updating completed")
 
     def record_all_signals(self, key, x_est, x_opt):
@@ -249,6 +248,8 @@ class GraphClient(object):
         all_features = self.compute_all_submap_features(key, all_opt_nodes, all_est_nodes)
         self.evaluate_and_publish_features(all_features)
 
+        self.check_for_degeneracy(all_opt_nodes, all_est_nodes)
+
         return True
 
     def reduce_and_synchronize(self, all_opt_nodes, all_est_nodes):
@@ -263,13 +264,22 @@ class GraphClient(object):
 
         # Reduce the robot graph and compute the wavelet basis functions.
         positions = np.array([np.array(x.position) for x in all_est_nodes])
-        print(f'positions: {positions.shape[0]}')
         self.robot_graph.build_from_poses(positions)
-        print(f'graph: {self.robot_graph.G.N}')
         # self.robot_graph.reduce_graph_using_indices(est_idx)
         self.robot_eval.compute_wavelets(self.robot_graph.G)
 
         return (all_opt_nodes, all_est_nodes)
+
+    def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
+        rospy.loginfo('[GraphClient] Checking for degeneracy.')
+        n_nodes = len(all_opt_nodes)
+        assert n_nodes == len(all_est_nodes)
+        for i in range(0, n_nodes):
+            if not all_est_nodes[i].degenerate:
+                continue
+            begin_send = max(i - 10, 0)
+            self.commander.send_degenerate_anchors(all_opt_nodes[begin_send:i])
+
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
         if not self.eval.is_available:

@@ -14,16 +14,19 @@ class CommandPost(object):
         self.pub_anchor = rospy.Publisher(anchor_node_topic, Path, queue_size=10)
         self.pub_relative = rospy.Publisher(relative_node_topic, Path, queue_size=10)
         self.pub_verify = rospy.Publisher(verification_service, VerificationCheckRequest, queue_size=10)
+        self.pub_degenerate = rospy.Publisher('/graph_client/degenerate_anchors', Path, queue_size=10)
         #self.verification_proxy = rospy.ServiceProxy(verification_service, Verification)
 
         self.good_path_msg = None
         self.bad_path_msg = None
+        self.degenerate_path_msg = None
         self.verification_request = VerificationCheckRequest()
         rospy.loginfo("[CommandPost] Initialized command post center.")
 
     def reset_msgs(self):
         self.good_path_msg = Path()
         self.bad_path_msg = Path()
+        self.degenerate_path_msg = Path()
         self.verification_request = VerificationCheckRequest()
 
     def accumulate_update_messages(self, submap_features):
@@ -32,15 +35,7 @@ class CommandPost(object):
         n_nodes = len(submap_features.nodes)
         for i in range(0, n_nodes):
             cur_opt = submap_features.nodes[i]
-            pose_msg = PoseStamped()
-            pose_msg.header.stamp = cur_opt.ts
-            pose_msg.pose.position.x = cur_opt.position[0]
-            pose_msg.pose.position.y = cur_opt.position[1]
-            pose_msg.pose.position.z = cur_opt.position[2]
-            pose_msg.pose.orientation.w = cur_opt.orientation[0]
-            pose_msg.pose.orientation.x = cur_opt.orientation[1]
-            pose_msg.pose.orientation.y = cur_opt.orientation[2]
-            pose_msg.pose.orientation.z = cur_opt.orientation[3]
+            pose_msg = self.create_pose_msg_from_node(cur_opt)
 
             if submap_features.label == 0:
                 self.good_path_msg.poses.append(pose_msg)
@@ -49,6 +44,18 @@ class CommandPost(object):
                 self.append_verification_request(submap_features)
             else:
                 rospy.logerror(f"Found an unknown label {submap_features.label}")
+
+    def create_pose_msg_from_node(self, cur_opt):
+        pose_msg = PoseStamped()
+        pose_msg.header.stamp = cur_opt.ts
+        pose_msg.pose.position.x = cur_opt.position[0]
+        pose_msg.pose.position.y = cur_opt.position[1]
+        pose_msg.pose.position.z = cur_opt.position[2]
+        pose_msg.pose.orientation.w = cur_opt.orientation[0]
+        pose_msg.pose.orientation.x = cur_opt.orientation[1]
+        pose_msg.pose.orientation.y = cur_opt.orientation[2]
+        pose_msg.pose.orientation.z = cur_opt.orientation[3]
+        return pose_msg
 
     def publish_update_messages(self):
         if self.good_path_msg == None or self.bad_path_msg == None:
@@ -84,3 +91,13 @@ class CommandPost(object):
         #self.verification_proxy(self.verification_request)
         self.verification_request.header.stamp = rospy.Time.now()
         self.pub_verify.publish(self.verification_request)
+
+    def send_degenerate_anchors(self, opt_nodes):
+        rospy.logerr(f'Sending degenerate anchors for {len(opt_nodes)} nodes.')
+        n_degenerate = len(opt_nodes)
+        for i in range(0, n_nodes):
+            pose_msg = self.create_pose_msg_from_node(opt_nodes[i])
+            self.degenerate_path_msg.poses.append(pose_msg)
+
+        self.degenerate_path_msg.header.stamp = rospy.Time.now()
+        self.pub_degenerate.publish(self.degenerate_path_msg)

@@ -130,14 +130,14 @@ class GraphClient(object):
     def traj_path_callback(self, msg):
         if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
-        msg.header.frame_id = self.config.robot_name
         self.latest_traj_msg = msg
 
     def process_latest_robot_data(self):
         if self.latest_traj_msg == None:
             return False
 
-        key = self.signal.convert_signal_from_path(self.latest_traj_msg)
+        rospy.logwarn(f'[GraphClient] Processing latest traj message ')
+        key = self.signal.convert_signal_from_path(self.latest_traj_msg, self.config.robot_name)
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")
             return False
@@ -161,8 +161,9 @@ class GraphClient(object):
         self.check_for_submap_constraints()
 
         if not self.process_latest_robot_data():
-            rospy.logwarn('[GraphClient] Found no robot data to process')
+            rospy.logwarn('[GraphClient] Unable to process latest robot data.')
             return
+
         self.compare_estimations()
         self.publish_client_update()
         rospy.loginfo("[GraphClient] Updating completed")

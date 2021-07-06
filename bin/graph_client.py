@@ -110,12 +110,13 @@ class GraphClient(object):
         if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
 
-        key = self.optimized_signal.convert_signal(msg)
-        rospy.loginfo(f"[GraphClient] Received opt trajectory message from {key}.")
+        keys = self.optimized_signal.convert_signal(msg)
+        rospy.loginfo(f"[GraphClient] Received opt trajectory message from {keys}.")
 
-        if self.key_in_optimized_keys(key):
-            return
-        self.optimized_keys.append(key)
+        for key in keys:
+            if self.key_in_optimized_keys(key):
+                continue
+            self.optimized_keys.append(key)
 
     def traj_callback(self, msg):
         if self.is_initialized is False:

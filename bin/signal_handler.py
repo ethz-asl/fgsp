@@ -13,7 +13,7 @@ class SignalHandler(object):
     def __init__(self):
         self.signals = {}
 
-    def find_robot_keys(self, signals):
+    def group_robots(self, signals):
         n_nodes = len(signals)
         grouped_signals = {}
         for i in range(0, n_nodes):
@@ -25,22 +25,20 @@ class SignalHandler(object):
         return grouped_signals
 
     def convert_signal(self, signal_msg):
-        n_nodes = len(signal_msg.nodes)
-        if (n_nodes <= 0):
-            return ""
+        grouped_signals = self.group_robots(signal_msg.nodes)
+        rospy.loginfo(f'[SignalHandler] Grouped signals are {grouped_signals.keys()}')
 
-        signals = [SignalNode] * n_nodes
-        signals[0] = self.convert_trajectory_node(signal_msg.nodes[0])
-        key = signals[0].robot_name
-        if key == "":
-            return ""
+        for key, nodes in grouped_signals.items():
+            n_nodes = len(nodes)
+            if (n_nodes <= 0):
+                continue
 
-        for i in range(1, n_nodes):
-            signals[i] = self.convert_trajectory_node(signal_msg.nodes[i])
+            signals = [SignalNode] * n_nodes
+            for i in range(0, n_nodes):
+                signals[i] = self.convert_trajectory_node(signal_msg.nodes[i])
+            self.signals[key] = signals
 
-        self.signals[key] = signals
-
-        return key
+        return grouped_signals.keys()
 
     def convert_signal_from_path(self, path_msg, robot_name):
         n_poses = len(path_msg.poses)

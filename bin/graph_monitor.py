@@ -67,14 +67,13 @@ class GraphMonitor(object):
         if self.is_initialized is False:
             return
 
-        key = self.optimized_signal.convert_signal(msg)
-        print(f'Got optimized version of robot {key}')
-        if key == "":
-            rospy.logerr("[GraphMonitor] Unable to convert signal.")
+        keys = self.optimized_signal.convert_signal(msg)
+        print(f'Got optimized version of robot {keys}')
 
-        if self.key_in_optimized_keys(key):
-            return
-        self.optimized_keys.append(key)
+        for key in keys:
+            if self.key_in_optimized_keys(key):
+                continue
+            self.optimized_keys.append(key)
 
     def verification_callback(self, msg):
         self.verification_handler.handle_verification(msg)

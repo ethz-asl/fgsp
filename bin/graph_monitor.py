@@ -2,6 +2,7 @@
 
 import rospy
 import copy
+import time
 from maplab_msgs.msg import *
 from multiprocessing import Lock
 
@@ -159,6 +160,7 @@ class GraphMonitor(object):
             traj_msg = self.optimized_signal.to_signal_msg(key)
             self.pub_traj.publish(traj_msg)
             rospy.loginfo(f"[GraphMonitor] Published trajectory for {key}.")
+            time.sleep(0.10)
 
     def publish_all_submaps(self, submaps):
         self.submap_handler.publish_submaps(submaps)

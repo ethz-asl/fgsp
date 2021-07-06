@@ -74,8 +74,9 @@ class GraphClient(object):
         cur_ts = Utils.ros_time_to_ns(rospy.Time.now())
         export_folder = self.config.dataroot + '/data/' + self.config.robot_name + '_%d'%np.float32(cur_ts)
         rospy.logwarn(f'[GraphClient] Setting up dataroot folder to {export_folder}')
-        os.mkdir(export_folder)
-        os.mkdir(export_folder + '/data')
+        if not os.path.exists(export_folder):
+            os.mkdir(export_folder)
+            os.mkdir(export_folder + '/data')
         self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):

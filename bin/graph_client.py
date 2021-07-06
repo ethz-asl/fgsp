@@ -19,6 +19,7 @@ from feature_node import FeatureNode
 from constraint_handler import ConstraintHandler
 from config import ClientConfig
 from plotter import Plotter
+from utils import Utils
 
 class GraphClient(object):
     def __init__(self):
@@ -62,8 +63,20 @@ class GraphClient(object):
         self.optimized_keys = []
         self.keys = []
 
+        self.create_data_export_folder()
         self.mutex.release()
         self.is_initialized = True
+
+
+    def create_data_export_folder(self):
+        if not self.config.enable_signal_recording and not self.config.enable_trajectory_recording:
+            return
+        cur_ts = Utils.ros_time_to_ns(rospy.Time.now())
+        export_folder = self.config.dataroot + '/data/' + '%d'%np.float32(cur_ts)
+        rospy.logwarn(f'[GraphClient] Setting up dataroot folder to {export_folder}')
+        os.mkdir(export_folder)
+        os.mkdir(export_folder + '/data')
+        self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
         if not (self.is_initialized and self.config.enable_anchor_constraints):

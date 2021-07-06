@@ -13,6 +13,17 @@ class SignalHandler(object):
     def __init__(self):
         self.signals = {}
 
+    def find_robot_keys(self, signals):
+        n_nodes = len(signals)
+        grouped_signals = {}
+        for i in range(0, n_nodes):
+            robot = signals[i].robot_name
+            if not robot in grouped_signals.keys():
+                grouped_signals[robot] = []
+
+            grouped_signals[robot].append(signals[i])
+        return grouped_signals
+
     def convert_signal(self, signal_msg):
         n_nodes = len(signal_msg.nodes)
         if (n_nodes <= 0):

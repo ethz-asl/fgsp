@@ -68,6 +68,7 @@ class GraphMonitor(object):
             return
 
         key = self.optimized_signal.convert_signal(msg)
+        print(f'Got optimized version of robot {key}')
         if key == "":
             rospy.logerr("[GraphMonitor] Unable to convert signal.")
 

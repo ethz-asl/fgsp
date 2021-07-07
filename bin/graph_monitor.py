@@ -49,6 +49,7 @@ class GraphMonitor(object):
         self.submaps = {}
         self.submap_counter = {}
         self.is_initialized = True
+        self.latest_opt_traj_msg = None
         self.mutex.release()
 
 
@@ -75,6 +76,7 @@ class GraphMonitor(object):
             if self.key_in_optimized_keys(key):
                 continue
             self.optimized_keys.append(key)
+        self.latest_opt_traj_msg = msg
 
     def verification_callback(self, msg):
         self.verification_handler.handle_verification(msg)
@@ -156,11 +158,19 @@ class GraphMonitor(object):
         self.pub_graph.publish(graph_msg)
         rospy.loginfo(f"[GraphMonitor] Published global graph.")
 
+        if self.config.send_separate_traj_msgs:
+            self.send_separate_traj_msgs()
+        else:
+            self.pub_traj.publish(self.latest_opt_traj_msg)
+            rospy.loginfo(f"[GraphMonitor] Published trajectory for keys {self.optimized_keys}.")
+
+
+    def send_separate_traj_msgs(self):
         for key in self.optimized_keys:
             traj_msg = self.optimized_signal.to_signal_msg(key)
             self.pub_traj.publish(traj_msg)
-            rospy.loginfo(f"[GraphMonitor] Published trajectory for {key}.")
             time.sleep(0.10)
+            rospy.loginfo(f"[GraphMonitor] Published separate trajectory for {key}.")
 
     def publish_all_submaps(self, submaps):
         self.submap_handler.publish_submaps(submaps)

@@ -11,6 +11,7 @@ class MonitorConfig(object):
         self.min_node_count = 10
         self.reduce_global_graph = False
         self.submap_min_ts_diff_ns = 10000000000
+        self.send_separate_traj_msgs = True
 
         # submap constraints
         self.pivot_distance = 20
@@ -39,6 +40,7 @@ class MonitorConfig(object):
         self.min_node_count = rospy.get_param("~min_node_count")
         self.reduce_global_graph = rospy.get_param("~reduce_global_graph")
         self.submap_min_count = rospy.get_param("~submap_min_count")
+        self.send_separate_traj_msgs = rospy.get_param("~send_separate_traj_msgs")
 
         # submap constraints
         self.pivot_distance = rospy.get_param("~submap_constraint_pivot_distance")

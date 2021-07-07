@@ -9,7 +9,6 @@ random_forest_model:                  "/home/berlukas/Documents/workspace/fgsp_w
 verification_service:                 /graph_monitor/verification
 verification_server_request:          /maplab_server/verification
 
-
 opt_pc_topic:                         "/maplab_server/sparse_graph/submap"
 enable_graph_building:                True
 enable_submap_constraints:            False
@@ -23,3 +22,4 @@ submap_constraint_p_norm:             2
 submap_constraint_refine_icp:         False
 submap_constraint_export_lidar_poses: False
 submap_min_count:                     3
+send_separate_traj_msgs:              False

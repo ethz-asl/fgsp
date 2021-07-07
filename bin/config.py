@@ -79,7 +79,7 @@ class ClientConfig(object):
         self.graph_adj_export_path = "/data/{key}_{src}_graph_adj.npy"
         self.trajectory_export_path = "/data/{key}_{src}_trajectory.npy"
         self.trajectory_export_path = "/data/{key}_{src}_raw_trajectory.npy"
-
+        self.degenerate_window = 10
 
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
@@ -112,6 +112,7 @@ class ClientConfig(object):
         self.graph_adj_export_path = rospy.get_param("~graph_adj_export_path")
         self.trajectory_export_path = rospy.get_param("~trajectory_export_path")
         self.trajectory_raw_export_path = rospy.get_param("~trajectory_raw_export_path")
+        self.degenerate_window = rospy.get_param("~degenerate_window")
 
         # input
         self.opt_graph_topic = rospy.get_param("~opt_graph_topic")

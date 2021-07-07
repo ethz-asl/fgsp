@@ -95,7 +95,7 @@ class CommandPost(object):
     def send_degenerate_anchors(self, opt_nodes):
         rospy.logerr(f'Sending degenerate anchors for {len(opt_nodes)} nodes.')
         n_degenerate = len(opt_nodes)
-        for i in range(0, n_nodes):
+        for i in range(0, n_degenerate):
             pose_msg = self.create_pose_msg_from_node(opt_nodes[i])
             self.degenerate_path_msg.poses.append(pose_msg)
 

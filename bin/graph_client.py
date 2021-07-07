@@ -158,6 +158,7 @@ class GraphClient(object):
 
     def update(self):
         rospy.loginfo("[GraphClient] Updating...")
+        self.commander.reset_msgs()
         self.check_for_submap_constraints()
 
         if not self.process_latest_robot_data():
@@ -278,10 +279,11 @@ class GraphClient(object):
         for i in range(0, n_nodes):
             if not all_est_nodes[i].degenerate:
                 continue
-            begin_send = max(i - 10, 0)
-            end_send = min(i + 10, n_nodes)
+            pivot = self.config.degenerate_window // 2
+            begin_send = max(i - pivot, 0)
+            end_send = min(i + (self.config.degenerate_window - pivot), n_nodes)
+            rospy.logerr(f'[GraphClient] Sending degenerate anchros from {begin_send} to {end_send}')
             self.commander.send_degenerate_anchors(all_opt_nodes[begin_send:end_send])
-
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
         if not self.eval.is_available:
@@ -330,7 +332,6 @@ class GraphClient(object):
         if len(all_features) == 0:
             return
 
-        self.commander.reset_msgs()
         for submap_features in all_features:
             # Predict the state of all the submaps and publish an update.
             submap_features.label = self.eval.classify_submap(submap_features.features)[0]

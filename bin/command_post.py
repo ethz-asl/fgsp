@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import rospy
+import numpy as np
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, VerificationCheckRequest
 from maplab_msgs.srv import Verification, VerificationResponse
 from geometry_msgs.msg import PoseStamped
@@ -21,6 +22,7 @@ class CommandPost(object):
         self.bad_path_msg = None
         self.degenerate_path_msg = None
         self.verification_request = VerificationCheckRequest()
+        self.degenerate_indices = []
         rospy.loginfo("[CommandPost] Initialized command post center.")
 
     def reset_msgs(self):
@@ -92,12 +94,26 @@ class CommandPost(object):
         self.verification_request.header.stamp = rospy.Time.now()
         self.pub_verify.publish(self.verification_request)
 
-    def send_degenerate_anchors(self, opt_nodes):
-        rospy.logerr(f'Sending degenerate anchors for {len(opt_nodes)} nodes.')
-        n_degenerate = len(opt_nodes)
-        for i in range(0, n_degenerate):
+    def send_degenerate_anchors(self, all_opt_nodes, begin_send, end_send):
+        rospy.logerr(f'Sending degenerate anchors for {end_send - begin_send} nodes.')
+        indices = np.arange(begin_send, end_send, 1)
+        self.send_degenerate_anchors_based_on_indices(all_opt_nodes, indices)
+
+    def send_degenerate_anchors_based_on_indices(self, opt_nodes, indices):
+        rospy.logerr(f'Sending degenerate anchors for {len(indices)} nodes.')
+        for i in indices:
             pose_msg = self.create_pose_msg_from_node(opt_nodes[i])
             self.degenerate_path_msg.poses.append(pose_msg)
 
+            # Update the degenerate anchor indices
+            if not i in self.degenerate_indices:
+                self.degenerate_indices.append(i)
+
         self.degenerate_path_msg.header.stamp = rospy.Time.now()
         self.pub_degenerate.publish(self.degenerate_path_msg)
+
+    def update_degenerate_anchors(self, all_opt_nodes):
+        if len(self.degenerate_indices) == 0:
+            return
+        rospy.logerr(f'Sending degenerate anchor update for {self.degenerate_indices}')
+        self.send_degenerate_anchors_based_on_indices(all_opt_nodes, self.degenerate_indices)

@@ -160,6 +160,7 @@ class GraphClient(object):
         rospy.loginfo("[GraphClient] Updating...")
         self.commander.reset_msgs()
         self.check_for_submap_constraints()
+        self.update_degenerate_anchors()
 
         if not self.process_latest_robot_data():
             rospy.logwarn('[GraphClient] Unable to process latest robot data.')
@@ -269,7 +270,6 @@ class GraphClient(object):
         self.robot_graph.build_from_poses(positions)
         # self.robot_graph.reduce_graph_using_indices(est_idx)
         self.robot_eval.compute_wavelets(self.robot_graph.G)
-
         return (all_opt_nodes, all_est_nodes)
 
     def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
@@ -283,7 +283,14 @@ class GraphClient(object):
             begin_send = max(i - pivot, 0)
             end_send = min(i + (self.config.degenerate_window - pivot), n_nodes)
             rospy.logerr(f'[GraphClient] Sending degenerate anchros from {begin_send} to {end_send}')
-            self.commander.send_degenerate_anchors(all_opt_nodes[begin_send:end_send])
+            self.commander.send_degenerate_anchors(all_opt_nodes, begin_send, end_send)
+
+    def update_degenerate_anchors(self):
+        all_opt_nodes = self.optimized_signal.get_all_nodes(self.config.robot_name)
+        if len(all_opt_nodes) == 0:
+            rospy.logerr(f'[GraphClient] Robot {self.config.robot_name} does not have any optimized nodes yet.')
+            return
+        self.commander.update_degenerate_anchors(all_opt_nodes)
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
         if not self.eval.is_available:

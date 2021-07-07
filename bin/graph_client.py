@@ -279,7 +279,8 @@ class GraphClient(object):
             if not all_est_nodes[i].degenerate:
                 continue
             begin_send = max(i - 10, 0)
-            self.commander.send_degenerate_anchors(all_opt_nodes[begin_send:i])
+            end_send = min(i + 10, n_nodes)
+            self.commander.send_degenerate_anchors(all_opt_nodes[begin_send:end_send])
 
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):

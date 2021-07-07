@@ -12,7 +12,6 @@ from signal_node import SignalNode
 class SignalHandler(object):
     def __init__(self):
         self.signals = {}
-        self.debug_deg = 0
 
     def group_robots(self, signals):
         n_nodes = len(signals)
@@ -111,12 +110,6 @@ class SignalHandler(object):
         position = np.array([pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
         orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
         degenerate = pose_msg.header.frame_id.lower() == 'degenerate'
-
-        self.debug_deg = self.debug_deg + 1
-        if self.debug_deg % 2 == 0:
-            print(f'============================================================================================== DEG')
-            degenerate = True
-
 
         signal = SignalNode()
         signal.init_onboard(ts, robot_name, position, orientation, degenerate)

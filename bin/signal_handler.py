@@ -118,7 +118,7 @@ class SignalHandler(object):
     def compute_signal_from_key(self, key):
         nodes = self.signals[key]
         traj = self.compute_trajectory(nodes)
-        traj_origin = traj[0,:]
+        traj_origin = traj[0,1:4]
 
         pos_signal = (traj - traj_origin).squeeze()
 
@@ -127,7 +127,7 @@ class SignalHandler(object):
 
     def compute_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
-        traj_origin = traj[0,:]
+        traj_origin = traj[0,1:4]
 
         pos_signal = (traj - traj_origin).squeeze()
 

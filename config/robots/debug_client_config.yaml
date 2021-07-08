@@ -19,6 +19,7 @@ dataroot:                    "/home/berlukas/Documents/workspace/fgsp_ws/src/fgs
 robot_name:                  "cerberus"
 random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.1
+enable_client_update:        False
 enable_anchor_constraints:   True
 enable_submap_constraints:   False
 enable_signal_recording:     False

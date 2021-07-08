@@ -34,19 +34,20 @@ class GraphClient(object):
         self.constraint_mutex = Lock()
         self.mutex.acquire()
 
-        # Subscribers.
+        # Subscriber and publisher
         rospy.Subscriber(self.config.opt_graph_topic, Graph, self.global_graph_callback)
         rospy.Subscriber(self.config.opt_traj_topic, Trajectory, self.traj_opt_callback)
         rospy.Subscriber(self.config.est_traj_topic, Trajectory, self.traj_callback)
         rospy.Subscriber(self.config.est_traj_path_topic, Path, self.traj_path_callback)
-        rospy.Subscriber(self.config.client_update_topic, Graph, self.client_update_callback)
         if self.config.enable_submap_constraints:
             rospy.Subscriber(self.config.submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
             self.constraint_handler = ConstraintHandler()
 
-        # Publishers
         self.intra_constraint_pub = rospy.Publisher(self.config.intra_constraint_topic, Path, queue_size=20)
-        self.client_update_pub = rospy.Publisher(self.config.client_update_topic, Graph, queue_size=20)
+
+        if self.config.enable_client_update:
+            rospy.Subscriber(self.config.client_update_topic, Graph, self.client_update_callback)
+            self.client_update_pub = rospy.Publisher(self.config.client_update_topic, Graph, queue_size=20)
 
         # Handlers and evaluators.
         self.global_graph = GlobalGraph(reduced=False)
@@ -210,13 +211,11 @@ class GraphClient(object):
         if self.global_graph.is_built is False:
             self.mutex.release()
             return
-        # Iterate over all estimated trajectories.
-        for key in self.keys:
-            # Check whether we have an optimized version of it.
-            if not self.key_in_optimized_keys(key):
-                rospy.logwarn(f"[GraphClient] Found no optimized version of {key} for comparison.")
-                continue
-            self.compare_stored_signals(key)
+        # Check whether we have an optimized version of it.
+        if self.key_in_optimized_keys(self.config.robot_name):
+            self.compare_stored_signals(self.config.robot_name)
+        else:
+            rospy.logwarn(f"[GraphClient] Found no optimized version of {key} for comparison.")
         self.mutex.release()
 
     def check_for_submap_constraints(self):

@@ -4,7 +4,6 @@ from utils import Utils
 
 class BaseConfig(object):
     def try_get_param(self, key, default=None):
-        rospy.loginfo(f'[BaseConfig] try_get_param: {key} with default {default}')
         return rospy.get_param(key) if rospy.has_param(key) else default
 
 
@@ -111,7 +110,7 @@ class ClientConfig(BaseConfig):
         self.dataroot = self.try_get_param("~dataroot", self.dataroot)
         self.random_forest_model = self.try_get_param("~random_forest_model", self.random_forest_model)
         self.robot_name = self.try_get_param("~robot_name", self.robot_name)
-        self.enable_client_update = self.try_get_param("~enable_client_update", self.enable_client)
+        self.enable_client_update = self.try_get_param("~enable_client_update", self.enable_client_update)
         self.enable_submap_constraints = self.try_get_param("~enable_submap_constraints", self.enable_submap_constraints)
         self.enable_anchor_constraints = self.try_get_param("~enable_anchor_constraints", self.enable_anchor_constraints)
         self.enable_signal_recording = self.try_get_param("~enable_signal_recording", self.enable_signal_recording)

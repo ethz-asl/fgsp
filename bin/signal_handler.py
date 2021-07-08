@@ -120,7 +120,7 @@ class SignalHandler(object):
         traj = self.compute_trajectory(nodes)
         traj_origin = traj[0,1:4]
 
-        pos_signal = (traj - traj_origin).squeeze()
+        pos_signal = (traj[:,1:4] - traj_origin).squeeze()
 
         x = np.linalg.norm(pos_signal, ord=2, axis=1)
         return x
@@ -129,7 +129,7 @@ class SignalHandler(object):
         traj = self.compute_trajectory(nodes)
         traj_origin = traj[0,1:4]
 
-        pos_signal = (traj - traj_origin).squeeze()
+        pos_signal = (traj[:,1:4] - traj_origin).squeeze()
 
         return np.linalg.norm(pos_signal, ord=2, axis=1)
 

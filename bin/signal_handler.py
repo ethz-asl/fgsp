@@ -5,6 +5,7 @@ from pygsp import graphs, filters, reduction
 from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 
+from utils import Utils
 from signal_node import SignalNode
 
 
@@ -12,30 +13,40 @@ class SignalHandler(object):
     def __init__(self):
         self.signals = {}
 
+    def group_robots(self, signals):
+        n_nodes = len(signals)
+        grouped_signals = {}
+        for i in range(0, n_nodes):
+            robot = signals[i].robot_name
+            if not robot in grouped_signals.keys():
+                grouped_signals[robot] = []
+
+            grouped_signals[robot].append(signals[i])
+        return grouped_signals
+
     def convert_signal(self, signal_msg):
-        n_nodes = len(signal_msg.nodes)
-        if (n_nodes <= 0):
-            return ""
+        grouped_signals = self.group_robots(signal_msg.nodes)
+        rospy.loginfo(f'[SignalHandler] Grouped signals are {grouped_signals.keys()}')
 
-        signals = [SignalNode] * n_nodes
-        signals[0] = self.convert_trajectory_node(signal_msg.nodes[0])
-        key = signals[0].robot_name
-        if key == "":
-            return ""
+        for key, nodes in grouped_signals.items():
+            n_nodes = len(nodes)
+            if (n_nodes <= 0):
+                continue
 
-        for i in range(1, n_nodes):
-            signals[i] = self.convert_trajectory_node(signal_msg.nodes[i])
+            signals = [SignalNode] * n_nodes
+            for i in range(0, n_nodes):
+                signals[i] = self.convert_trajectory_node(signal_msg.nodes[i])
+            self.signals[key] = signals
 
-        self.signals[key] = signals
+        return grouped_signals.keys()
 
-        return key
-
-    def convert_signal_from_path(self, path_msg):
+    def convert_signal_from_path(self, path_msg, robot_name):
         n_poses = len(path_msg.poses)
         if (n_poses <= 0):
             return ""
 
-        key = path_msg.header.frame_id
+        # key = path_msg.header.frame_id
+        key = robot_name
         signals = [SignalNode] * n_poses
         for i in range(0, n_poses):
             signals[i] = self.convert_path_node(path_msg.poses[i], key)
@@ -95,13 +106,13 @@ class SignalHandler(object):
         return signal
 
     def convert_path_node(self, pose_msg, robot_name):
-        pose_msg = pose_msg
         ts = pose_msg.header.stamp
         position = np.array([pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
         orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
+        degenerate = pose_msg.header.frame_id.lower() == 'degenerate'
 
         signal = SignalNode()
-        signal.init_onboard(ts, robot_name, position, orientation)
+        signal.init_onboard(ts, robot_name, position, orientation, degenerate)
         return signal
 
     def compute_signal_from_key(self, key):
@@ -124,9 +135,11 @@ class SignalHandler(object):
 
     def compute_trajectory(self, nodes):
         n_nodes = len(nodes)
-        trajectory = np.zeros((n_nodes, 3))
+        trajectory = np.zeros((n_nodes, 8))
         for i in range(n_nodes):
-            trajectory[i,0:3] = nodes[i].position
+            trajectory[i,0] = Utils.ros_time_to_ns(nodes[i].ts)
+            trajectory[i,1:4] = nodes[i].position
+            trajectory[i,4:8] = nodes[i].orientation
 
         return trajectory
 

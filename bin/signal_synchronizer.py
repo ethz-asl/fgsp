@@ -11,9 +11,7 @@ class SignalSynchronizer(object):
         rospy.loginfo("[SignalSynchronizer] Initialized")
 
     def synchronize(self, optimized, estimated):
-        rospy.loginfo(f"[SignalSynchronizer] Computing optimized {len(optimized)}")
         ts_opt = self.extract_timestamps(optimized)
-        rospy.loginfo(f"[SignalSynchronizer] Computing estimated {len(estimated)}")
         ts_est = self.extract_timestamps(estimated)
 
         opt_size = ts_opt.shape[0]

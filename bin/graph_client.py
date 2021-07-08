@@ -19,6 +19,7 @@ from feature_node import FeatureNode
 from constraint_handler import ConstraintHandler
 from config import ClientConfig
 from plotter import Plotter
+from utils import Utils
 
 class GraphClient(object):
     def __init__(self):
@@ -62,8 +63,21 @@ class GraphClient(object):
         self.optimized_keys = []
         self.keys = []
 
+        self.create_data_export_folder()
         self.mutex.release()
         self.is_initialized = True
+
+
+    def create_data_export_folder(self):
+        if not self.config.enable_signal_recording and not self.config.enable_trajectory_recording:
+            return
+        cur_ts = Utils.ros_time_to_ns(rospy.Time.now())
+        export_folder = self.config.dataroot + '/data/' + self.config.robot_name + '_%d'%np.float32(cur_ts)
+        rospy.logwarn(f'[GraphClient] Setting up dataroot folder to {export_folder}')
+        if not os.path.exists(export_folder):
+            os.mkdir(export_folder)
+            os.mkdir(export_folder + '/data')
+        self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
         if not (self.is_initialized and self.config.enable_anchor_constraints):
@@ -96,12 +110,13 @@ class GraphClient(object):
         if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
 
-        key = self.optimized_signal.convert_signal(msg)
-        rospy.loginfo(f"[GraphClient] Received opt trajectory message from {key}.")
+        keys = self.optimized_signal.convert_signal(msg)
+        rospy.loginfo(f"[GraphClient] Received opt trajectory message from {keys}.")
 
-        if self.key_in_optimized_keys(key):
-            return
-        self.optimized_keys.append(key)
+        for key in keys:
+            if self.key_in_optimized_keys(key):
+                continue
+            self.optimized_keys.append(key)
 
     def traj_callback(self, msg):
         if self.is_initialized is False:
@@ -116,18 +131,13 @@ class GraphClient(object):
     def traj_path_callback(self, msg):
         if not (self.is_initialized and self.config.enable_anchor_constraints):
             return
-        msg.header.frame_id = self.config.robot_name
         self.latest_traj_msg = msg
 
     def process_latest_robot_data(self):
         if self.latest_traj_msg == None:
             return False
-        self.robot_graph.build_from_path(self.latest_traj_msg)
-        if not self.robot_graph.is_built:
-            rospy.logerr(f'[GraphClient] Building robot graph from path failed.')
-            return False
 
-        key = self.signal.convert_signal_from_path(self.latest_traj_msg)
+        key = self.signal.convert_signal_from_path(self.latest_traj_msg, self.config.robot_name)
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")
             return False
@@ -148,13 +158,16 @@ class GraphClient(object):
 
     def update(self):
         rospy.loginfo("[GraphClient] Updating...")
+        self.commander.reset_msgs()
         self.check_for_submap_constraints()
+        self.update_degenerate_anchors()
 
         if not self.process_latest_robot_data():
-            rospy.logwarn('[GraphClient] Found no robot data to process')
+            rospy.logwarn('[GraphClient] Unable to process latest robot data.')
             return
         self.compare_estimations()
         self.publish_client_update()
+
         rospy.loginfo("[GraphClient] Updating completed")
 
     def record_all_signals(self, key, x_est, x_opt):
@@ -163,7 +176,12 @@ class GraphClient(object):
         self.record_signal_for_key(key, x_est, 'est')
         self.record_signal_for_key(key, x_opt, 'opt')
 
-    def record_all_trajectories(self, key, traj_est, traj_opt):
+    def record_raw_est_trajectory(self, key, traj):
+        filename = self.config.dataroot + self.config.trajectory_raw_export_path.format(key=key, src='est')
+        rospy.loginfo(f'Writing raw trajectory from {key}.')
+        np.save(filename, traj)
+
+    def record_synchronized_trajectories(self, key, traj_est, traj_opt):
         if not self.config.enable_trajectory_recording:
             return
         self.record_traj_for_key(key, traj_est, 'est')
@@ -171,7 +189,7 @@ class GraphClient(object):
 
     def record_signal_for_key(self, key, x, src):
         signal_file = self.config.dataroot + self.config.signal_export_path.format(key=key, src=src)
-        rospy.loginfo(f'Writing signals from {src}.')
+        rospy.loginfo(f'Writing signals from {key}.')
         np.save(signal_file, x)
         graph_coords_file = self.config.dataroot + self.config.graph_coords_export_path.format(key=key, src=src)
         graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(key=key, src=src)
@@ -182,7 +200,7 @@ class GraphClient(object):
 
     def record_traj_for_key(self, key, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(key=key, src=src)
-        rospy.loginfo(f'Writing trajectory from {src}.')
+        rospy.loginfo(f'Writing trajectory from {key}.')
         np.save(filename, traj)
 
     def compare_estimations(self):
@@ -228,9 +246,12 @@ class GraphClient(object):
         n_opt_nodes = len(all_opt_nodes)
 
         # Compute the features and publish the results.
+        self.record_raw_est_trajectory(key, self.signal.compute_trajectory(all_est_nodes))
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
         all_features = self.compute_all_submap_features(key, all_opt_nodes, all_est_nodes)
         self.evaluate_and_publish_features(all_features)
+
+        self.check_for_degeneracy(all_opt_nodes, all_est_nodes)
 
         return True
 
@@ -245,10 +266,31 @@ class GraphClient(object):
         assert(len(est_idx) == len(opt_idx))
 
         # Reduce the robot graph and compute the wavelet basis functions.
-        self.robot_graph.reduce_graph_using_indices(est_idx)
+        positions = np.array([np.array(x.position) for x in all_est_nodes])
+        self.robot_graph.build_from_poses(positions)
+        # self.robot_graph.reduce_graph_using_indices(est_idx)
         self.robot_eval.compute_wavelets(self.robot_graph.G)
-
         return (all_opt_nodes, all_est_nodes)
+
+    def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
+        rospy.loginfo('[GraphClient] Checking for degeneracy.')
+        n_nodes = len(all_opt_nodes)
+        assert n_nodes == len(all_est_nodes)
+        for i in range(0, n_nodes):
+            if not all_est_nodes[i].degenerate:
+                continue
+            pivot = self.config.degenerate_window // 2
+            begin_send = max(i - pivot, 0)
+            end_send = min(i + (self.config.degenerate_window - pivot), n_nodes)
+            rospy.logerr(f'[GraphClient] Sending degenerate anchros from {begin_send} to {end_send}')
+            self.commander.send_degenerate_anchors(all_opt_nodes, begin_send, end_send)
+
+    def update_degenerate_anchors(self):
+        all_opt_nodes = self.optimized_signal.get_all_nodes(self.config.robot_name)
+        if len(all_opt_nodes) == 0:
+            rospy.logerr(f'[GraphClient] Robot {self.config.robot_name} does not have any optimized nodes yet.')
+            return
+        self.commander.update_degenerate_anchors(all_opt_nodes)
 
     def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
         if not self.eval.is_available:
@@ -258,7 +300,7 @@ class GraphClient(object):
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
         self.record_all_signals(key, x_est, x_opt)
-        self.record_all_trajectories(key, self.signal.compute_trajectory(all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
+        self.record_synchronized_trajectories(key, self.signal.compute_trajectory(all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
 
         psi = self.eval.get_wavelets()
         robot_psi = self.robot_eval.get_wavelets()
@@ -297,7 +339,6 @@ class GraphClient(object):
         if len(all_features) == 0:
             return
 
-        self.commander.reset_msgs()
         for submap_features in all_features:
             # Predict the state of all the submaps and publish an update.
             submap_features.label = self.eval.classify_submap(submap_features.features)[0]

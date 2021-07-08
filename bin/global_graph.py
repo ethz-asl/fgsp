@@ -16,7 +16,7 @@ class GlobalGraph(object):
         self.is_built = False
         self.reduced_ind = []
         self.submap_ind = []
-        self.graph_seq = None
+        self.graph_seq = -1
         self.latest_graph_msg = None
         rospy.loginfo("[GlobalGraph] Initialized.")
 
@@ -64,17 +64,7 @@ class GlobalGraph(object):
         rospy.loginfo(f'[GlobalGraph] Building complete ({execution_time} sec)')
         self.latest_graph_msg = graph_msg
 
-    def build_from_path(self, path_msg):
-        start_time = time.time()
-        n_poses = len(path_msg.poses)
-        if n_poses <= 0:
-            rospy.logerr(f"[GlobalGraph] Received empty path message.")
-            return
-        self.coords = self.read_coordinates_from_poses(path_msg.poses)
-        rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
-        self.adj = self.create_adjacency_from_poses(self.coords)
-        rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
-
+    def build_graph(self):
         if len(self.adj.tolist()) == 0:
             rospy.loginfo(f"[GlobalGraph] Path adjacency matrix is empty. Aborting graph building.")
             return
@@ -92,10 +82,38 @@ class GlobalGraph(object):
         if (self.is_reduced):
             self.reduce_graph()
 
-        self.graph_seq = path_msg.header.seq
+    def build_from_path(self, path_msg):
+        start_time = time.time()
+        self.build_from_pose_msgs(path_msg.poses)
+        self.build_graph()
+
+        self.graph_seq = self.graph_seq + 1
         self.is_built = True
         execution_time = (time.time() - start_time)
         rospy.loginfo(f'[GlobalGraph] Building from path complete ({execution_time} sec)')
+
+    def build_from_pose_msgs(self, poses):
+        start_time = time.time()
+        n_poses = len(poses)
+        if n_poses <= 0:
+            rospy.logerr(f"[GlobalGraph] Received empty path message.")
+            return
+        self.coords = self.read_coordinates_from_poses(poses)
+        rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
+        self.adj = self.create_adjacency_from_poses(self.coords)
+        rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
+
+    def build_from_poses(self, poses):
+        start_time = time.time()
+        n_poses = poses.shape[0]
+        if n_poses <= 0:
+            rospy.logerr(f"[GlobalGraph] Received empty path message.")
+            return
+        self.coords = poses
+        rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
+        self.adj = self.create_adjacency_from_poses(self.coords)
+        rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
+        self.build_graph()
 
     def read_coordinates(self, graph_msg):
         n_coords = len(graph_msg.coords)

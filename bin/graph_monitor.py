@@ -93,6 +93,8 @@ class GraphMonitor(object):
         if self.config.enable_graph_building:
             self.compute_and_publish_graph()
 
+        self.graph.publish()
+
     def compute_and_publish_graph(self):
         rospy.loginfo(f"[GraphMonitor] Computing global graph.")
         self.mutex.acquire()
@@ -160,7 +162,7 @@ class GraphMonitor(object):
 
         if self.config.send_separate_traj_msgs:
             self.send_separate_traj_msgs()
-        else:
+        elif self.latest_opt_traj_msg is not None:
             self.pub_traj.publish(self.latest_opt_traj_msg)
             rospy.loginfo(f"[GraphMonitor] Published trajectory for keys {self.optimized_keys}.")
 
@@ -177,7 +179,6 @@ class GraphMonitor(object):
 
     def key_in_optimized_keys(self, key):
        return any(key in k for k in self.optimized_keys)
-
 
 if __name__ == '__main__':
     rospy.init_node('graph_monitor')

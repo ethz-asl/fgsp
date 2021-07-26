@@ -4,8 +4,8 @@ from utils import Utils
 
 class BaseConfig(object):
     def try_get_param(self, key, default=None):
+        rospy.logdebug(f'[BaseConfig] try_get_param: {key} with default {default}')
         return rospy.get_param(key) if rospy.has_param(key) else default
-
 
 class MonitorConfig(BaseConfig):
     def __init__(self):

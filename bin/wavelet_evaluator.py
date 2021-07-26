@@ -36,7 +36,6 @@ class WaveletEvaluator(object):
         return self.clf.initialized
 
     def compare_signals(self, G, x_1, x_2):
-
         # Compute the wavelets for each node and scale.
         psi = self.compute_wavelets(G)
         rospy.logdebug(f"[WaveletEvaluator] psi = {psi.shape}")
@@ -110,10 +109,10 @@ class WaveletEvaluator(object):
     def compute_distances_1D(self, coeffs_1, coeffs_2):
         distances = np.zeros((9, self.n_scales))
         for j in range(0, self.n_scales):
-            distances[1, j] = scipy.spatial.distance.euclidean(coeffs_1[j], coeffs_2[j])
-            distances[3, j] = scipy.spatial.distance.correlation(coeffs_1[j], coeffs_2[j])
-            distances[7, j] = scipy.spatial.distance.cityblock(coeffs_1[j], coeffs_2[j])
-            distances[8, j] = scipy.spatial.distance.chebyshev(coeffs_1[j], coeffs_2[j])
+            distances[0, j] = scipy.spatial.distance.euclidean(coeffs_1[j], coeffs_2[j])
+            distances[1, j] = scipy.spatial.distance.correlation(coeffs_1[j], coeffs_2[j])
+            distances[2, j] = scipy.spatial.distance.cityblock(coeffs_1[j], coeffs_2[j])
+            distances[3, j] = scipy.spatial.distance.chebyshev(coeffs_1[j], coeffs_2[j])
 
         return distances
 
@@ -161,33 +160,6 @@ class WaveletEvaluator(object):
             all_data = all_data.append(data)
 
         return all_data
-
-    def compute_features_2(self, submap_coeffs_1, submap_coeffs_2):
-        D = self.compute_distances(submap_coeffs_1, submap_coeffs_2)
-        print(f'Shape of distances is {D.shape}')
-        data = pandas.DataFrame({
-            # Euclidean distance.
-            self.feature_names[0]:[D[0, 0:2]],
-            self.feature_names[1]:[D[0, 2:4]],
-            self.feature_names[2]:[D[0, 5:]],
-
-            # Correlation.
-            self.feature_names[3]:[D[1, 0:2]],
-            self.feature_names[4]:[D[1, 2:4]],
-            self.feature_names[5]:[D[1, 5:]],
-
-            # Cityblock distance.
-            self.feature_names[6]:[D[2, 0:2]],
-            self.feature_names[7]:[D[2, 2:4]],
-            self.feature_names[8]:[D[2, 5:]],
-
-            # Chebyshev distance.
-            self.feature_names[9]:[D[3, 0:2]],
-            self.feature_names[10]:[D[3, 2:4]],
-            self.feature_names[11]:[D[3, 5:]],
-        })
-
-        return data
 
     def classify_submap(self, features):
         (prediction, pred_prob) = self.clf.predict(features)

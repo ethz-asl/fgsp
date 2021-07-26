@@ -136,6 +136,8 @@ class WaveletEvaluator(object):
         all_data = pandas.DataFrame()
         for i in range(n_nodes):
             D = self.compute_distances_1D(submap_coeffs_1[i,:], submap_coeffs_2[i,:])
+#             print(f'D is {D[:,2:4]}')
+            D = np.nan_to_num(D)
             data = pandas.DataFrame({
                 # Euclidean distance.
                 self.feature_names[0]:[np.sum(D[0, 0:2])],
@@ -159,12 +161,29 @@ class WaveletEvaluator(object):
             })
             all_data = all_data.append(data)
 
-        return all_data
+        return np.nan_to_num(all_data)
 
-    def classify_submap(self, features):
+    def classify_forest(self, features):
         (prediction, pred_prob) = self.clf.predict(features)
 
         return prediction
+
+    def classify_simple(self, data):
+        n_nodes = data.shape[0]
+        labels = []
+        for i in range(0, n_nodes):
+            low_mean = np.mean([data[i,0], data[i,3], data[i,6], data[i,9]])
+            mid_mean = np.mean([data[i,1], data[i,4], data[i,7], data[i,10]])
+            high_mean = np.mean([data[i,2], data[i,5], data[i,8], data[i,11]])
+            dists = np.array([low_mean, mid_mean, high_mean])
+            max_dist_idx = np.argmax(dists)
+
+            print(f'dists is {dists} and max idx is {max_dist_idx}')
+            if dists[max_dist_idx] <= 0.3:
+                labels.append(0)
+            else:
+                labels.append(max_dist_idx + 1)
+        return np.array(labels)
 
 if __name__ == '__main__':
     print(f" --- Test Driver for the Wavelet Evaluator ----------------------")
@@ -195,5 +214,5 @@ if __name__ == '__main__':
     features = eval.compute_features(W_1, W_2)
     print(f"Feature vector shape: {features.shape}")
 
-    # label = eval.classify_submap(features)
-    # print(f"Submap return label: {label}")
+    label = eval.classify_simple(features)
+    print(f"Submap return label: {label}")

@@ -94,6 +94,7 @@ class GraphMonitor(object):
             self.compute_and_publish_graph()
 
         self.graph.publish()
+        self.optimized_signal.publish()
 
     def compute_and_publish_graph(self):
         rospy.loginfo(f"[GraphMonitor] Computing global graph.")
@@ -165,7 +166,6 @@ class GraphMonitor(object):
         elif self.latest_opt_traj_msg is not None:
             self.pub_traj.publish(self.latest_opt_traj_msg)
             rospy.loginfo(f"[GraphMonitor] Published trajectory for keys {self.optimized_keys}.")
-
 
     def send_separate_traj_msgs(self):
         for key in self.optimized_keys:

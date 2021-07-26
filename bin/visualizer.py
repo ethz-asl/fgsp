@@ -8,13 +8,12 @@ from geometry_msgs.msg import Point
 
 class Visualizer(object):
     def __init__(self):
-        self.line_id = 0
-        self.sphere_id = 0
-
         self.spheres = MarkerArray()
         self.adjacency = MarkerArray()
+        self.signals = MarkerArray()
         self.line_marker = self.create_line_marker()
-        self.sphere_marker = self.create_sphere_marker()
+        self.sphere_graph_marker = self.create_sphere_marker()
+        self.signal_graph_marker = self.create_sphere_marker()
 
         self.pub_adjacency = rospy.Publisher("/graph_monitor/graph/adjacency", MarkerArray, queue_size=10)
         self.pub_coords = rospy.Publisher('/graph_monitor/graph/coords', MarkerArray, queue_size=10)
@@ -61,20 +60,31 @@ class Visualizer(object):
 
     def resetConstraintVisualization(self):
         self.line_marker.id = 0
-        self.sphere_marker.id = 0
+        self.sphere_graph_marker.id = 0
+        self.signal_graph_marker.id = 0
         self.spheres = MarkerArray()
         self.adjacency = MarkerArray()
+        self.signals = MarkerArray()
 
-    def add_graph_coordinate(self, point):
-        self.sphere_marker.id += 1
-        sphere = copy.deepcopy(self.sphere_marker)
+    def create_sphere(self, sphere, point):
         sphere.header.stamp = rospy.Time.now()
         sphere.pose.position.x = point[0]
         sphere.pose.position.y = point[1]
         sphere.pose.position.z = point[2]
+        return sphere
 
+    def add_graph_coordinate(self, point):
+        self.sphere_graph_marker.id += 1
+        sphere = copy.deepcopy(self.sphere_graph_marker)
+        sphere = self.create_sphere(sphere, point)
         self.spheres.markers.append(sphere)
-        self.sphere_id = self.sphere_id + 1
+
+    def add_signal_coordinate(self, point, robot_idx):
+        self.signal_graph_marker.id += 1
+        sphere = copy.deepcopy(self.signal_graph_marker)
+        sphere = self.create_sphere(sphere, point)
+        sphere.color = self.robot_colors[robot_idx]
+        self.signals.markers.append(sphere)
 
     def add_graph_adjacency(self, point_a, point_b):
         line_point_a = Point(point_a[0], point_a[1], point_a[2])
@@ -96,3 +106,7 @@ class Visualizer(object):
 
     def visualize_adjacency(self):
         self.pub_adjacency.publish(self.adjacency)
+
+    def visualize_signals(self, topic):
+        pub_signals = rospy.Publisher(topic, MarkerArray, queue_size=10)
+        pub_signals.publish(self.signals)

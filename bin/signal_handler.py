@@ -4,10 +4,11 @@ import numpy as np
 from pygsp import graphs, filters, reduction
 from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Path
 
 from utils import Utils
 from signal_node import SignalNode
-
+from visualizer import Visualizer
 
 class SignalHandler(object):
     def __init__(self):
@@ -24,21 +25,34 @@ class SignalHandler(object):
             grouped_signals[robot].append(signals[i])
         return grouped_signals
 
+    def publish_grouped_robots(self, grouped_signals):
+        for key, nodes in grouped_signals.items():
+            path_msg = Path()
+            for node in nodes:
+                path_msg.poses.append(node.pose)
+            path_msg.header.stamp = rospy.Time.now()
+            path_msg.header.frame_id = 'darpa'
+            pub = rospy.Publisher(f'/graph_monitor/{key}/monitor_path', Path, queue_size=10)
+            pub.publish(path_msg)
+
     def convert_signal(self, signal_msg):
         grouped_signals = self.group_robots(signal_msg.nodes)
+        self.publish_grouped_robots(grouped_signals)
         rospy.loginfo(f'[SignalHandler] Grouped signals are {grouped_signals.keys()}')
 
         for key, nodes in grouped_signals.items():
             n_nodes = len(nodes)
+            rospy.logwarn(f'[SignalHandler] For {key} we have {n_nodes} nodes.')
             if (n_nodes <= 0):
                 continue
 
             signals = [SignalNode] * n_nodes
             for i in range(0, n_nodes):
-                signals[i] = self.convert_trajectory_node(signal_msg.nodes[i])
+                signals[i] = self.convert_trajectory_node(nodes[i])
             self.signals[key] = signals
 
         return grouped_signals.keys()
+
 
     def convert_signal_from_path(self, path_msg, robot_name):
         n_poses = len(path_msg.poses)
@@ -169,6 +183,20 @@ class SignalHandler(object):
             traj_msg.nodes.append(node_msg)
 
         return traj_msg
+
+    def publish(self):
+        topic_fmt = '/graph_monitor/signal/{key}_trajectory'
+        color_idx = 0
+        viz = Visualizer()
+        for robot, nodes in self.signals.items():
+            rospy.logwarn(f'[SignalHandler] Publishing signal for {robot}')
+            topic = topic_fmt.format(key=robot)
+            for node in nodes:
+                viz.add_signal_coordinate(node.position, color_idx)
+            viz.visualize_signals(topic)
+            viz.resetConstraintVisualization()
+            color_idx += 1
+
 
 if __name__ == '__main__':
     sh = SignalHandler()

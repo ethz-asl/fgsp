@@ -244,7 +244,7 @@ class GraphClient(object):
         # Compute the features and publish the results.
         self.record_raw_est_trajectory(self.signal.compute_trajectory(all_est_nodes))
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
-        all_features = self.compute_all_submap_features(key, all_opt_nodes, all_est_nodes)
+        labels = self.compute_all_submap_features(key, all_opt_nodes, all_est_nodes)
         self.evaluate_and_publish_features(all_features)
 
         self.check_for_degeneracy(all_opt_nodes, all_est_nodes)
@@ -311,25 +311,11 @@ class GraphClient(object):
         # We will filter them later per submap.
         W_est = self.robot_eval.compute_wavelet_coeffs(x_est)
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
+        features = self.eval.compute_features(W_1, W_2)
 
-        n_submaps = self.optimized_signal.get_number_of_submaps(key)
+        labels =  self.eval.classify_simple(features)
+        return FeatureNode(key, all_opt_nodes, features, labels)
 
-        all_features = []
-        rospy.loginfo(f"[GraphClient] Computing features for {n_submaps} submaps")
-        for i in range(0, n_submaps):
-            # Get all nodes for submap i.
-            node_indices = self.optimized_signal.get_indices_for_submap(key, i)
-            if len(node_indices) == 0:
-                continue
-            features = self.eval.compute_features_for_submap(W_opt, W_est, node_indices)
-            if features.empty:
-                continue
-            feature_node = FeatureNode(i, key, all_opt_nodes, features, node_indices)
-            if not feature_node.initialized:
-                continue
-
-            all_features.append(feature_node)
-        return all_features
 
     def evaluate_and_publish_features(self, all_features):
         if len(all_features) == 0:

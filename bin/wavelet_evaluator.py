@@ -107,6 +107,16 @@ class WaveletEvaluator(object):
 
         return distances
 
+    def compute_distances_1D(self, coeffs_1, coeffs_2):
+        distances = np.zeros((9, self.n_scales))
+        for j in range(0, self.n_scales):
+            distances[1, j] = scipy.spatial.distance.euclidean(coeffs_1[j], coeffs_2[j])
+            distances[3, j] = scipy.spatial.distance.correlation(coeffs_1[j], coeffs_2[j])
+            distances[7, j] = scipy.spatial.distance.cityblock(coeffs_1[j], coeffs_2[j])
+            distances[8, j] = scipy.spatial.distance.chebyshev(coeffs_1[j], coeffs_2[j])
+
+        return distances
+
     def compute_features_for_submap(self, coeffs_1, coeffs_2, submap_ids):
         n_coeffs_1 = coeffs_1.shape[0]
         n_coeffs_2 = coeffs_2.shape[0]
@@ -123,28 +133,58 @@ class WaveletEvaluator(object):
         return self.compute_features(submap_coeffs_1, submap_coeffs_2)
 
     def compute_features(self, submap_coeffs_1, submap_coeffs_2):
-        D = self.compute_distances(submap_coeffs_1, submap_coeffs_2)
+        n_nodes = submap_coeffs_1.shape[0]
+        all_data = pandas.DataFrame()
+        for i in range(n_nodes):
+            D = self.compute_distances_1D(submap_coeffs_1[i,:], submap_coeffs_2[i,:])
+            data = pandas.DataFrame({
+                # Euclidean distance.
+                self.feature_names[0]:[np.sum(D[0, 0:2])],
+                self.feature_names[1]:[np.sum(D[0, 2:4])],
+                self.feature_names[2]:[np.sum(D[0, 5:])],
 
+                # Correlation.
+                self.feature_names[3]:[np.sum(D[1, 0:2])],
+                self.feature_names[4]:[np.sum(D[1, 2:4])],
+                self.feature_names[5]:[np.sum(D[1, 5:])],
+
+                # Cityblock distance.
+                self.feature_names[6]:[np.sum(D[2, 0:2])],
+                self.feature_names[7]:[np.sum(D[2, 2:4])],
+                self.feature_names[8]:[np.sum(D[2, 5:])],
+
+                # Chebyshev distance.
+                self.feature_names[9]:[np.sum(D[3, 0:2])],
+                self.feature_names[10]:[np.sum(D[3, 2:4])],
+                self.feature_names[11]:[np.sum(D[3, 5:])],
+            })
+            all_data = all_data.append(data)
+
+        return all_data
+
+    def compute_features_2(self, submap_coeffs_1, submap_coeffs_2):
+        D = self.compute_distances(submap_coeffs_1, submap_coeffs_2)
+        print(f'Shape of distances is {D.shape}')
         data = pandas.DataFrame({
             # Euclidean distance.
-            self.feature_names[0]:[np.sum(D[0, 0:2])],
-            self.feature_names[1]:[np.sum(D[0, 2:4])],
-            self.feature_names[2]:[np.sum(D[0, 5:])],
+            self.feature_names[0]:[D[0, 0:2]],
+            self.feature_names[1]:[D[0, 2:4]],
+            self.feature_names[2]:[D[0, 5:]],
 
             # Correlation.
-            self.feature_names[3]:[np.sum(D[1, 0:2])],
-            self.feature_names[4]:[np.sum(D[1, 2:4])],
-            self.feature_names[5]:[np.sum(D[1, 5:])],
+            self.feature_names[3]:[D[1, 0:2]],
+            self.feature_names[4]:[D[1, 2:4]],
+            self.feature_names[5]:[D[1, 5:]],
 
             # Cityblock distance.
-            self.feature_names[6]:[np.sum(D[2, 0:2])],
-            self.feature_names[7]:[np.sum(D[2, 2:4])],
-            self.feature_names[8]:[np.sum(D[2, 5:])],
+            self.feature_names[6]:[D[2, 0:2]],
+            self.feature_names[7]:[D[2, 2:4]],
+            self.feature_names[8]:[D[2, 5:]],
 
             # Chebyshev distance.
-            self.feature_names[9]:[np.sum(D[3, 0:2])],
-            self.feature_names[10]:[np.sum(D[3, 2:4])],
-            self.feature_names[11]:[np.sum(D[3, 5:])],
+            self.feature_names[9]:[D[3, 0:2]],
+            self.feature_names[10]:[D[3, 2:4]],
+            self.feature_names[11]:[D[3, 5:]],
         })
 
         return data
@@ -163,11 +203,12 @@ if __name__ == '__main__':
     ind = np.arange(0, G.N, 10)
     Gs = reduction.kron_reduction(G, ind)
     Gs.compute_fourier_basis()
+    print(f'Size after reduction is {Gs.N}')
 
 
     # Compute wavelets.
     psi = eval.compute_wavelets(Gs)
-    print(f" psi = {psi.shape}")
+    print(f'psi shape is {psi.shape}')
 
     # Compute wavelet coefficients for two signals.
     x_1 = Gs.coords
@@ -175,13 +216,12 @@ if __name__ == '__main__':
     x_2 = Gs.coords + 10
     x_2 = np.linalg.norm(x_2, ord=2, axis=1)
 
-    W_1 = eval.compute_wavelet_coeffs(psi, x_1)
-    W_2 = eval.compute_wavelet_coeffs(psi, x_2)
-    print(f" W_1 = {W_1.shape} andd W_2 = {W_2.shape}")
+    W_1 = eval.compute_wavelet_coeffs_using_wavelet(psi, x_1)
+    W_2 = eval.compute_wavelet_coeffs_using_wavelet(psi, x_2)
+    print(f"W_1 = {W_1.shape} andd W_2 = {W_2.shape}")
 
-    ids = np.arange(0, 27, 1)
-    print(f"Checking submap for indices: {ids}")
-    features = eval.compute_features_for_submap(W_1, W_2, ids)
+    features = eval.compute_features(W_1, W_2)
     print(f"Feature vector shape: {features.shape}")
-    label = eval.classify_submap(features)
-    print(f"Submap return label: {label}")
+
+    # label = eval.classify_submap(features)
+    # print(f"Submap return label: {label}")

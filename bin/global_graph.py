@@ -6,6 +6,7 @@ from pygsp import graphs, filters, reduction
 from geometry_msgs.msg import Point
 from maplab_msgs.msg import Graph
 from scipy import spatial
+from visualizer import Visualizer
 
 class GlobalGraph(object):
     def __init__(self, reduced=False):
@@ -232,3 +233,24 @@ class GlobalGraph(object):
     def write_graph_to_disk(self, coords_file, adj_file):
         np.save(coords_file, self.coords)
         np.save(adj_file, self.adj)
+
+    def publish(self):
+        if not self.is_built:
+            return
+        viz = Visualizer()
+
+        # First publish the coordinates of the global graph.
+        n_coords = self.G.N
+        for i in range(0, n_coords):
+            viz.add_graph_coordinate(self.coords[i,:])
+        viz.visualize_coords()
+
+        # Next publish the adjacency matrix of the global graph.
+        for i in range(0, n_coords):
+            for j in range(0, n_coords):
+                if self.adj[i,j] <= 0.0:
+                    continue
+                viz.add_graph_adjacency(self.coords[i,:], self.coords[j,:])
+        viz.visualize_adjacency()
+
+        rospy.loginfo("[GlobalGraph] Visualized global graph.")

@@ -4,6 +4,7 @@ import rospy
 import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
+from utils import Utils
 
 class ClassificationResult(object):
     def __init__(self, robot_name, opt_nodes, features, labels):
@@ -30,27 +31,29 @@ class ClassificationResult(object):
 
     def construct_large_area_constraint(self, idx):
         relative_constraint = self.construct_mid_area_constraint(idx)
+        cur_opt = self.opt_nodes[idx]
         if idx - 3 >= 0:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 3])
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 3])
             relative_constraint.poses.append(pose_msg)
         if idx - 4 >= 0:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 4])
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 4])
             relative_constraint.poses.append(pose_msg)
         if idx + 3 < n_nodes:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 3])
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 3])
             relative_constraint.poses.append(pose_msg)
         if idx + 4 < n_nodes:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 4])
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 4])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 
     def construct_mid_area_constraint(self, idx):
         relative_constraint = self.construct_small_area_constraint(idx)
+        cur_opt = self.opt_nodes[idx]
         if idx - 2 >= 0:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 2])
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 2])
             relative_constraint.poses.append(pose_msg)
         if idx + 2 < n_nodes:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 2])
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 2])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 
@@ -62,10 +65,10 @@ class ClassificationResult(object):
         relative_constraint = Path()
         relative_constraint.header.stamp = cur_opt.ts
         if idx - 1 >= 0:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 1])
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 1])
             relative_constraint.poses.append(pose_msg)
         if idx + 1 < n_nodes:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 1])
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 1])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 
@@ -80,3 +83,30 @@ class ClassificationResult(object):
         pose_msg.pose.orientation.y = cur_opt.orientation[2]
         pose_msg.pose.orientation.z = cur_opt.orientation[3]
         return pose_msg
+
+    def compute_relative_distance(self, opt_node_from, opt_node_to):
+        T_G_B_a = self.create_transformation_from_node(opt_node_from)
+        T_G_B_b = self.create_transformation_from_node(opt_node_to)
+        T_a_b = np.matmul(np.linalg.inv(T_G_B_a), T_G_B_b)
+        t_a_b, q_a_b = self.convert_transform(T_a_b)
+
+        pose_msg = PoseStamped()
+        pose_msg.header.stamp = opt_node_to.ts
+        pose_msg.pose.position.x = t_a_b[0]
+        pose_msg.pose.position.y = t_a_b[1]
+        pose_msg.pose.position.z = t_a_b[2]
+        pose_msg.pose.orientation.x = q_a_b[0]
+        pose_msg.pose.orientation.y = q_a_b[1]
+        pose_msg.pose.orientation.z = q_a_b[2]
+        pose_msg.pose.orientation.w = q_a_b[3]
+        return pose_msg
+
+    def convert_transform(self, T_a_b):
+        pos =  T_a_b[0:3, 3]
+        R = T_a_b[0:3,0:3]
+        return pos, Rotation.from_matrix(R).as_quat() # x, y, z, w
+
+    def create_transformation_from_node(self, node):
+        pose_msg = self.create_pose_msg_from_node(node)
+        pos, orien = Utils.convert_pose_stamped_msg_to_array(pose_msg)
+        T_G_B = Utils.convert_pos_quat_to_transformation(pos, orien)

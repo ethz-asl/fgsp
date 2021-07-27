@@ -81,7 +81,7 @@ class GraphClient(object):
         self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
-        if not (self.is_initialized and self.config.enable_anchor_constraints):
+        if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
         self.mutex.acquire()
 
@@ -93,7 +93,7 @@ class GraphClient(object):
         self.mutex.release()
 
     def client_update_callback(self, graph_msg):
-        if not (self.is_initialized and self.config.enable_anchor_constraints):
+        if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
         # Theoretically this does exactly the same as the graph_callback, but
         # lets separate it for now to be a bit more flexible.
@@ -108,7 +108,7 @@ class GraphClient(object):
         self.mutex.release()
 
     def traj_opt_callback(self, msg):
-        if not (self.is_initialized and self.config.enable_anchor_constraints):
+        if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
 
         keys = self.optimized_signal.convert_signal(msg)
@@ -130,7 +130,7 @@ class GraphClient(object):
         self.keys.append(key)
 
     def traj_path_callback(self, msg):
-        if not (self.is_initialized and self.config.enable_anchor_constraints):
+        if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
         self.latest_traj_msg = msg
 
@@ -202,10 +202,11 @@ class GraphClient(object):
         np.save(filename, traj)
 
     def compare_estimations(self):
-        if not self.config.enable_anchor_constraints:
+        if not self.config.enable_relative_constraints:
             return
         self.mutex.acquire()
         if self.global_graph.is_built is False:
+
             self.mutex.release()
             return
         # Check whether we have an optimized version of it.
@@ -273,6 +274,8 @@ class GraphClient(object):
         return (all_opt_nodes, all_est_nodes)
 
     def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
+        if not self.config.enable_anchor_constraints:
+            return
         rospy.loginfo('[GraphClient] Checking for degeneracy.')
         n_nodes = len(all_opt_nodes)
         assert n_nodes == len(all_est_nodes)
@@ -315,7 +318,7 @@ class GraphClient(object):
         # We will filter them later per submap.
         W_est = self.robot_eval.compute_wavelet_coeffs(x_est)
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
-        features = self.eval.compute_features(W_1, W_2)
+        features = self.eval.compute_features(W_opt, W_est)
 
         labels =  self.eval.classify_simple(features)
         return ClassificationResult(key, all_opt_nodes, features, labels)

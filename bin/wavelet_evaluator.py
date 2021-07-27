@@ -178,7 +178,6 @@ class WaveletEvaluator(object):
             dists = np.array([low_mean, mid_mean, high_mean])
             max_dist_idx = np.argmax(dists)
 
-            print(f'dists is {dists} and max idx is {max_dist_idx}')
             if dists[max_dist_idx] <= 0.3:
                 labels.append(0)
             else:

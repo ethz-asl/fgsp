@@ -4,12 +4,14 @@ import rospy
 import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
+from scipy.spatial.transform import Rotation
 from utils import Utils
 
 class ClassificationResult(object):
     def __init__(self, robot_name, opt_nodes, features, labels):
         self.robot_name = robot_name
         self.opt_nodes = opt_nodes
+        self.n_nodes = len(opt_nodes)
         self.features = features
         self.labels = labels
 
@@ -38,10 +40,10 @@ class ClassificationResult(object):
         if idx - 4 >= 0:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 4])
             relative_constraint.poses.append(pose_msg)
-        if idx + 3 < n_nodes:
+        if idx + 3 < self.n_nodes:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 3])
             relative_constraint.poses.append(pose_msg)
-        if idx + 4 < n_nodes:
+        if idx + 4 < self.n_nodes:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 4])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
@@ -52,14 +54,13 @@ class ClassificationResult(object):
         if idx - 2 >= 0:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 2])
             relative_constraint.poses.append(pose_msg)
-        if idx + 2 < n_nodes:
+        if idx + 2 < self.n_nodes:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 2])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 
     def construct_small_area_constraint(self, idx):
-        n_nodes = len(self.opt_nodes)
-        if n_nodes <= 1:
+        if self.n_nodes <= 1:
             return None
         cur_opt = self.opt_nodes[idx]
         relative_constraint = Path()
@@ -67,7 +68,7 @@ class ClassificationResult(object):
         if idx - 1 >= 0:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 1])
             relative_constraint.poses.append(pose_msg)
-        if idx + 1 < n_nodes:
+        if idx + 1 < self.n_nodes:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 1])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
@@ -109,4 +110,4 @@ class ClassificationResult(object):
     def create_transformation_from_node(self, node):
         pose_msg = self.create_pose_msg_from_node(node)
         pos, orien = Utils.convert_pose_stamped_msg_to_array(pose_msg)
-        T_G_B = Utils.convert_pos_quat_to_transformation(pos, orien)
+        return Utils.convert_pos_quat_to_transformation(pos, orien)

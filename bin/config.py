@@ -79,6 +79,7 @@ class ClientConfig(BaseConfig):
         self.enable_client_update = True
         self.enable_submap_constraints = True
         self.enable_anchor_constraints = False
+        self.enable_relative_constraints = False
         self.enable_signal_recording = False
         self.enable_trajectory_recording = False
         self.signal_export_path = "/data/{key}_{src}_signal.npy"
@@ -113,6 +114,7 @@ class ClientConfig(BaseConfig):
         self.enable_client_update = self.try_get_param("~enable_client_update", self.enable_client_update)
         self.enable_submap_constraints = self.try_get_param("~enable_submap_constraints", self.enable_submap_constraints)
         self.enable_anchor_constraints = self.try_get_param("~enable_anchor_constraints", self.enable_anchor_constraints)
+        self.enable_relative_constraints = self.try_get_param("~enable_relative_constraints", self.enable_relative_constraints)
         self.enable_signal_recording = self.try_get_param("~enable_signal_recording", self.enable_signal_recording)
         self.enable_trajectory_recording = self.try_get_param("~enable_trajectory_recording", self.enable_trajectory_recording)
         self.signal_export_path = self.try_get_param("~signal_export_path", self.signal_export_path)

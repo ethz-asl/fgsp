@@ -178,7 +178,10 @@ class WaveletEvaluator(object):
             dists = np.array([low_mean, mid_mean, high_mean])
             max_dist_idx = np.argmax(dists)
 
-            if dists[max_dist_idx] <= 0.3:
+            np.set_printoptions(suppress=True)
+            # rospy.logwarn(f'distance is {dists}')
+            # print(f'low is {np.array([data[i,0], data[i,3], data[i,6], data[i,9]])}')
+            if dists[max_dist_idx] <= 10.0:
                 labels.append(0)
             else:
                 labels.append(max_dist_idx + 1)

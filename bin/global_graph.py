@@ -149,20 +149,20 @@ class GlobalGraph(object):
         adj = np.zeros((n_coords, n_coords))
         tree = spatial.KDTree(coords)
         max_pos_dist = 6.0
-        n_nearest_neighbors = min(20, n_coords)
-        sigma = 1
-        normalization = 2*(sigma**2)
+        # n_nearest_neighbors = min(20, n_coords)
+        sigma = 1.0
+        normalization = 2.0*(sigma**2)
         for i in range(n_coords):
             # nn_dists, nn_indices = tree.query(coords[i,:], p = 2, k = n_nearest_neighbors)
+            # nn_indices = [nn_indices] if n_nearest_neighbors == 1 else nn_indices
             nn_indices = tree.query_ball_point(coords[i,:], r = max_pos_dist, p = 2)
-            nn_indices = [nn_indices] if n_nearest_neighbors == 1 else nn_indices
 
             # print(f'Found the following indices: {nn_indices} / {n_coords}')
             for nn_i in nn_indices:
                 if nn_i == i:
                     continue
-                dist = spatial.distance.euclidean(coords[nn_i,:], coords[i,:])
-                adj[i,nn_i] = np.exp(-dist/normalization)
+                dist = spatial.distance.euclidean(coords[i,:], coords[nn_i,:])
+                adj[i, nn_i] = np.exp(-dist/normalization)
 
         assert np.all(adj >= 0)
         return adj

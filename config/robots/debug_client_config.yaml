@@ -2,7 +2,7 @@
 opt_graph_topic:             /graph_monitor/sparse_graph/graph
 opt_traj_topic:              /graph_monitor/sparse_graph/trajectory
 est_traj_topic:              /trajectory
-est_traj_path_topic:         /incremental_trajectory
+est_traj_path_topic:         /optimized_path
 opt_submap_constraint_topic: /graph_monitor/submaps
 
 # Publishers.
@@ -18,7 +18,7 @@ client_update_topic:         "/graph_client/latest_graph"
 dataroot:                    "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp"
 robot_name:                  "anymal_1"
 random_forest_model:         "/config/forest.joblib"
-update_rate:                 0.1
+update_rate:                 0.3
 enable_client_update:        False
 enable_anchor_constraints:   False
 enable_relative_constraints: True

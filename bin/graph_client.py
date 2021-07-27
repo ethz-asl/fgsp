@@ -15,7 +15,7 @@ from graph_visualizer import GraphVisualizer
 from signal_synchronizer import SignalSynchronizer
 from wavelet_evaluator import WaveletEvaluator
 from command_post import CommandPost
-from feature_node import ClassificationResult
+from classification_result import ClassificationResult
 from constraint_handler import ConstraintHandler
 from config import ClientConfig
 from plotter import Plotter

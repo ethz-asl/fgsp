@@ -31,26 +31,26 @@ class ClassificationResult(object):
     def construct_large_area_constraint(self, idx):
         relative_constraint = self.construct_mid_area_constraint(idx)
         if idx - 3 >= 0:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 3]
+            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 3])
             relative_constraint.poses.append(pose_msg)
         if idx - 4 >= 0:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 4]
+            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 4])
             relative_constraint.poses.append(pose_msg)
         if idx + 3 < n_nodes:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 3]
+            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 3])
             relative_constraint.poses.append(pose_msg)
         if idx + 4 < n_nodes:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 4]
+            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 4])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 
     def construct_mid_area_constraint(self, idx):
         relative_constraint = self.construct_small_area_constraint(idx)
         if idx - 2 >= 0:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 2]
+            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 2])
             relative_constraint.poses.append(pose_msg)
         if idx + 2 < n_nodes:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 2]
+            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 2])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 
@@ -62,10 +62,10 @@ class ClassificationResult(object):
         relative_constraint = Path()
         relative_constraint.header.stamp = cur_opt.ts
         if idx - 1 >= 0:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 1]
+            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx - 1])
             relative_constraint.poses.append(pose_msg)
         if idx + 1 < n_nodes:
-            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 1]
+            pose_msg = self.create_pose_msg_from_node(self.opt_nodes[idx + 1])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 

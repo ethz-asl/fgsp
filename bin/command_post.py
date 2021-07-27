@@ -31,21 +31,15 @@ class CommandPost(object):
         self.degenerate_path_msg = Path()
         self.verification_request = VerificationCheckRequest()
 
-    def accumulate_update_messages(self, submap_features):
+    def evaluate_labels_per_node(self, labels):
         # Should always publish for all states as we don't know
         # whether they reached the clients.
-        n_nodes = len(submap_features.nodes)
+        n_nodes = labels.size()
         for i in range(0, n_nodes):
-            cur_opt = submap_features.nodes[i]
-            pose_msg = self.create_pose_msg_from_node(cur_opt)
-
-            if submap_features.label == 0:
-                self.good_path_msg.poses.append(pose_msg)
-            elif submap_features.label == 1:
-                self.bad_path_msg.poses.append(pose_msg)
-                self.append_verification_request(submap_features)
-            else:
-                rospy.logerror(f"Found an unknown label {submap_features.label}")
+            relative_constraint = labels.check_and_construct_constraint_at(i)
+            if relative_constraint is None:
+                continue # no-op
+            self.pub_relative.publish(relative_constraint)
 
     def create_pose_msg_from_node(self, cur_opt):
         pose_msg = PoseStamped()
@@ -58,23 +52,6 @@ class CommandPost(object):
         pose_msg.pose.orientation.y = cur_opt.orientation[2]
         pose_msg.pose.orientation.z = cur_opt.orientation[3]
         return pose_msg
-
-    def publish_update_messages(self):
-        if self.good_path_msg == None or self.bad_path_msg == None:
-            return
-        n_good = len(self.good_path_msg.poses)
-        n_bad = len(self.bad_path_msg.poses)
-        rospy.loginfo(f"[CommandPost] Publishing evaluation results ({n_good}/{n_bad}).")
-        if n_good > 0:
-            self.good_path_msg.header.stamp = rospy.Time.now()
-            self.pub_anchor.publish(self.good_path_msg)
-        if n_bad > 0:
-            # Publish bad message
-            self.bad_path_msg.header.stamp = rospy.Time.now()
-            self.pub_relative.publish(self.bad_path_msg)
-
-            # Publish verification request
-        self.send_verification_request()
 
     def append_verification_request(self, submap_features):
         if not self.verification_request.robot_name:

@@ -15,7 +15,7 @@ from graph_visualizer import GraphVisualizer
 from signal_synchronizer import SignalSynchronizer
 from wavelet_evaluator import WaveletEvaluator
 from command_post import CommandPost
-from feature_node import FeatureNode
+from feature_node import ClassificationResult
 from constraint_handler import ConstraintHandler
 from config import ClientConfig
 from plotter import Plotter
@@ -242,11 +242,15 @@ class GraphClient(object):
         n_opt_nodes = len(all_opt_nodes)
 
         # Compute the features and publish the results.
+        # This evaluates per node the scale of the difference
+        # and creates a relative constraint accordingly.
         self.record_raw_est_trajectory(self.signal.compute_trajectory(all_est_nodes))
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
-        labels = self.compute_all_submap_features(key, all_opt_nodes, all_est_nodes)
-        self.evaluate_and_publish_features(all_features)
+        labels = self.compute_all_features(key, all_opt_nodes, all_est_nodes)
+        self.evaluate_and_publish_features(labels)
 
+        # Check if we the robot identified a degeneracy in its state.
+        # Publish an anchor node curing the affected areas.
         self.check_for_degeneracy(all_opt_nodes, all_est_nodes)
 
         return True
@@ -288,7 +292,7 @@ class GraphClient(object):
             return
         self.commander.update_degenerate_anchors(all_opt_nodes)
 
-    def compute_all_submap_features(self, key, all_opt_nodes, all_est_nodes):
+    def compute_all_features(self, key, all_opt_nodes, all_est_nodes):
         if not self.eval.is_available:
             return []
 
@@ -314,18 +318,12 @@ class GraphClient(object):
         features = self.eval.compute_features(W_1, W_2)
 
         labels =  self.eval.classify_simple(features)
-        return FeatureNode(key, all_opt_nodes, features, labels)
+        return ClassificationResult(key, all_opt_nodes, features, labels)
 
-
-    def evaluate_and_publish_features(self, all_features):
-        if len(all_features) == 0:
+    def evaluate_and_publish_features(self, labels):
+        if labels.size() == 0:
             return
-
-        for submap_features in all_features:
-            # Predict the state of all the submaps and publish an update.
-            submap_features.label = self.eval.classify_submap(submap_features.features)[0]
-            self.commander.accumulate_update_messages(submap_features)
-        self.commander.publish_update_messages()
+        self.commander.evaluate_labels_per_node(labels)
 
     def key_in_optimized_keys(self, key):
        return any(key in k for k in self.optimized_keys)

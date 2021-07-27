@@ -213,7 +213,7 @@ class GraphClient(object):
         if self.key_in_optimized_keys(self.config.robot_name):
             self.compare_stored_signals(self.config.robot_name)
         else:
-            rospy.logwarn(f"[GraphClient] Found no optimized version of {key} for comparison.")
+            rospy.logwarn(f"[GraphClient] Found no optimized version of {self.config.robot_name} for comparison.")
         self.mutex.release()
 
     def check_for_submap_constraints(self):
@@ -297,7 +297,7 @@ class GraphClient(object):
 
     def compute_all_features(self, key, all_opt_nodes, all_est_nodes):
         if not self.eval.is_available:
-            return []
+            return None
 
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
@@ -309,10 +309,10 @@ class GraphClient(object):
         robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
-            return []
+            return None
         if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
             rospy.logwarn(f'[GraphClient] Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
-            return []
+            return None
 
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.
@@ -324,7 +324,7 @@ class GraphClient(object):
         return ClassificationResult(key, all_opt_nodes, features, labels)
 
     def evaluate_and_publish_features(self, labels):
-        if labels.size() == 0:
+        if labels == None or labels.size() == 0:
             return
         self.commander.evaluate_labels_per_node(labels)
 

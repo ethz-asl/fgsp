@@ -11,7 +11,7 @@ verification_server_request:          /maplab_server/verification
 
 opt_pc_topic:                         "/maplab_server/sparse_graph/submap"
 enable_graph_building:                True
-enable_submap_constraints:            False
+enable_submap_constraints:            True
 enable_submap_map_publishing:         False
 reduce_global_graph:                  False
 accumulated_map_topic:                "/graph_monitor/map"

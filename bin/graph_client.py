@@ -55,7 +55,7 @@ class GraphClient(object):
         self.latest_traj_msg = None
         self.signal = SignalHandler()
         self.optimized_signal = SignalHandler()
-        self.synchronizer = SignalSynchronizer()
+        self.synchronizer = SignalSynchronizer(self.config)
         self.eval = WaveletEvaluator()
         self.robot_eval = WaveletEvaluator()
         self.commander = CommandPost()
@@ -139,6 +139,7 @@ class GraphClient(object):
             return False
 
         key = self.signal.convert_signal_from_path(self.latest_traj_msg, self.config.robot_name)
+
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")
             return False
@@ -206,7 +207,6 @@ class GraphClient(object):
             return
         self.mutex.acquire()
         if self.global_graph.is_built is False:
-
             self.mutex.release()
             return
         # Check whether we have an optimized version of it.
@@ -242,11 +242,15 @@ class GraphClient(object):
         all_opt_nodes = self.optimized_signal.get_all_nodes(key)
         n_opt_nodes = len(all_opt_nodes)
 
+
         # Compute the features and publish the results.
         # This evaluates per node the scale of the difference
         # and creates a relative constraint accordingly.
         self.record_raw_est_trajectory(self.signal.compute_trajectory(all_est_nodes))
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
+        if all_opt_nodes is None or all_est_nodes is None:
+            return False
+
         labels = self.compute_all_features(key, all_opt_nodes, all_est_nodes)
         self.evaluate_and_publish_features(labels)
 
@@ -261,10 +265,16 @@ class GraphClient(object):
         # Synchronize the node lists based on their TS.
         # We always sync to the optimized nodes.
         if self.global_graph.is_reduced:
+            rospy.logwarn(f'[GraphClient] Reducing global graph with {len(self.global_graph.reduced_ind)} indices.')
             all_opt_nodes = [all_opt_nodes[i] for i in self.global_graph.reduced_ind]
+
         (all_opt_nodes, all_est_nodes, opt_idx, est_idx) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
-        assert(len(all_est_nodes) == len(all_opt_nodes))
+        n_nodes = len(all_est_nodes)
+        assert(n_nodes == len(all_opt_nodes))
         assert(len(est_idx) == len(opt_idx))
+        if n_nodes == 0:
+            rospy.logwarn('[GraphClient] Could not synchronize nodes.')
+            return (None, None)
 
         # Reduce the robot graph and compute the wavelet basis functions.
         positions = np.array([np.array(x.position) for x in all_est_nodes])
@@ -302,6 +312,7 @@ class GraphClient(object):
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
+
         self.record_all_signals(x_est, x_opt)
         self.record_synchronized_trajectories(self.signal.compute_trajectory(all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
 

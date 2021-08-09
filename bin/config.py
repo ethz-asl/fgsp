@@ -88,6 +88,7 @@ class ClientConfig(BaseConfig):
         self.trajectory_export_path = "/data/{key}_{src}_trajectory.npy"
         self.trajectory_raw_export_path = "/data/{key}_{src}_raw_trajectory.npy"
         self.degenerate_window = 10
+        self.synchronization_max_diff_s = 1
 
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
@@ -123,7 +124,8 @@ class ClientConfig(BaseConfig):
         self.trajectory_export_path = self.try_get_param("~trajectory_export_path", self.trajectory_export_path)
         self.trajectory_raw_export_path = self.try_get_param("~trajectory_raw_export_path", self.trajectory_raw_export_path)
         self.degenerate_window = self.try_get_param("~degenerate_window", self.degenerate_window)
-
+        self.synchronization_max_diff_s = self.try_get_param("~synchronization_max_diff_s", self.synchronization_max_diff_s)
+        
         # input
         self.opt_graph_topic = self.try_get_param("~opt_graph_topic", self.opt_graph_topic)
         self.opt_traj_topic = self.try_get_param("~opt_traj_topic", self.opt_traj_topic)

@@ -7,8 +7,9 @@ from utils import Utils
 
 class SignalSynchronizer(object):
 
-    def __init__(self):
-        rospy.loginfo("[SignalSynchronizer] Initialized")
+    def __init__(self, config):
+        self.config = config
+
 
     def synchronize(self, optimized, estimated):
         ts_opt = self.extract_timestamps(optimized)
@@ -25,7 +26,12 @@ class SignalSynchronizer(object):
 
             # TODO(lbern): Check for a max difference.
             ts_diff = np.absolute(ts_est - cur_ts)
-            cur_min_index = np.where(ts_diff == np.amin(ts_diff))[0]
+            ts_min = np.amin(ts_diff)
+            diff_s = Utils.ts_ns_to_seconds(ts_min)
+            if diff_s > self.config.synchronization_max_diff_s:
+                rospy.logwarn(f'[SignalSynchronizer] closest TS is {diff_s} away.')
+                continue
+            cur_min_index = np.where(ts_diff == ts_min)[0]
             est_idx.append(cur_min_index[0])
             opt_idx.append(i)
 
@@ -33,7 +39,6 @@ class SignalSynchronizer(object):
         opt_nodes = [optimized[i] for i in opt_idx]
 
         return (opt_nodes, est_nodes, opt_idx, est_idx)
-
 
     def extract_timestamps(self, signals):
         n_nodes = len(signals)

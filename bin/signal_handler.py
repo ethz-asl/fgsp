@@ -46,7 +46,7 @@ class SignalHandler(object):
             if (n_nodes <= 0):
                 continue
 
-            signals = [SignalNode] * n_nodes
+            signals = [None] * n_nodes
             for i in range(0, n_nodes):
                 signals[i] = self.convert_trajectory_node(nodes[i])
             self.signals[key] = signals
@@ -61,7 +61,7 @@ class SignalHandler(object):
 
         # key = path_msg.header.frame_id
         key = robot_name
-        signals = [SignalNode] * n_poses
+        signals = [None] * n_poses
         for i in range(0, n_poses):
             signals[i] = self.convert_path_node(path_msg.poses[i], key)
 

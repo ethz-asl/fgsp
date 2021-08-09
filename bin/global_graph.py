@@ -42,22 +42,10 @@ class GlobalGraph(object):
         self.submap_ind = self.read_submap_indices(graph_msg)
         rospy.logdebug("[GlobalGraph] Building with ind: " + str(len(self.submap_ind)))
 
-        if len(self.adj.tolist()) == 0:
-            rospy.loginfo(f"[GlobalGraph] Adjacency matrix is empty. Aborting graph building.")
+        if not self.build_graph():
+            self.G = None
+            self.is_built = False
             return
-        self.G = graphs.Graph(self.adj)
-        if self.G.N != self.coords.shape[0]:
-            rospy.logerr(f"[GlobalGraph] Graph size is {self.G.N} but coords are {self.coords.shape}")
-            return
-        if self.G.N <= 1:
-            rospy.logdebug("[GlobalGraph] Graph vertex count is less than 2.")
-            return
-
-        self.G.set_coordinates(self.coords[:,[0,1]])
-        self.G.compute_fourier_basis()
-
-        if (self.is_reduced):
-            self.reduce_graph()
 
         self.graph_seq = graph_msg.header.seq
         self.is_built = True
@@ -68,30 +56,31 @@ class GlobalGraph(object):
     def build_graph(self):
         if len(self.adj.tolist()) == 0:
             rospy.loginfo(f"[GlobalGraph] Path adjacency matrix is empty. Aborting graph building.")
-            return
+            return False
         self.G = graphs.Graph(self.adj)
         if self.G.N != self.coords.shape[0]:
             rospy.logerr(f"[GlobalGraph] Path graph size is {self.G.N} but coords are {self.coords.shape}")
-            return
+            return False
         if self.G.N <= 1:
             rospy.logdebug("[GlobalGraph] Path graph vertex count is less than 2.")
-            return
+            return False
 
         self.G.set_coordinates(self.coords[:,[0,1]])
         self.G.compute_fourier_basis()
 
         if (self.is_reduced):
             self.reduce_graph()
+        return True
+
+    def build_graph_from_coords_and_adj(self, coords, adj):
+        self.coords = coords
+        self.adj = adj
+        self.build_graph()
 
     def build_from_path(self, path_msg):
         start_time = time.time()
         self.build_from_pose_msgs(path_msg.poses)
-        self.build_graph()
-
-        self.graph_seq = self.graph_seq + 1
-        self.is_built = True
-        execution_time = (time.time() - start_time)
-        rospy.loginfo(f'[GlobalGraph] Building from path complete ({execution_time} sec)')
+        return self.build_graph()
 
     def build_from_pose_msgs(self, poses):
         start_time = time.time()

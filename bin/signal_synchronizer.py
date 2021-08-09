@@ -21,6 +21,9 @@ class SignalSynchronizer(object):
         est_idx = []
         opt_idx = []
 
+        if min_size != opt_size:
+            rospy.logerr(f'[SignalSynchronizer] min size is {min_size} and opt is {opt_size}.')
+
         for i in range(0, min_size):
             cur_ts = ts_opt[i,0]
 

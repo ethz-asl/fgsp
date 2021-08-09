@@ -16,7 +16,7 @@ client_update_topic:         "/graph_client/latest_graph"
 
 # Div
 dataroot:                    "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"
-robot_name:                  "anymal_5"
+robot_name:                  "anymal_2"
 random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.2
 enable_client_update:        False
@@ -31,4 +31,4 @@ graph_adj_export_path:       "/data/{src}_graph_adj.npy"
 trajectory_export_path:      "/data/{src}_trajectory.npy"
 trajectory_raw_export_path:  "/data/{src}_raw_trajectory.npy"
 degenerate_window:           20
-synchronization_max_diff_s:  0.5
+synchronization_max_diff_s:  4.0

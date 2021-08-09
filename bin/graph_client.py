@@ -124,7 +124,6 @@ class GraphClient(object):
             return
 
         key = self.signal.convert_signal(msg)
-
         if self.key_in_keys(key):
             return
         self.keys.append(key)
@@ -139,7 +138,6 @@ class GraphClient(object):
             return False
 
         key = self.signal.convert_signal_from_path(self.latest_traj_msg, self.config.robot_name)
-
         if not key:
             rospy.logerror("[GraphClient] Unable to convert msg to signal.")
             return False
@@ -195,8 +193,11 @@ class GraphClient(object):
         graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(src=src)
         if src == 'opt':
             self.global_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
+            rospy.logwarn(f'[GraphClient] for {src} we have {x.shape} and {self.global_graph.coords.shape}')
         elif src == 'est':
             self.robot_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
+            rospy.logwarn(f'[GraphClient] for {src} we have {x.shape} and {self.robot_graph.coords.shape}')
+
 
     def record_traj_for_key(self, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(src=src)

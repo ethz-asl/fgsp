@@ -2,21 +2,24 @@
 opt_graph_topic:             /graph_monitor/sparse_graph/graph
 opt_traj_topic:              /graph_monitor/sparse_graph/trajectory
 est_traj_topic:              /trajectory
-est_traj_path_topic:         /incremental_trajectory
+est_traj_path_topic:         /optimized_path
 opt_submap_constraint_topic: /graph_monitor/submaps
 
 # Publishers.
 anchor_node_topic:           '/graph_client/anchor_nodes'
-relative_node_topic:         '/graph_client/intra_constraints'
+relative_node_topic:         '/graph_client/relative_nodes'
 intra_constraints:           '/graph_client/intra_constraints_sub'
 verification_service:        '/graph_monitor/verification'
 
 # Subscriber and Publisher
 client_update_topic:         "/graph_client/latest_graph"
 
+# Constraint construction
+client_mode:                 'euclidean'
+
 # Div
 dataroot:                    "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"
-robot_name:                  "anymal_2"
+robot_name:                  "anymal_5"
 random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.2
 enable_client_update:        False

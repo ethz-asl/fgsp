@@ -307,18 +307,20 @@ class GraphClient(object):
         self.commander.update_degenerate_anchors(all_opt_nodes)
 
     def compute_all_labels(self, key, all_opt_nodes, all_est_nodes):
-        if not self.eval.is_available:
-            return None
-
         if self.config.client_mode == 'multiscale':
             return self.perform_multiscale_evaluation(key, all_opt_nodes, all_est_nodes)
         elif self.config.client_mode == 'euclidean':
             return self.perform_euclidean_evaluation(key, all_opt_nodes, all_est_nodes)
         elif self.config.client_mode == 'always':
             return self.perform_always(key, all_opt_nodes, all_est_nodes)
-
+        else:
+            rospy.logerr('[GraphClient] Unknown mode specified {mode}'.format(mode=self.config.client_mode))
+            return None
 
     def perform_multiscale_evaluation(self, key, all_opt_nodes, all_est_nodes):
+        if not self.eval.is_available:
+            return None
+
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
@@ -344,19 +346,19 @@ class GraphClient(object):
         return ClassificationResult(key, all_opt_nodes, features, labels)
 
     def perform_euclidean_evaluation(self, key, all_opt_nodes, all_est_nodes):
-         est_traj = self.optimized_signal.compute_trajectory(all_opt_nodes)
-         opt_traj = self.signal.compute_trajectory(all_est_nodes)
-         diff_simple = np.linalg.norm(est_traj[:,1:4] - opt_traj[:,1:4], axis=1)
-         n_nodes = est_traj.shape[0]
-         labels = [0] * n_nodes
-         for i in range(0, n_nodes):
-                if diff[i] > 5.0:
-                    labels[i] = 1
-                elif diff[i] > 3.0:
-                    labels[i] = 2
-                elif diff[i] > 1.0:
-                    labels[i] = 3
-        return ClassificationResult(key, all_opt_nodes, diff_simple, labels)
+        est_traj = self.optimized_signal.compute_trajectory(all_opt_nodes)
+        opt_traj = self.signal.compute_trajectory(all_est_nodes)
+        euclidean_dist = np.linalg.norm(est_traj[:,1:4] - opt_traj[:,1:4], axis=1)
+        n_nodes = est_traj.shape[0]
+        labels = [0] * n_nodes
+        for i in range(0, n_nodes):
+            if euclidean_dist[i] > 5.0:
+                labels[i] = 1
+            elif euclidean_dist[i] > 3.0:
+                labels[i] = 2
+            elif euclidean_dist[i] > 1.0:
+                labels[i] = 3
+        return ClassificationResult(key, all_opt_nodes, euclidean_dist, labels)
 
     def perform_always(self, key, all_opt_nodes, all_est_nodes):
         n_nodes = len(all_opt_nodes)

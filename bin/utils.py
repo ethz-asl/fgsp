@@ -21,6 +21,11 @@ class Utils(object):
       return rospy.Time(ros_timestamp_sec, ros_timestamp_nsec)
 
     @staticmethod
+    def ts_ns_to_seconds(ts_ns):
+      k_ns_per_s = 1e9;
+      return ts_ns / k_ns_per_s;
+
+    @staticmethod
     def convert_pointcloud2_msg_to_array(cloud_msg):
         points_list = []
         for data in pc2.read_points(cloud_msg, skip_nans=True):

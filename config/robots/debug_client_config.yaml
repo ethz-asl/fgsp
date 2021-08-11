@@ -7,25 +7,28 @@ opt_submap_constraint_topic: /graph_monitor/submaps
 
 # Publishers.
 anchor_node_topic:           '/graph_client/anchor_nodes'
-relative_node_topic:         '/graph_client/relative_nodes'
-intra_constraints:           '/graph_client/intra_constraints'
+relative_node_topic:         '/graph_client/intra_constraints'
+intra_constraints:           '/graph_client/intra_constraints_sub'
 verification_service:        '/graph_monitor/verification'
 
 # Subscriber and Publisher
 client_update_topic:         "/graph_client/latest_graph"
 
 # Div
-dataroot:                    "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp"
-robot_name:                  "anymal_1"
+dataroot:                    "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"
+robot_name:                  "anymal_2"
 random_forest_model:         "/config/forest.joblib"
-update_rate:                 0.1
-enable_anchor_constraints:   True
+update_rate:                 0.2
+enable_client_update:        False
+enable_anchor_constraints:   False
+enable_relative_constraints: True
 enable_submap_constraints:   False
-enable_signal_recording:     False
-signal_export_path:          "/data/{key}_{src}_signal.npy"
-graph_coords_export_path:    "/data/{key}_{src}_graph_coords.npy"
-graph_adj_export_path:       "/data/{key}_{src}_graph_adj.npy"
-enable_trajectory_recording: False
-trajectory_export_path:      "/data/{key}_{src}_trajectory.npy"
-trajectory_raw_export_path:  "/data/{key}_{src}_raw_trajectory.npy"
+enable_signal_recording:     True
+enable_trajectory_recording: True
+signal_export_path:          "/data/{src}_signal.npy"
+graph_coords_export_path:    "/data/{src}_graph_coords.npy"
+graph_adj_export_path:       "/data/{src}_graph_adj.npy"
+trajectory_export_path:      "/data/{src}_trajectory.npy"
+trajectory_raw_export_path:  "/data/{src}_raw_trajectory.npy"
 degenerate_window:           20
+synchronization_max_diff_s:  4.0

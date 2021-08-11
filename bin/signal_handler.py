@@ -46,7 +46,7 @@ class SignalHandler(object):
             if (n_nodes <= 0):
                 continue
 
-            signals = [SignalNode] * n_nodes
+            signals = [None] * n_nodes
             for i in range(0, n_nodes):
                 signals[i] = self.convert_trajectory_node(nodes[i])
             self.signals[key] = signals
@@ -61,7 +61,7 @@ class SignalHandler(object):
 
         # key = path_msg.header.frame_id
         key = robot_name
-        signals = [SignalNode] * n_poses
+        signals = [None] * n_poses
         for i in range(0, n_poses):
             signals[i] = self.convert_path_node(path_msg.poses[i], key)
 
@@ -132,18 +132,18 @@ class SignalHandler(object):
     def compute_signal_from_key(self, key):
         nodes = self.signals[key]
         traj = self.compute_trajectory(nodes)
-        traj_origin = traj[0,:]
+        traj_origin = traj[0,1:4]
 
-        pos_signal = (traj - traj_origin).squeeze()
+        pos_signal = (traj[:,1:4] - traj_origin).squeeze()
 
         x = np.linalg.norm(pos_signal, ord=2, axis=1)
         return x
 
     def compute_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
-        traj_origin = traj[0,:]
+        traj_origin = traj[0,1:4]
 
-        pos_signal = (traj - traj_origin).squeeze()
+        pos_signal = (traj[:,1:4] - traj_origin).squeeze()
 
         return np.linalg.norm(pos_signal, ord=2, axis=1)
 

@@ -56,15 +56,12 @@ class ConstraintHandler(object):
             diff_from = time_now - constraint_msg.timestamp_from[i]
             diff_to = time_now - constraint_msg.timestamp_to[i]
             if diff_from.to_nsec() < 0 or diff_to.to_nsec() < 0:
-                rospy.logerr(f"[ConstraintHandler] Difference is negative. From is {diff_from.to_nsec()} and to is {diff_to.to_nsec()}.")                
+                rospy.logerr(f"[ConstraintHandler] Difference is negative. From is {diff_from.to_nsec()} and to is {diff_to.to_nsec()}.")
                 return False
-
-
         return True
 
     def process_intra_constraints(self, constraint_msg, i):
         robot_name = constraint_msg.robot_name_from[i]
-
         # Add the key if it is not present in the dict.
         if robot_name not in self.intra_contraints:
             self.intra_contraints[robot_name] = RobotConstraints()

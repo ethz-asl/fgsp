@@ -76,8 +76,10 @@ class ClientConfig(BaseConfig):
         self.dataroot = "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp"
         self.random_forest_model = "/config/forest.joblib"
         self.robot_name = "cerberus"
+        self.enable_client_update = True
         self.enable_submap_constraints = True
         self.enable_anchor_constraints = False
+        self.enable_relative_constraints = False
         self.enable_signal_recording = False
         self.enable_trajectory_recording = False
         self.signal_export_path = "/data/{key}_{src}_signal.npy"
@@ -86,6 +88,7 @@ class ClientConfig(BaseConfig):
         self.trajectory_export_path = "/data/{key}_{src}_trajectory.npy"
         self.trajectory_raw_export_path = "/data/{key}_{src}_raw_trajectory.npy"
         self.degenerate_window = 10
+        self.synchronization_max_diff_s = 1
 
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
@@ -109,8 +112,10 @@ class ClientConfig(BaseConfig):
         self.dataroot = self.try_get_param("~dataroot", self.dataroot)
         self.random_forest_model = self.try_get_param("~random_forest_model", self.random_forest_model)
         self.robot_name = self.try_get_param("~robot_name", self.robot_name)
+        self.enable_client_update = self.try_get_param("~enable_client_update", self.enable_client_update)
         self.enable_submap_constraints = self.try_get_param("~enable_submap_constraints", self.enable_submap_constraints)
         self.enable_anchor_constraints = self.try_get_param("~enable_anchor_constraints", self.enable_anchor_constraints)
+        self.enable_relative_constraints = self.try_get_param("~enable_relative_constraints", self.enable_relative_constraints)
         self.enable_signal_recording = self.try_get_param("~enable_signal_recording", self.enable_signal_recording)
         self.enable_trajectory_recording = self.try_get_param("~enable_trajectory_recording", self.enable_trajectory_recording)
         self.signal_export_path = self.try_get_param("~signal_export_path", self.signal_export_path)
@@ -119,7 +124,8 @@ class ClientConfig(BaseConfig):
         self.trajectory_export_path = self.try_get_param("~trajectory_export_path", self.trajectory_export_path)
         self.trajectory_raw_export_path = self.try_get_param("~trajectory_raw_export_path", self.trajectory_raw_export_path)
         self.degenerate_window = self.try_get_param("~degenerate_window", self.degenerate_window)
-
+        self.synchronization_max_diff_s = self.try_get_param("~synchronization_max_diff_s", self.synchronization_max_diff_s)
+        
         # input
         self.opt_graph_topic = self.try_get_param("~opt_graph_topic", self.opt_graph_topic)
         self.opt_traj_topic = self.try_get_param("~opt_traj_topic", self.opt_traj_topic)

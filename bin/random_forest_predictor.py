@@ -11,8 +11,8 @@ from sklearn import metrics
 from joblib import dump, load
 
 class RandomForestPredictor(object):
-    def __init__(self):
-        if rospy.has_param('~random_forest_model'):
+    def __init__(self, use_ros = False):
+        if use_ros and rospy.has_param('~random_forest_model'):
             dataroot = rospy.get_param("~dataroot")
             path_to_model = rospy.get_param("~random_forest_model")
             random_forest_model = dataroot + path_to_model

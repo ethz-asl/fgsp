@@ -42,7 +42,7 @@ class SubmapHandler(object):
         n_submaps = len(submaps)
         header = Header()
         header.stamp = rospy.Time.now()
-        header.frame_id = 'map'
+        header.frame_id = 'darpa'
         map_points = np.zeros((1,4))
 
         for i in range(0, n_submaps):

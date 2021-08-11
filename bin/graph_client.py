@@ -86,7 +86,7 @@ class GraphClient(object):
         self.mutex.acquire()
 
         # We only trigger the graph building if the msg contains new information.
-        if self.global_graph.msg_contains_updates(msg) is True:
+        if self.global_graph.msg_contains_updates(msg) and self.config.client_mode == 'multiscale':
             self.global_graph.build(msg)
             self.eval.compute_wavelets(self.global_graph.G)
 
@@ -101,7 +101,7 @@ class GraphClient(object):
         client_seq = graph_msg.header.seq
         self.mutex.acquire()
         graph_seq = self.global_graph.graph_seq
-        if self.global_graph.msg_contains_updates(graph_msg) is True:
+        if self.global_graph.msg_contains_updates(graph_msg) and self.config.client_mode == 'multiscale':
             self.global_graph.build(graph_msg)
             self.eval.compute_wavelets(self.global_graph.G)
 

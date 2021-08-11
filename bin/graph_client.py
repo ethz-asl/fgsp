@@ -252,7 +252,7 @@ class GraphClient(object):
         if all_opt_nodes is None or all_est_nodes is None:
             return False
 
-        labels = self.compute_all_features(key, all_opt_nodes, all_est_nodes)
+        labels = self.compute_all_labels(key, all_opt_nodes, all_est_nodes)
         self.evaluate_and_publish_features(labels)
 
         # Check if we the robot identified a degeneracy in its state.
@@ -306,10 +306,19 @@ class GraphClient(object):
             return
         self.commander.update_degenerate_anchors(all_opt_nodes)
 
-    def compute_all_features(self, key, all_opt_nodes, all_est_nodes):
+    def compute_all_labels(self, key, all_opt_nodes, all_est_nodes):
         if not self.eval.is_available:
             return None
 
+        if self.config.client_mode == 'multiscale':
+            return self.perform_multiscale_evaluation(key, all_opt_nodes, all_est_nodes)
+        elif self.config.client_mode == 'euclidean':
+            return self.perform_euclidean_evaluation(key, all_opt_nodes, all_est_nodes)
+        elif self.config.client_mode == 'always':
+            return self.perform_always(key, all_opt_nodes, all_est_nodes)
+
+
+    def perform_multiscale_evaluation(self, key, all_opt_nodes, all_est_nodes):
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
@@ -325,7 +334,6 @@ class GraphClient(object):
         if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
             rospy.logwarn(f'[GraphClient] Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
             return None
-
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.
         W_est = self.robot_eval.compute_wavelet_coeffs(x_est)
@@ -334,6 +342,26 @@ class GraphClient(object):
 
         labels =  self.eval.classify_simple(features)
         return ClassificationResult(key, all_opt_nodes, features, labels)
+
+    def perform_euclidean_evaluation(self, key, all_opt_nodes, all_est_nodes):
+         est_traj = self.optimized_signal.compute_trajectory(all_opt_nodes)
+         opt_traj = self.signal.compute_trajectory(all_est_nodes)
+         diff_simple = np.linalg.norm(est_traj[:,1:4] - opt_traj[:,1:4], axis=1)
+         n_nodes = est_traj.shape[0]
+         labels = [0] * n_nodes
+         for i in range(0, n_nodes):
+                if diff[i] > 5.0:
+                    labels[i] = 1
+                elif diff[i] > 3.0:
+                    labels[i] = 2
+                elif diff[i] > 1.0:
+                    labels[i] = 3
+        return ClassificationResult(key, all_opt_nodes, diff_simple, labels)
+
+    def perform_always(self, key, all_opt_nodes, all_est_nodes):
+        n_nodes = len(all_opt_nodes)
+        labels = [3] * n_nodes
+        return ClassificationResult(key, all_opt_nodes, None, labels)
 
     def evaluate_and_publish_features(self, labels):
         if labels == None or labels.size() == 0:

@@ -14,6 +14,9 @@ verification_service:        '/graph_monitor/verification'
 # Subscriber and Publisher
 client_update_topic:         "/graph_client/latest_graph"
 
+# Constraint construction
+client_mode:                 'always'
+
 # Div
 dataroot:                    "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"
 robot_name:                  "anymal_2"

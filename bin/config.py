@@ -73,9 +73,9 @@ class ClientConfig(BaseConfig):
     def __init__(self):
         # general config
         self.rate = rospy.Rate(0.1)
-        self.dataroot = "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp"
-        self.random_forest_model = "/config/forest.joblib"
-        self.robot_name = "cerberus"
+        self.dataroot = '/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp'
+        self.random_forest_model = '/config/forest.joblib'
+        self.robot_name = 'cerberus'
         self.enable_client_update = True
         self.enable_submap_constraints = True
         self.enable_anchor_constraints = False
@@ -89,6 +89,9 @@ class ClientConfig(BaseConfig):
         self.trajectory_raw_export_path = "/data/{key}_{src}_raw_trajectory.npy"
         self.degenerate_window = 10
         self.synchronization_max_diff_s = 1
+
+        # constraint construction
+        self.client_mode = 'multiscale'
 
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
@@ -125,7 +128,10 @@ class ClientConfig(BaseConfig):
         self.trajectory_raw_export_path = self.try_get_param("~trajectory_raw_export_path", self.trajectory_raw_export_path)
         self.degenerate_window = self.try_get_param("~degenerate_window", self.degenerate_window)
         self.synchronization_max_diff_s = self.try_get_param("~synchronization_max_diff_s", self.synchronization_max_diff_s)
-        
+
+        # constraint construction
+        self.client_mode = self.try_get_param("~client_mode", self.client_mode)
+
         # input
         self.opt_graph_topic = self.try_get_param("~opt_graph_topic", self.opt_graph_topic)
         self.opt_traj_topic = self.try_get_param("~opt_traj_topic", self.opt_traj_topic)

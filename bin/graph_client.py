@@ -206,8 +206,10 @@ class GraphClient(object):
     def compare_estimations(self):
         if not self.config.enable_relative_constraints:
             return
+        rospy.loginfo("[GraphClient] Comparing estimations.")
         self.mutex.acquire()
-        if self.global_graph.is_built is False:
+        if self.global_graph.is_built is False and self.config.client_mode == 'multiscale':
+            rospy.logerr('[GraphClient] Graph is not built yet.')
             self.mutex.release()
             return
         # Check whether we have an optimized version of it.

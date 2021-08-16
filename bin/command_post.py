@@ -24,6 +24,7 @@ class CommandPost(object):
         self.verification_request = VerificationCheckRequest()
         self.degenerate_indices = []
         rospy.loginfo("[CommandPost] Initialized command post center.")
+        self.previous_relatives = {}
 
     def reset_msgs(self):
         self.good_path_msg = Path()
@@ -36,9 +37,12 @@ class CommandPost(object):
         # whether they reached the clients.
         n_nodes = labels.size()
         for i in range(0, n_nodes):
+            if labels.labels[i] == 0 and i in self.previous_relatives.keys():
+                labels.labels[i] = self.previous_relatives[i]
             relative_constraint = labels.check_and_construct_constraint_at(i)
             if relative_constraint is None:
                 continue # no-op
+            self.previous_relatives[i] = labels.labels[i]
             self.pub_relative.publish(relative_constraint)
 
     def create_pose_msg_from_node(self, cur_opt):

@@ -32,30 +32,39 @@ class ClassificationResult(object):
         return None
 
     def construct_large_area_constraint(self, idx):
-        relative_constraint = self.construct_mid_area_constraint(idx)
         cur_opt = self.opt_nodes[idx]
-        if idx - 3 >= 0:
-            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 3])
+        relative_constraint = Path()
+        relative_constraint.header.stamp = cur_opt.ts
+        # if idx - 13 >= 0:
+        #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 13])
+        #     relative_constraint.poses.append(pose_msg)
+        # if idx - 14 >= 0:
+        #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 14])
+        #     relative_constraint.poses.append(pose_msg)
+        if idx - 15 >= 0:
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 15])
             relative_constraint.poses.append(pose_msg)
-        if idx - 4 >= 0:
-            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 4])
-            relative_constraint.poses.append(pose_msg)
-        if idx + 3 < self.n_nodes:
-            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 3])
-            relative_constraint.poses.append(pose_msg)
-        if idx + 4 < self.n_nodes:
-            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 4])
+
+        # if idx + 13 < self.n_nodes:
+        #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 13])
+        #     relative_constraint.poses.append(pose_msg)
+        # if idx + 14 < self.n_nodes:
+        #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 14])
+        #     relative_constraint.poses.append(pose_msg)
+        if idx + 15 < self.n_nodes:
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 15])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 
     def construct_mid_area_constraint(self, idx):
-        relative_constraint = self.construct_small_area_constraint(idx)
         cur_opt = self.opt_nodes[idx]
-        if idx - 2 >= 0:
-            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 2])
+        relative_constraint = Path()
+        relative_constraint.header.stamp = cur_opt.ts
+        if idx - 5 >= 0:
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 5])
             relative_constraint.poses.append(pose_msg)
-        if idx + 2 < self.n_nodes:
-            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 2])
+        if idx + 5 < self.n_nodes:
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 5])
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 

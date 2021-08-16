@@ -182,7 +182,7 @@ class WaveletEvaluator(object):
             # rospy.logwarn(f'distance is {dists}')
             # print(f'low is {np.array([data[i,0], data[i,3], data[i,6], data[i,9]])}')
             rospy.loginfo('[WaveletEvaluator] max dist is {dist}'.format(dist=dists[max_dist_idx]))
-            if dists[max_dist_idx] <= 10.0:
+            if dists[max_dist_idx] <= 0.7:
                 labels.append(0)
             else:
                 labels.append(max_dist_idx + 1)

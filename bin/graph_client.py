@@ -332,6 +332,7 @@ class GraphClient(object):
         robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
+            rospy.logwarn(f'[GraphClient] We have some size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}')
             return None
         if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
             rospy.logwarn(f'[GraphClient] Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')

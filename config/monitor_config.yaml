@@ -16,8 +16,8 @@ enable_submap_map_publishing:         True
 reduce_global_graph:                  False
 accumulated_map_topic:                "/graph_monitor/map"
 submap_constraint_topic:              "/graph_monitor/submaps"
-submap_constraint_pivot_distance:     30.0
-submap_constraint_knn:                20
+submap_constraint_pivot_distance:     20.0
+submap_constraint_knn:                5
 submap_constraint_p_norm:             2
 submap_constraint_refine_icp:         False
 submap_constraint_export_lidar_poses: False

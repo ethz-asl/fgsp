@@ -355,11 +355,7 @@ class GraphClient(object):
         n_nodes = est_traj.shape[0]
         labels = [0] * n_nodes
         for i in range(0, n_nodes):
-            if euclidean_dist[i] > 5.0:
-                labels[i] = 1
-            elif euclidean_dist[i] > 3.0:
-                labels[i] = 2
-            elif euclidean_dist[i] > 1.0:
+            if euclidean_dist[i] > 1.0:
                 labels[i] = 3
         return ClassificationResult(key, all_opt_nodes, euclidean_dist, labels)
 

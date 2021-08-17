@@ -23,11 +23,11 @@ class ClassificationResult(object):
         if label == 0:
             return None
         if label == 1:
-            return self.construct_large_area_constraint(idx)
+            return self.construct_small_area_constraint(idx)
         if label == 2:
             return self.construct_mid_area_constraint(idx)
         if label == 3:
-            return self.construct_small_area_constraint(idx)
+            return self.construct_large_area_constraint(idx)
         rospy.logerror(f'[ClassificationResult] Unknown label ({label})')
         return None
 
@@ -38,9 +38,9 @@ class ClassificationResult(object):
         # if idx - 13 >= 0:
         #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 13])
         #     relative_constraint.poses.append(pose_msg)
-        # if idx - 14 >= 0:
-        #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 14])
-        #     relative_constraint.poses.append(pose_msg)
+        if idx - 14 >= 0:
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 14])
+            relative_constraint.poses.append(pose_msg)
         if idx - 15 >= 0:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 15])
             relative_constraint.poses.append(pose_msg)
@@ -48,9 +48,9 @@ class ClassificationResult(object):
         # if idx + 13 < self.n_nodes:
         #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 13])
         #     relative_constraint.poses.append(pose_msg)
-        # if idx + 14 < self.n_nodes:
-        #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 14])
-        #     relative_constraint.poses.append(pose_msg)
+        if idx + 14 < self.n_nodes:
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 14])
+            relative_constraint.poses.append(pose_msg)
         if idx + 15 < self.n_nodes:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 15])
             relative_constraint.poses.append(pose_msg)

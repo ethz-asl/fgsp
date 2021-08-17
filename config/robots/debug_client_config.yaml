@@ -24,8 +24,8 @@ random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.2
 enable_client_update:        False
 enable_anchor_constraints:   False
-enable_relative_constraints: False
-enable_submap_constraints:   True
+enable_relative_constraints: True
+enable_submap_constraints:   False
 enable_signal_recording:     True
 enable_trajectory_recording: True
 signal_export_path:          "/data/{src}_signal.npy"

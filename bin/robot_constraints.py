@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+import rospy
+import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 
@@ -30,6 +32,24 @@ class RobotConstraints(object):
             path_msg = self.construct_path_msg_for_submap(ts_ns_from, loop_closures)
             path_msgs.append(path_msg)
         return path_msgs
+
+    def construct_path_msgs_using_ts(self, timestamps):
+        path_msgs = []
+        print(f'Constructing path message for {len(self.submap_constraints)} different submaps.')
+        for ts_from_ns in self.submap_constraints:
+            if not self.should_publish_map(ts_from_ns, timestamps):
+                continue
+            rospy.logwarn('[RobotConstraints] Found a valid timestamp!!! ')
+            loop_closures = list(self.submap_constraints[ts_from_ns])
+            path_msg = self.construct_path_msg_for_submap(ts_from_ns, loop_closures)
+            path_msgs.append(path_msg)
+        return path_msgs
+
+    def should_publish_map(self, ts_from_ns, timestamps):
+        ts_diff = np.absolute(timestamps - ts_from_ns)
+        ts_min = np.amin(ts_diff)
+        diff_s = Utils.ts_ns_to_seconds(ts_min)
+        return diff_s < 5
 
     def construct_path_msg_for_submap(self, ts_ns_from, loop_closures):
         path_msg = Path()

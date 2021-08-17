@@ -27,17 +27,17 @@ class ClassificationResult(object):
         if label == 2:
             return self.construct_mid_area_constraint(idx)
         if label == 3:
-            return self.construct_large_area_constraint(idx)
-        rospy.logerror(f'[ClassificationResult] Unknown label ({label})')
+            return None
+        rospy.logerr(f'[ClassificationResult] Unknown label ({label})')
         return None
 
     def construct_large_area_constraint(self, idx):
         cur_opt = self.opt_nodes[idx]
         relative_constraint = Path()
         relative_constraint.header.stamp = cur_opt.ts
-        # if idx - 13 >= 0:
-        #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 13])
-        #     relative_constraint.poses.append(pose_msg)
+        if idx - 13 >= 0:
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 13])
+            relative_constraint.poses.append(pose_msg)
         if idx - 14 >= 0:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 14])
             relative_constraint.poses.append(pose_msg)
@@ -45,9 +45,9 @@ class ClassificationResult(object):
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 15])
             relative_constraint.poses.append(pose_msg)
 
-        # if idx + 13 < self.n_nodes:
-        #     pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 13])
-        #     relative_constraint.poses.append(pose_msg)
+        if idx + 13 < self.n_nodes:
+            pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 13])
+            relative_constraint.poses.append(pose_msg)
         if idx + 14 < self.n_nodes:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 14])
             relative_constraint.poses.append(pose_msg)

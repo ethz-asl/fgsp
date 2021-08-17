@@ -159,7 +159,6 @@ class GraphClient(object):
     def update(self):
         rospy.loginfo("[GraphClient] Updating...")
         self.commander.reset_msgs()
-        self.check_for_submap_constraints()
         self.update_degenerate_anchors()
 
         if not self.process_latest_robot_data():
@@ -219,11 +218,11 @@ class GraphClient(object):
             rospy.logwarn(f"[GraphClient] Found no optimized version of {self.config.robot_name} for comparison.")
         self.mutex.release()
 
-    def check_for_submap_constraints(self):
+    def check_for_submap_constraints(self, labels, all_opt_nodes):
         if not self.config.enable_submap_constraints:
             return
         self.constraint_mutex.acquire()
-        path_msgs = self.constraint_handler.create_msg_for_intra_constraints(self.config.robot_name)
+        path_msgs = self.constraint_handler.create_msg_for_intra_constraints(self.config.robot_name, labels, all_opt_nodes)
         self.constraint_mutex.release()
         for msg in path_msgs:
             self.intra_constraint_pub.publish(msg)
@@ -260,6 +259,10 @@ class GraphClient(object):
         # Check if we the robot identified a degeneracy in its state.
         # Publish an anchor node curing the affected areas.
         self.check_for_degeneracy(all_opt_nodes, all_est_nodes)
+
+        # Check for large discrepancies in the data.
+        # If so publish submap constraints.
+        self.check_for_submap_constraints(labels, all_opt_nodes)
 
         return True
 

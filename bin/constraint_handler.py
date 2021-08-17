@@ -1,8 +1,9 @@
 #! /usr/bin/env python3
 
 import rospy
-
+import numpy as np
 from robot_constraints import RobotConstraints
+from utils import Utils
 
 class ConstraintHandler(object):
     def __init__(self):
@@ -76,8 +77,22 @@ class ConstraintHandler(object):
         else:
             return self.intra_contraints[robot_name]
 
-    def create_msg_for_intra_constraints(self, robot_name):
+    def filter_large_constraints(self, labels, all_opt_nodes):
+        timestamps = []
+        n_labels = labels.size()
+        for i in range(n_labels):
+            if labels.labels[i] < 3:
+                continue
+            timestamps.append(Utils.ros_time_to_ns(all_opt_nodes[i].ts))
+        return np.array(timestamps)
+
+
+    def create_msg_for_intra_constraints(self, robot_name, labels, all_opt_nodes):
         if robot_name not in self.intra_contraints:
             rospy.logerr(f"Robot {robot_name} does not have intra mission constraints.")
             return []
-        return self.intra_contraints[robot_name].construct_path_msgs()
+        timestamps = self.filter_large_constraints(labels, all_opt_nodes)
+        if timestamps.shape[0] > 0:
+            return self.intra_contraints[robot_name].construct_path_msgs_using_ts(timestamps)
+        else:
+            return []

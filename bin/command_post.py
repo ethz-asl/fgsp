@@ -37,8 +37,8 @@ class CommandPost(object):
         # whether they reached the clients.
         n_nodes = labels.size()
         for i in range(0, n_nodes):
-            if labels.labels[i] == 0 and i in self.previous_relatives.keys():
-                labels.labels[i] = self.previous_relatives[i]
+            if i in self.previous_relatives.keys():
+                labels.labels[i] = list(set(labels.labels[i]+self.previous_relatives[i]))
             relative_constraint = labels.check_and_construct_constraint_at(i)
             if relative_constraint is None:
                 continue # no-op

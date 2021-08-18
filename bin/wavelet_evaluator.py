@@ -183,14 +183,15 @@ class WaveletEvaluator(object):
             # print(f'low is {np.array([data[i,0], data[i,3], data[i,6], data[i,9]])}')
             rospy.loginfo('[WaveletEvaluator] dists are {dists} max is {max}'.format(dists=dists, max=dists[max_dist_idx]))
             local_labels = []
-            if dists[0] > 0.7
+            if dists[0] > 0.4:
                 local_labels.append(1)
-            if dists[1] > 0.7
+            if dists[1] > 0.3:
                 local_labels.append(2)
-            if dists[2] > 0.7
+            if dists[2] > 0.2:
                 local_labels.append(3)
+            rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
             labels.append(local_labels)
-        return np.array(labels)
+        return labels
 
 if __name__ == '__main__':
     print(f" --- Test Driver for the Wavelet Evaluator ----------------------")

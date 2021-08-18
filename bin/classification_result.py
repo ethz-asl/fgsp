@@ -19,22 +19,24 @@ class ClassificationResult(object):
         return len(self.opt_nodes)
 
     def check_and_construct_constraint_at(self, idx):
-        label = self.labels[idx]
-        if label == 0:
+        local_labels = self.labels[idx]
+        if local_labels is None or len(local_labels) == 0:
             return None
-        if label == 1:
-            return self.construct_small_area_constraint(idx)
-        if label == 2:
-            return self.construct_mid_area_constraint(idx)
-        if label == 3:
-            return None
-        rospy.logerr(f'[ClassificationResult] Unknown label ({label})')
-        return None
 
-    def construct_large_area_constraint(self, idx):
         cur_opt = self.opt_nodes[idx]
         relative_constraint = Path()
         relative_constraint.header.stamp = cur_opt.ts
+
+        if 1 in local_labels:
+            relative_constraint = self.construct_small_area_constraint(idx, relative_constraint)
+        if 2 in local_labels:
+            relative_constraint = self.construct_mid_area_constraint(idx, relative_constraint)
+            
+        if len(relative_constraint.poses) == 0:
+            return None
+        return relative_constraint
+
+    def construct_large_area_constraint(self, idx):
         if idx - 13 >= 0:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 13])
             relative_constraint.poses.append(pose_msg)
@@ -56,10 +58,8 @@ class ClassificationResult(object):
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 
-    def construct_mid_area_constraint(self, idx):
+    def construct_mid_area_constraint(self, idx, relative_constraint):
         cur_opt = self.opt_nodes[idx]
-        relative_constraint = Path()
-        relative_constraint.header.stamp = cur_opt.ts
         if idx - 5 >= 0:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 5])
             relative_constraint.poses.append(pose_msg)
@@ -68,12 +68,10 @@ class ClassificationResult(object):
             relative_constraint.poses.append(pose_msg)
         return relative_constraint
 
-    def construct_small_area_constraint(self, idx):
+    def construct_small_area_constraint(self, idx, relative_constraint):
         if self.n_nodes <= 1:
             return None
         cur_opt = self.opt_nodes[idx]
-        relative_constraint = Path()
-        relative_constraint.header.stamp = cur_opt.ts
         if idx - 1 >= 0:
             pose_msg = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 1])
             relative_constraint.poses.append(pose_msg)

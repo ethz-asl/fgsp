@@ -70,7 +70,15 @@ class GraphMonitor(object):
             return
 
         keys = self.optimized_signal.convert_signal(msg)
-        print(f'Got optimized version of robot {keys}')
+
+        # If the graph is reduced, we need to reduce the optimized nodes too.
+        if self.graph.is_reduced:
+            rospy.logwarn(f'[GraphMonitor] Reducing trajectory with {len(self.graph.reduced_ind)} indices.')
+            msg.nodes = [msg.nodes[i] for i in self.graph.reduced_ind]
+
+        if self.graph.has_skipped():
+            rospy.logwarn(f'[GraphMonitor] Skipping trajectory with {len(self.graph.skip_ind)} indices.')
+            msg.nodes = [element for i,element in enumerate(msg.nodes) if i not in self.graph.skip_ind]
 
         for key in keys:
             if self.key_in_optimized_keys(key):

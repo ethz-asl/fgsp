@@ -267,13 +267,6 @@ class GraphClient(object):
         return True
 
     def reduce_and_synchronize(self, all_opt_nodes, all_est_nodes):
-        # If the graph is reduced, we need to reduce the optimized nodes too.
-        # Synchronize the node lists based on their TS.
-        # We always sync to the optimized nodes.
-        if self.global_graph.is_reduced:
-            rospy.logwarn(f'[GraphClient] Reducing global graph with {len(self.global_graph.reduced_ind)} indices.')
-            all_opt_nodes = [all_opt_nodes[i] for i in self.global_graph.reduced_ind]
-
         (all_opt_nodes, all_est_nodes, opt_idx, est_idx) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
         n_nodes = len(all_est_nodes)
         assert(n_nodes == len(all_opt_nodes))

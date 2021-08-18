@@ -53,7 +53,6 @@ class SignalHandler(object):
 
         return grouped_signals.keys()
 
-
     def convert_signal_from_path(self, path_msg, robot_name):
         n_poses = len(path_msg.poses)
         if (n_poses <= 0):

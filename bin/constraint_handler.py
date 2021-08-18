@@ -79,9 +79,12 @@ class ConstraintHandler(object):
 
     def filter_large_constraints(self, labels, all_opt_nodes):
         timestamps = []
+        if labels == None:
+            return np.array(timestamps)
         n_labels = labels.size()
         for i in range(n_labels):
-            if labels.labels[i] < 3:
+            rospy.loginfo('local labels do not contain s2s: {local_labels}'.format(local_labels=labels.labels[i]))
+            if not 3 in labels.labels[i]:
                 continue
             timestamps.append(Utils.ros_time_to_ns(all_opt_nodes[i].ts))
         return np.array(timestamps)

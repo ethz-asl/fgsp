@@ -349,15 +349,15 @@ class GraphClient(object):
         opt_traj = self.signal.compute_trajectory(all_est_nodes)
         euclidean_dist = np.linalg.norm(est_traj[:,1:4] - opt_traj[:,1:4], axis=1)
         n_nodes = est_traj.shape[0]
-        labels = [0] * n_nodes
+        labels = [[0]] * n_nodes
         for i in range(0, n_nodes):
             if euclidean_dist[i] > 1.0:
-                labels[i] = 3
+                labels[i].append(1)
         return ClassificationResult(key, all_opt_nodes, euclidean_dist, labels)
 
     def perform_always(self, key, all_opt_nodes, all_est_nodes):
         n_nodes = len(all_opt_nodes)
-        labels = [3] * n_nodes
+        labels = [[1]] * n_nodes
         return ClassificationResult(key, all_opt_nodes, None, labels)
 
     def evaluate_and_publish_features(self, labels):

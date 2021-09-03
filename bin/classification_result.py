@@ -27,14 +27,19 @@ class ClassificationResult(object):
         relative_constraint = Path()
         relative_constraint.header.stamp = cur_opt.ts
 
+        small_relative_counter = 0
+        mid_relative_counter = 0
+
         if 1 in local_labels:
             relative_constraint = self.construct_small_area_constraint(idx, relative_constraint)
+            small_relative_counter = len(relative_constraint.poses)
         if 2 in local_labels:
             relative_constraint = self.construct_mid_area_constraint(idx, relative_constraint)
-            
+            mid_relative_counter = len(relative_constraint.poses) - small_relative_counter
+
         if len(relative_constraint.poses) == 0:
             return None
-        return relative_constraint
+        return relative_constraint, small_relative_counter, mid_relative_counter
 
     def construct_large_area_constraint(self, idx):
         if idx - 13 >= 0:

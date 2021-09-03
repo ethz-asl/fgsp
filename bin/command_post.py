@@ -2,6 +2,7 @@
 
 import rospy
 import numpy as np
+import time
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, VerificationCheckRequest
 from maplab_msgs.srv import Verification, VerificationResponse
 from geometry_msgs.msg import PoseStamped
@@ -25,12 +26,18 @@ class CommandPost(object):
         self.degenerate_indices = []
         rospy.loginfo("[CommandPost] Initialized command post center.")
         self.previous_relatives = {}
+        self.small_constraint_counter = 0
+        self.mid_constraint_counter = 0
+        self.large_constraint_counter = 0
 
     def reset_msgs(self):
         self.good_path_msg = Path()
         self.bad_path_msg = Path()
         self.degenerate_path_msg = Path()
         self.verification_request = VerificationCheckRequest()
+        self.small_constraint_counter = 0
+        self.mid_constraint_counter = 0
+        self.large_constraint_counter = 0
 
     def evaluate_labels_per_node(self, labels):
         # Should always publish for all states as we don't know
@@ -39,11 +46,21 @@ class CommandPost(object):
         for i in range(0, n_nodes):
             if i in self.previous_relatives.keys():
                 labels.labels[i] = list(set(labels.labels[i]+self.previous_relatives[i]))
-            relative_constraint = labels.check_and_construct_constraint_at(i)
+            relative_constraint, small_relative_counter, mid_relative_counter = labels.check_and_construct_constraint_at(i)
             if relative_constraint is None:
                 continue # no-op
             self.previous_relatives[i] = labels.labels[i]
             self.pub_relative.publish(relative_constraint)
+            self.add_to_constraint_counter(small_relative_counter, mid_relative_counter, 0)
+            time.sleep(0.01)
+
+    def add_to_constraint_counter(self, n_small_constraints, n_mid_constraints, n_large_constraints):
+        self.small_constraint_counter = self.small_constraint_counter + n_small_constraints
+        self.mid_constraint_counter = self.mid_constraint_counter + n_mid_constraints
+        self.large_constraint_counter = self.large_constraint_counter + n_large_constraints
+
+    def get_total_amount_of_constraints(self):
+        return self.small_constraint_counter + self.mid_constraint_counter + self.large_constraint_counter
 
     def create_pose_msg_from_node(self, cur_opt):
         pose_msg = PoseStamped()

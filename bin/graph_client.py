@@ -24,6 +24,8 @@ from utils import Utils
 class GraphClient(object):
     def __init__(self):
         self.is_initialized = False
+        self.is_updating = False
+        self.last_update_seq = -1
         self.config = ClientConfig()
         self.config.init_from_config()
         Plotter.PlotClientBanner()
@@ -81,7 +83,8 @@ class GraphClient(object):
         self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
-        if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
+        rospy.loginfo(f"[GraphClient] Received graph message from monitor {msg.header.frame_id}.")
+        if not (self.is_initialized and(self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
         self.mutex.acquire()
 
@@ -157,17 +160,36 @@ class GraphClient(object):
         self.constraint_mutex.release()
 
     def update(self):
+        self.mutex.acquire()
+        if self.is_updating:
+            self.mutex.release()
+            return
+        print('[GraphClient] {last_upd} and {graph_upd})'.format(last_upd=self.last_update_seq, graph_upd=self.global_graph.graph_seq))
+        # if self.last_update_seq > 0 and self.last_update_seq == self.global_graph.graph_seq:
+            # self.mutex.release()
+            # return
+        self.is_updating = True
+        self.mutex.release()
+
         rospy.loginfo("[GraphClient] Updating...")
         self.commander.reset_msgs()
-        self.update_degenerate_anchors()
+        # self.update_degenerate_anchors()
 
         if not self.process_latest_robot_data():
             rospy.logwarn('[GraphClient] Unable to process latest robot data.')
+            self.mutex.acquire()
+            self.is_updating = False
+            self.mutex.release()
             return
         self.compare_estimations()
-        self.publish_client_update()
+        # self.publish_client_update()
 
-        rospy.loginfo("[GraphClient] Updating completed")
+        rospy.loginfo('[GraphClient] Updating completed (sent {n_constraints} constraints)'.format(n_constraints=self.commander.get_total_amount_of_constraints()))
+        rospy.loginfo('[GraphClient] In detail: {n_low} / {n_mid} / {n_high}'.format(n_low=self.commander.small_constraint_counter, n_mid=self.commander.mid_constraint_counter, n_high=self.commander.large_constraint_counter))
+        self.mutex.acquire()
+        self.is_updating = False
+        self.last_update_seq = self.global_graph.graph_seq
+        self.mutex.release()
 
     def record_all_signals(self, x_est, x_opt):
         if not self.config.enable_signal_recording:
@@ -226,7 +248,8 @@ class GraphClient(object):
         self.constraint_mutex.release()
         for msg in path_msgs:
             self.intra_constraint_pub.publish(msg)
-            time.sleep(0.10)
+            self.commander.add_to_constraint_counter(0,0,len(msg.poses))
+            time.sleep(0.01)
 
     def publish_client_update(self):
         if not (self.config.enable_anchor_constraints and self.global_graph.is_built and self.config.enable_client_update):
@@ -251,6 +274,7 @@ class GraphClient(object):
         self.record_raw_est_trajectory(self.signal.compute_trajectory(all_est_nodes))
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
         if all_opt_nodes is None or all_est_nodes is None:
+            rospy.logerr(f'[GraphClient] Synchronization failed')
             return False
 
         labels = self.compute_all_labels(key, all_opt_nodes, all_est_nodes)
@@ -330,8 +354,14 @@ class GraphClient(object):
         robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
-            rospy.logwarn(f'[GraphClient] We have some size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}')
-            return None
+            rospy.logwarn(f'[GraphClient] We have a size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}. Trying to fix it.')
+
+            positions = np.array([np.array(x.position) for x in all_opt_nodes])
+            self.global_graph.build_from_poses(positions)
+            self.eval.compute_wavelets(self.global_graph.G)
+            psi = self.eval.get_wavelets()
+            n_dim = psi.shape[0]
+
         if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
             rospy.logwarn(f'[GraphClient] Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
             return None

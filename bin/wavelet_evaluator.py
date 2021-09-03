@@ -172,22 +172,30 @@ class WaveletEvaluator(object):
         n_nodes = data.shape[0]
         labels = []
         for i in range(0, n_nodes):
-            low_mean = np.mean([data[i,0], data[i,3], data[i,6], data[i,9]])
-            mid_mean = np.mean([data[i,1], data[i,4], data[i,7], data[i,10]])
-            high_mean = np.mean([data[i,2], data[i,5], data[i,8], data[i,11]])
+            # low_mean = np.mean([data[i,0], data[i,3], data[i,6], data[i,9]])
+            # mid_mean = np.mean([data[i,1], data[i,4], data[i,7], data[i,10]])
+            # high_mean = np.mean([data[i,2], data[i,5], data[i,8], data[i,11]])
+            low_mean = data[i,0]
+            mid_mean = data[i,1]
+            high_mean = data[i,2]
             dists = np.array([low_mean, mid_mean, high_mean])
             max_dist_idx = np.argmax(dists)
 
             np.set_printoptions(suppress=True)
-            # rospy.logwarn(f'distance is {dists}')
-            # print(f'low is {np.array([data[i,0], data[i,3], data[i,6], data[i,9]])}')
-            rospy.loginfo('[WaveletEvaluator] dists are {dists} max is {max}'.format(dists=dists, max=dists[max_dist_idx]))
+            rospy.loginfo('[WaveletEvaluator] dists are {dists}'.format(dists=dists))
             local_labels = []
-            if dists[0] > 0.4:
+            # if dists[0] > 0.4:
+            #     local_labels.append(1)
+            # if dists[1] > 0.11: # for h_naymal_2 we had 0.2
+            #     local_labels.append(2)
+            # if dists[2] > 0.05:
+            #     local_labels.append(3)
+
+            if dists[0] > 1.1:
                 local_labels.append(1)
-            if dists[1] > 0.3:
+            if dists[1] > 0.15: # for h_naymal_2 we had 0.2
                 local_labels.append(2)
-            if dists[2] > 0.2:
+            if dists[2] > 0.001:
                 local_labels.append(3)
             rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
             labels.append(local_labels)

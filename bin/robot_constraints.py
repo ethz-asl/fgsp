@@ -23,6 +23,11 @@ class RobotConstraints(object):
 
         if ts_from_ns not in self.submap_constraints:
             self.submap_constraints[ts_from_ns] = []
+        for i in range(len(self.submap_constraints[ts_from_ns])):
+            if self.submap_constraints[ts_from_ns][i].ts_to == ts_to:
+                self.submap_constraints[ts_from_ns][i] = lc
+                return
+
         self.submap_constraints[ts_from_ns].append(lc)
 
     def construct_path_msgs(self):
@@ -58,7 +63,7 @@ class RobotConstraints(object):
         diff_s = Utils.ts_ns_to_seconds(ts_min)
         rospy.logwarn('[RobotConstraints] min diff ts is {diff}'.format(diff=diff_s))
 
-        return diff_s < 7
+        return diff_s < 3
 
     def construct_path_msg_for_submap(self, ts_ns_from, loop_closures):
         path_msg = Path()

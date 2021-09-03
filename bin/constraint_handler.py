@@ -19,8 +19,8 @@ class ConstraintHandler(object):
 
         # Received new message, reinitialize the constraints.
         # Each message contains all currently used constraints.
-        self.intra_contraints = {}
-        self.inter_contraints = {}
+        # self.intra_contraints = {}
+        # self.inter_contraints = {}
 
         for i in range(0, n_constraints):
             if constraint_msg.robot_name_to[i] == constraint_msg.robot_name_from[i]:
@@ -83,7 +83,6 @@ class ConstraintHandler(object):
             return np.array(timestamps)
         n_labels = labels.size()
         for i in range(n_labels):
-            rospy.loginfo('local labels do not contain s2s: {local_labels}'.format(local_labels=labels.labels[i]))
             if not 3 in labels.labels[i]:
                 continue
             timestamps.append(Utils.ros_time_to_ns(all_opt_nodes[i].ts))

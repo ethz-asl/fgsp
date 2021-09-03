@@ -26,7 +26,11 @@ class GlobalGraph(object):
         if self.is_built is False:
             return True
 
-        return graph_msg.header.seq > self.graph_seq
+
+        if graph_msg.header.frame_id != '':
+            return int(graph_msg.header.frame_id) > self.graph_seq
+        else:
+            return graph_msg.header.seq > self.graph_seq
 
     def graph_size(self):
         if self.G is not None:
@@ -48,7 +52,10 @@ class GlobalGraph(object):
             self.is_built = False
             return
 
-        self.graph_seq = graph_msg.header.seq
+        if graph_msg.header.frame_id != "":
+            self.graph_seq = int(graph_msg.header.frame_id)
+        else:
+            self.graph_seq = graph_msg.header.seq
         self.is_built = True
         execution_time = (time.time() - start_time)
         rospy.loginfo(f'[GlobalGraph] Building complete ({execution_time} sec)')
@@ -218,6 +225,7 @@ class GlobalGraph(object):
     def to_graph_msg(self):
         graph_msg = Graph()
         graph_msg.header.seq = self.graph_seq
+        graph_msg.header.frame_id = str(self.graph_seq)
         n_coords = self.G.N
 
         # Write coordinates and adjacency.
@@ -245,8 +253,12 @@ class GlobalGraph(object):
             return
         viz = Visualizer()
 
-        # First publish the coordinates of the global graph.
         n_coords = self.G.N
+        if n_coords > self.coords.shape[0] or n_coords >= self.adj.shape[0]:
+            rospy.logerr(f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}')
+            return
+
+        # First publish the coordinates of the global graph.
         for i in range(0, n_coords):
             viz.add_graph_coordinate(self.coords[i,:])
         viz.visualize_coords()

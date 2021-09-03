@@ -101,8 +101,9 @@ class SubmapHandler(object):
 
         # Remove self and fix output.
         nn_dists, nn_indices = Utils.fix_nn_output(n_neighbors, idx, nn_dists, nn_indices)
+        mask = nn_dists >= self.config.min_pivot_distance
 
-        return nn_dists, nn_indices
+        return nn_dists[mask], nn_indices[mask]
 
     def get_all_positions(self, submaps):
         n_submaps = len(submaps)
@@ -140,6 +141,9 @@ class SubmapHandler(object):
         else:
             for idx in self.previous_submap_neighbors[i]:
                 neighbors[idx] = 1
+
+        if i not in submaps.keys():
+            return submap_msg
 
         candidate_a = submaps[i]
         n_neighbors = len(neighbors)

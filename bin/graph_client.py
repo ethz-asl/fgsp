@@ -243,13 +243,13 @@ class GraphClient(object):
     def check_for_submap_constraints(self, labels, all_opt_nodes):
         if not self.config.enable_submap_constraints:
             return
-        self.constraint_mutex.acquire()
-        path_msgs = self.constraint_handler.create_msg_for_intra_constraints(self.config.robot_name, labels, all_opt_nodes)
-        self.constraint_mutex.release()
-        for msg in path_msgs:
-            self.intra_constraint_pub.publish(msg)
-            self.commander.add_to_constraint_counter(0,0,len(msg.poses))
-            time.sleep(0.01)
+        # self.constraint_mutex.acquire()
+        # path_msgs = self.constraint_handler.create_msg_for_intra_constraints(self.config.robot_name, labels, all_opt_nodes)
+        # self.constraint_mutex.release()
+        # for msg in path_msgs:
+        #     self.intra_constraint_pub.publish(msg)
+        #     self.commander.add_to_constraint_counter(0,0,len(msg.poses))
+        #     time.sleep(0.01)
 
     def publish_client_update(self):
         if not (self.config.enable_anchor_constraints and self.global_graph.is_built and self.config.enable_client_update):

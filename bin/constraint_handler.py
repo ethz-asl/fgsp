@@ -88,7 +88,6 @@ class ConstraintHandler(object):
             timestamps.append(Utils.ros_time_to_ns(all_opt_nodes[i].ts))
         return np.array(timestamps)
 
-
     def create_msg_for_intra_constraints(self, robot_name, labels, all_opt_nodes):
         if robot_name not in self.intra_contraints:
             rospy.logerr(f"Robot {robot_name} does not have intra mission constraints.")

@@ -26,7 +26,6 @@ class GlobalGraph(object):
         if self.is_built is False:
             return True
 
-
         if graph_msg.header.frame_id != '':
             return int(graph_msg.header.frame_id) > self.graph_seq
         else:
@@ -254,7 +253,7 @@ class GlobalGraph(object):
         viz = Visualizer()
 
         n_coords = self.G.N
-        if n_coords > self.coords.shape[0] or n_coords >= self.adj.shape[0]:
+        if n_coords > self.coords.shape[0] or n_coords > self.adj.shape[0]:
             rospy.logerr(f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}')
             return
 
@@ -266,8 +265,13 @@ class GlobalGraph(object):
         # Next publish the adjacency matrix of the global graph.
         for i in range(0, n_coords):
             for j in range(0, n_coords):
+                if i >= n_coords or j >= self.coords.shape[0]:
+                    continue
+                if i >= self.adj.shape[0] or j >= self.adj.shape[1]:
+                    continue
                 if self.adj[i,j] <= 0.0:
                     continue
+
                 viz.add_graph_adjacency(self.coords[i,:], self.coords[j,:])
         viz.visualize_adjacency()
 

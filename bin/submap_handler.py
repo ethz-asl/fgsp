@@ -56,7 +56,7 @@ class SubmapHandler(object):
             submap_points = Utils.transform_pointcloud(submap, T_G_L)
             map_points = np.append(map_points, submap_points, axis=0)
 
-        map_points = Utils.downsample_pointcloud(map_points)
+        map_points = Utils.downsample_pointcloud(map_points, voxel_size = 0.4)
         n_points = map_points.shape[0]
         if n_points > 1:
             map_points = map_points[1:,:]

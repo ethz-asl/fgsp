@@ -184,6 +184,7 @@ class WaveletEvaluator(object):
             np.set_printoptions(suppress=True)
             rospy.loginfo('[WaveletEvaluator] dists are {dists}'.format(dists=dists))
             local_labels = []
+            # h florr
             # if dists[0] > 0.4:
             #     local_labels.append(1)
             # if dists[1] > 0.11: # for h_naymal_2 we had 0.2
@@ -191,12 +192,22 @@ class WaveletEvaluator(object):
             # if dists[2] > 0.05:
             #     local_labels.append(3)
 
-            if dists[0] > 1.1:
+            # hagerbach anymal 2
+            if dists[0] > 0.31:
                 local_labels.append(1)
-            if dists[1] > 0.15: # for h_naymal_2 we had 0.2
+            if dists[1] > 0.21: # for h_naymal_2 we had 0.2
                 local_labels.append(2)
-            if dists[2] > 0.001:
+            if dists[2] > 0.037:
                 local_labels.append(3)
+
+            # hagerbach anymal 1
+            # if dists[0] > 2.96:
+            #     local_labels.append(1)
+            # if dists[1] > 0.80: # for h_naymal_2 we had 0.2
+            #     local_labels.append(2)
+            # if dists[2] > 0.025:
+            #     local_labels.append(3)
+
             rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
             labels.append(local_labels)
         return labels

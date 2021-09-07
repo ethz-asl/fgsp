@@ -29,6 +29,7 @@ class CommandPost(object):
         self.small_constraint_counter = 0
         self.mid_constraint_counter = 0
         self.large_constraint_counter = 0
+        self.history = None
 
     def reset_msgs(self):
         self.good_path_msg = Path()
@@ -44,15 +45,20 @@ class CommandPost(object):
         # whether they reached the clients.
         n_nodes = labels.size()
         for i in range(0, n_nodes):
+            history = None
             if i in self.previous_relatives.keys():
                 labels.labels[i] = list(set(labels.labels[i]+self.previous_relatives[i]))
-            relative_constraint, small_relative_counter, mid_relative_counter = labels.check_and_construct_constraint_at(i)
+                if i in self.history.keys():
+                    history = self.history[i]
+
+            relative_constraint, small_relative_counter, mid_relative_counter, large_relative_counter = labels.check_and_construct_constraint_at(i, history)
             if relative_constraint is None:
                 continue # no-op
             self.previous_relatives[i] = labels.labels[i]
             self.pub_relative.publish(relative_constraint)
-            self.add_to_constraint_counter(small_relative_counter, mid_relative_counter, 0)
-            time.sleep(0.01)
+            self.add_to_constraint_counter(small_relative_counter, mid_relative_counter, large_relative_counter)
+            self.history = labels.history
+            time.sleep(0.001)
 
     def add_to_constraint_counter(self, n_small_constraints, n_mid_constraints, n_large_constraints):
         self.small_constraint_counter = self.small_constraint_counter + n_small_constraints

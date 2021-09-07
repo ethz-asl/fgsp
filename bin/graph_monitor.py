@@ -101,8 +101,11 @@ class GraphMonitor(object):
         if self.config.enable_graph_building:
             self.compute_and_publish_graph()
 
-        self.graph.publish()
-        self.optimized_signal.publish()
+        try:
+            self.graph.publish()
+            self.optimized_signal.publish()
+        except Exception as e:
+            rospy.logerr(f'[GraphMonitor] Unable to publish results to client.')
 
     def compute_and_publish_graph(self):
         rospy.loginfo(f"[GraphMonitor] Computing global graph.")

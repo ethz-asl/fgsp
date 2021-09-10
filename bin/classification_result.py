@@ -119,7 +119,6 @@ class ClassificationResult(object):
                 counter = counter + 1
 
         if idx != 0:
-            print(f'ADDING CONSTRAINT FOR START')
             target_idx = 1
             T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[target_idx])
             if history.has_different_transform(target_idx, T_a_b):
@@ -173,13 +172,13 @@ class ClassificationResult(object):
                 relative_constraint.poses.append(pose_msg)
                 history.add_record(idx - 1, T_a_b)
                 counter = counter + 1
-        if idx - 2 >= 0:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 2])
-            if history.has_different_transform(idx - 2, T_a_b):
-                pose_msg = self.create_pose_msg(self.opt_nodes[idx - 2], T_a_b)
-                relative_constraint.poses.append(pose_msg)
-                history.add_record(idx - 2, T_a_b)
-                counter = counter + 1
+        # if idx - 2 >= 0:
+        #     T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 2])
+        #     if history.has_different_transform(idx - 2, T_a_b):
+        #         pose_msg = self.create_pose_msg(self.opt_nodes[idx - 2], T_a_b)
+        #         relative_constraint.poses.append(pose_msg)
+        #         history.add_record(idx - 2, T_a_b)
+        #         counter = counter + 1
         if idx + 1 < self.n_nodes:
             T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 1])
             if history.has_different_transform(idx + 1, T_a_b):
@@ -187,13 +186,13 @@ class ClassificationResult(object):
                 relative_constraint.poses.append(pose_msg)
                 history.add_record(idx + 1, T_a_b)
                 counter = counter + 1
-        if idx + 2 < self.n_nodes:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 2])
-            if history.has_different_transform(idx + 2, T_a_b):
-                pose_msg = self.create_pose_msg(self.opt_nodes[idx + 2], T_a_b)
-                relative_constraint.poses.append(pose_msg)
-                history.add_record(idx + 2, T_a_b)
-                counter = counter + 1
+        # if idx + 2 < self.n_nodes:
+        #     T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 2])
+        #     if history.has_different_transform(idx + 2, T_a_b):
+        #         pose_msg = self.create_pose_msg(self.opt_nodes[idx + 2], T_a_b)
+        #         relative_constraint.poses.append(pose_msg)
+        #         history.add_record(idx + 2, T_a_b)
+                # counter = counter + 1
         return relative_constraint, history, counter
 
     def create_pose_msg_from_node(self, cur_opt):

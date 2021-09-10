@@ -15,11 +15,11 @@ verification_service:        '/graph_monitor/verification'
 client_update_topic:         "/graph_client/latest_graph"
 
 # Constraint construction:   multiscale, euclidean, always
-client_mode:                 'always'
+client_mode:                 'multiscale'
 
 # Div
 dataroot:                    "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"
-robot_name:                  "anymal_2"
+robot_name:                  "euroc_5"
 random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.05
 enable_client_update:        False

@@ -70,7 +70,15 @@ class GraphMonitor(object):
             return
 
         keys = self.optimized_signal.convert_signal(msg)
-        print(f'Got optimized version of robot {keys}')
+
+        # If the graph is reduced, we need to reduce the optimized nodes too.
+        if self.graph.is_reduced:
+            rospy.logwarn(f'[GraphMonitor] Reducing trajectory with {len(self.graph.reduced_ind)} indices.')
+            msg.nodes = [msg.nodes[i] for i in self.graph.reduced_ind]
+
+        if self.graph.has_skipped():
+            rospy.logwarn(f'[GraphMonitor] Skipping trajectory with {len(self.graph.skip_ind)} indices.')
+            msg.nodes = [element for i,element in enumerate(msg.nodes) if i not in self.graph.skip_ind]
 
         for key in keys:
             if self.key_in_optimized_keys(key):
@@ -83,29 +91,31 @@ class GraphMonitor(object):
 
     def update(self):
         # Publish verifications to the server.
-        self.verification_handler.send_verification_request()
+        # self.verification_handler.send_verification_request()
 
         # Compute the submap constraints and publish them if enabled.
-        if self.config.enable_submap_constraints:
-            self.compute_and_publish_submaps()
+        # if self.config.enable_submap_constraints:
+            # self.compute_and_publish_submaps()
 
         # Compute the global graph and signal, then publish it
         if self.config.enable_graph_building:
             self.compute_and_publish_graph()
 
-        self.graph.publish()
-        self.optimized_signal.publish()
+        try:
+            self.graph.publish()
+            self.optimized_signal.publish()
+        except Exception as e:
+            rospy.logerr(f'[GraphMonitor] Unable to publish results to client.')
 
     def compute_and_publish_graph(self):
-        rospy.loginfo(f"[GraphMonitor] Computing global graph.")
         self.mutex.acquire()
         if self.graph.is_built is False:
             rospy.logwarn(f"[GraphMonitor] Graph is not built yet!")
             self.mutex.release()
             return
-        rospy.loginfo(f"[GraphMonitor] Checking size")
+        rospy.loginfo(f"[GraphMonitor] Computing global graph with {self.graph.graph_size()}.")
         if self.graph.graph_size() < self.config.min_node_count:
-            rospy.logwarn(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()})")
+            rospy.logwarn(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()} < self.config.min_node_count)")
             self.mutex.release()
             return;
         self.mutex.release()

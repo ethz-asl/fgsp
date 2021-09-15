@@ -2,6 +2,7 @@
 
 import rospy
 import numpy as np
+import time
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, VerificationCheckRequest
 from maplab_msgs.srv import Verification, VerificationResponse
 from geometry_msgs.msg import PoseStamped
@@ -24,22 +25,50 @@ class CommandPost(object):
         self.verification_request = VerificationCheckRequest()
         self.degenerate_indices = []
         rospy.loginfo("[CommandPost] Initialized command post center.")
+        self.previous_relatives = {}
+        self.small_constraint_counter = 0
+        self.mid_constraint_counter = 0
+        self.large_constraint_counter = 0
+        self.anchor_constraint_counter = 0
+        self.history = None
 
     def reset_msgs(self):
         self.good_path_msg = Path()
         self.bad_path_msg = Path()
         self.degenerate_path_msg = Path()
         self.verification_request = VerificationCheckRequest()
+        self.small_constraint_counter = 0
+        self.mid_constraint_counter = 0
+        self.large_constraint_counter = 0
+        self.anchor_constraint_counter = 0
 
     def evaluate_labels_per_node(self, labels):
         # Should always publish for all states as we don't know
         # whether they reached the clients.
         n_nodes = labels.size()
         for i in range(0, n_nodes):
-            relative_constraint = labels.check_and_construct_constraint_at(i)
+            history = None
+            if i in self.previous_relatives.keys():
+                labels.labels[i] = list(set(labels.labels[i]+self.previous_relatives[i]))
+                if i in self.history.keys():
+                    history = self.history[i]
+
+            relative_constraint, small_relative_counter, mid_relative_counter, large_relative_counter = labels.check_and_construct_constraint_at(i, history)
             if relative_constraint is None:
                 continue # no-op
+            self.previous_relatives[i] = labels.labels[i]
             self.pub_relative.publish(relative_constraint)
+            self.add_to_constraint_counter(small_relative_counter, mid_relative_counter, large_relative_counter)
+            self.history = labels.history
+            time.sleep(0.001)
+
+    def add_to_constraint_counter(self, n_small_constraints, n_mid_constraints, n_large_constraints):
+        self.small_constraint_counter = self.small_constraint_counter + n_small_constraints
+        self.mid_constraint_counter = self.mid_constraint_counter + n_mid_constraints
+        self.large_constraint_counter = self.large_constraint_counter + n_large_constraints
+
+    def get_total_amount_of_constraints(self):
+        return self.small_constraint_counter + self.mid_constraint_counter + self.large_constraint_counter
 
     def create_pose_msg_from_node(self, cur_opt):
         pose_msg = PoseStamped()
@@ -71,13 +100,14 @@ class CommandPost(object):
         self.verification_request.header.stamp = rospy.Time.now()
         self.pub_verify.publish(self.verification_request)
 
-    def send_degenerate_anchors(self, all_opt_nodes, begin_send, end_send):
+    def send_anchors(self, all_opt_nodes, begin_send, end_send):
         rospy.logerr(f'Sending degenerate anchors for {end_send - begin_send} nodes.')
         indices = np.arange(begin_send, end_send, 1)
-        self.send_degenerate_anchors_based_on_indices(all_opt_nodes, indices)
+        self.send_anchors_based_on_indices(all_opt_nodes, indices)
 
-    def send_degenerate_anchors_based_on_indices(self, opt_nodes, indices):
-        rospy.logerr(f'Sending degenerate anchors for {len(indices)} nodes.')
+    def send_anchors_based_on_indices(self, opt_nodes, indices):
+        n_constraints = len(indices)
+        rospy.logerr(f'Sending anchors for {n_constraints} nodes.')
         for i in indices:
             pose_msg = self.create_pose_msg_from_node(opt_nodes[i])
             self.degenerate_path_msg.poses.append(pose_msg)
@@ -87,7 +117,8 @@ class CommandPost(object):
                 self.degenerate_indices.append(i)
 
         self.degenerate_path_msg.header.stamp = rospy.Time.now()
-        self.pub_degenerate.publish(self.degenerate_path_msg)
+        self.pub_anchor.publish(self.degenerate_path_msg)
+        self.anchor_constraint_counter = self.anchor_constraint_counter + n_constraints
 
     def update_degenerate_anchors(self, all_opt_nodes):
         if len(self.degenerate_indices) == 0:

@@ -10,7 +10,7 @@ class BaseConfig(object):
 class MonitorConfig(BaseConfig):
     def __init__(self):
         # general config
-        self.rate = rospy.Rate(0.1)
+        self.rate = rospy.Rate(0.01)
         self.enable_graph_building = True
         self.enable_submap_constraints = True
         self.min_node_count = 10
@@ -20,6 +20,7 @@ class MonitorConfig(BaseConfig):
 
         # submap constraints
         self.pivot_distance = 20
+        self.min_pivot_distance = 20
         self.n_nearest_neighbors = 50
         self.p_norm = 2
         self.enable_submap_map_publishing = False
@@ -50,6 +51,7 @@ class MonitorConfig(BaseConfig):
 
         # submap constraints
         self.pivot_distance = self.try_get_param("~submap_constraint_pivot_distance", self.pivot_distance)
+        self.min_pivot_distance = self.try_get_param("~submap_constraint_min_distance", self.min_pivot_distance)
         self.n_nearest_neighbors = self.try_get_param("~submap_constraint_knn", self.n_nearest_neighbors)
         self.p_norm = self.try_get_param("~submap_constraint_p_norm", self.p_norm)
         self.enable_submap_map_publishing = self.try_get_param("~enable_submap_map_publishing", self.enable_submap_map_publishing)

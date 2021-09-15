@@ -11,11 +11,12 @@ from visualizer import Visualizer
 class GlobalGraph(object):
     def __init__(self, reduced=False):
         self.adj = None
-        self.coords = None
+        self.coords = np.array([])
         self.G = None
         self.is_reduced = reduced
         self.is_built = False
         self.reduced_ind = []
+        self.skip_ind = []
         self.submap_ind = []
         self.graph_seq = -1
         self.latest_graph_msg = None
@@ -25,7 +26,10 @@ class GlobalGraph(object):
         if self.is_built is False:
             return True
 
-        return graph_msg.header.seq > self.graph_seq
+        if graph_msg.header.frame_id != '':
+            return int(graph_msg.header.frame_id) > self.graph_seq
+        else:
+            return graph_msg.header.seq > self.graph_seq
 
     def graph_size(self):
         if self.G is not None:
@@ -47,7 +51,10 @@ class GlobalGraph(object):
             self.is_built = False
             return
 
-        self.graph_seq = graph_msg.header.seq
+        if graph_msg.header.frame_id != "":
+            self.graph_seq = int(graph_msg.header.frame_id)
+        else:
+            self.graph_seq = graph_msg.header.seq
         self.is_built = True
         execution_time = (time.time() - start_time)
         rospy.loginfo(f'[GlobalGraph] Building complete ({execution_time} sec)')
@@ -58,6 +65,7 @@ class GlobalGraph(object):
             rospy.loginfo(f"[GlobalGraph] Path adjacency matrix is empty. Aborting graph building.")
             return False
         self.G = graphs.Graph(self.adj)
+
         if self.G.N != self.coords.shape[0]:
             rospy.logerr(f"[GlobalGraph] Path graph size is {self.G.N} but coords are {self.coords.shape}")
             return False
@@ -104,6 +112,21 @@ class GlobalGraph(object):
         self.adj = self.create_adjacency_from_poses(self.coords)
         rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
         self.build_graph()
+
+    def skip_jumping_coords(self, prev_coords, next_coords):
+        n_coords_to_check = len(prev_coords)
+        skip_indices = []
+        for i in range(0, n_coords_to_check):
+            diff = np.linalg.norm(prev_coords[i,:] - next_coords[i,:])
+            if diff < 0.5:
+                continue
+            next_coords = np.delete(next_coords,i,0)
+            skip_indices.append(i)
+
+        return next_coords, skip_indices
+
+    def has_skipped(self):
+        return len(self.skip_ind) > 0
 
     def read_coordinates(self, graph_msg):
         n_coords = len(graph_msg.coords)
@@ -201,6 +224,7 @@ class GlobalGraph(object):
     def to_graph_msg(self):
         graph_msg = Graph()
         graph_msg.header.seq = self.graph_seq
+        graph_msg.header.frame_id = str(self.graph_seq)
         n_coords = self.G.N
 
         # Write coordinates and adjacency.
@@ -228,8 +252,12 @@ class GlobalGraph(object):
             return
         viz = Visualizer()
 
-        # First publish the coordinates of the global graph.
         n_coords = self.G.N
+        if n_coords > self.coords.shape[0] or n_coords > self.adj.shape[0]:
+            rospy.logerr(f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}')
+            return
+
+        # First publish the coordinates of the global graph.
         for i in range(0, n_coords):
             viz.add_graph_coordinate(self.coords[i,:])
         viz.visualize_coords()
@@ -237,8 +265,13 @@ class GlobalGraph(object):
         # Next publish the adjacency matrix of the global graph.
         for i in range(0, n_coords):
             for j in range(0, n_coords):
+                if i >= n_coords or j >= self.coords.shape[0]:
+                    continue
+                if i >= self.adj.shape[0] or j >= self.adj.shape[1]:
+                    continue
                 if self.adj[i,j] <= 0.0:
                     continue
+
                 viz.add_graph_adjacency(self.coords[i,:], self.coords[j,:])
         viz.visualize_adjacency()
 

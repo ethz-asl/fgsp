@@ -34,6 +34,7 @@ class SubmapHandler(object):
 
         self.map_pub = rospy.Publisher(config.accumulated_map_topic, PointCloud2, queue_size=10)
         self.submap_seq = 0
+        self.previous_submap_neighbors = {}
         rospy.loginfo("[SubmapHandler] Initialized.")
 
     def publish_submaps(self, submaps):
@@ -55,7 +56,7 @@ class SubmapHandler(object):
             submap_points = Utils.transform_pointcloud(submap, T_G_L)
             map_points = np.append(map_points, submap_points, axis=0)
 
-        map_points = Utils.downsample_pointcloud(map_points)
+        map_points = Utils.downsample_pointcloud(map_points, voxel_size = 0.4)
         n_points = map_points.shape[0]
         if n_points > 1:
             map_points = map_points[1:,:]
@@ -100,8 +101,9 @@ class SubmapHandler(object):
 
         # Remove self and fix output.
         nn_dists, nn_indices = Utils.fix_nn_output(n_neighbors, idx, nn_dists, nn_indices)
+        mask = nn_dists >= self.config.min_pivot_distance
 
-        return nn_dists, nn_indices
+        return nn_dists[mask], nn_indices[mask]
 
     def get_all_positions(self, submaps):
         n_submaps = len(submaps)
@@ -134,6 +136,15 @@ class SubmapHandler(object):
         if nnz == 0:
             return submap_msg
 
+        if i not in self.previous_submap_neighbors.keys():
+            self.previous_submap_neighbors[i] = []
+        else:
+            for idx in self.previous_submap_neighbors[i]:
+                neighbors[idx] = 1
+
+        if i not in submaps.keys():
+            return submap_msg
+
         candidate_a = submaps[i]
         n_neighbors = len(neighbors)
         for j in range(0, n_neighbors):
@@ -150,12 +161,13 @@ class SubmapHandler(object):
                                 candidate_a, candidate_b, T_L_a_L_b, submap_msg)
                 self.verify_submap_message(submap_msg)
 
+                # Bookkeeping
+                if j not in self.previous_submap_neighbors[i]:
+                    self.previous_submap_neighbors[i].append(j)
+
         return submap_msg
 
     def compute_alignment(self, candidate_a, candidate_b):
-        points_a = candidate_a.compute_dense_map()
-        points_b = candidate_b.compute_dense_map()
-
         # Compute prior transformation.
         T_a_b = None
         if self.config.compute_poses_in_LiDAR:
@@ -169,6 +181,9 @@ class SubmapHandler(object):
 
         if not self.config.refine_with_ICP:
             return T_a_b
+
+        points_a = candidate_a.compute_dense_map()
+        points_b = candidate_b.compute_dense_map()
 
         # Register the submaps.
         T = self.reg_box.register(points_a, points_b, T_a_b)

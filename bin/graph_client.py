@@ -24,6 +24,8 @@ from utils import Utils
 class GraphClient(object):
     def __init__(self):
         self.is_initialized = False
+        self.is_updating = False
+        self.last_update_seq = -1
         self.config = ClientConfig()
         self.config.init_from_config()
         Plotter.PlotClientBanner()
@@ -81,7 +83,8 @@ class GraphClient(object):
         self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
-        if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
+        rospy.loginfo(f"[GraphClient] Received graph message from monitor {msg.header.frame_id}.")
+        if not (self.is_initialized and(self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
         self.mutex.acquire()
 
@@ -157,18 +160,37 @@ class GraphClient(object):
         self.constraint_mutex.release()
 
     def update(self):
+        self.mutex.acquire()
+        if self.is_updating:
+            self.mutex.release()
+            return
+        print('[GraphClient] {last_upd} and {graph_upd})'.format(last_upd=self.last_update_seq, graph_upd=self.global_graph.graph_seq))
+        # if self.last_update_seq > 0 and self.last_update_seq == self.global_graph.graph_seq:
+            # self.mutex.release()
+            # return
+        self.is_updating = True
+        self.mutex.release()
+
         rospy.loginfo("[GraphClient] Updating...")
         self.commander.reset_msgs()
-        self.check_for_submap_constraints()
-        self.update_degenerate_anchors()
+        # self.update_degenerate_anchors()
 
         if not self.process_latest_robot_data():
             rospy.logwarn('[GraphClient] Unable to process latest robot data.')
+            self.mutex.acquire()
+            self.is_updating = False
+            self.mutex.release()
             return
         self.compare_estimations()
-        self.publish_client_update()
+        # self.publish_client_update()
 
-        rospy.loginfo("[GraphClient] Updating completed")
+        rospy.loginfo('[GraphClient] Updating completed (sent {n_constraints} constraints)'.format(n_constraints=self.commander.get_total_amount_of_constraints()))
+        rospy.loginfo('[GraphClient] In detail relatives: {n_low} / {n_mid} / {n_high}'.format(n_low=self.commander.small_constraint_counter, n_mid=self.commander.mid_constraint_counter, n_high=self.commander.large_constraint_counter))
+        rospy.loginfo('[GraphClient] In detail anchors: {n_anchor}'.format(n_anchor=self.commander.anchor_constraint_counter))
+        self.mutex.acquire()
+        self.is_updating = False
+        self.last_update_seq = self.global_graph.graph_seq
+        self.mutex.release()
 
     def record_all_signals(self, x_est, x_opt):
         if not self.config.enable_signal_recording:
@@ -206,8 +228,10 @@ class GraphClient(object):
     def compare_estimations(self):
         if not self.config.enable_relative_constraints:
             return
+        rospy.loginfo("[GraphClient] Comparing estimations.")
         self.mutex.acquire()
-        if self.global_graph.is_built is False:
+        if self.global_graph.is_built is False and self.config.client_mode == 'multiscale':
+            rospy.logerr('[GraphClient] Graph is not built yet.')
             self.mutex.release()
             return
         # Check whether we have an optimized version of it.
@@ -217,15 +241,16 @@ class GraphClient(object):
             rospy.logwarn(f"[GraphClient] Found no optimized version of {self.config.robot_name} for comparison.")
         self.mutex.release()
 
-    def check_for_submap_constraints(self):
+    def check_for_submap_constraints(self, labels, all_opt_nodes):
         if not self.config.enable_submap_constraints:
             return
-        self.constraint_mutex.acquire()
-        path_msgs = self.constraint_handler.create_msg_for_intra_constraints(self.config.robot_name)
-        self.constraint_mutex.release()
-        for msg in path_msgs:
-            self.intra_constraint_pub.publish(msg)
-            time.sleep(0.10)
+        # self.constraint_mutex.acquire()
+        # path_msgs = self.constraint_handler.create_msg_for_intra_constraints(self.config.robot_name, labels, all_opt_nodes)
+        # self.constraint_mutex.release()
+        # for msg in path_msgs:
+        #     self.intra_constraint_pub.publish(msg)
+        #     self.commander.add_to_constraint_counter(0,0,len(msg.poses))
+        #     time.sleep(0.01)
 
     def publish_client_update(self):
         if not (self.config.enable_anchor_constraints and self.global_graph.is_built and self.config.enable_client_update):
@@ -250,6 +275,7 @@ class GraphClient(object):
         self.record_raw_est_trajectory(self.signal.compute_trajectory(all_est_nodes))
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
         if all_opt_nodes is None or all_est_nodes is None:
+            rospy.logerr(f'[GraphClient] Synchronization failed')
             return False
 
         labels = self.compute_all_labels(key, all_opt_nodes, all_est_nodes)
@@ -259,16 +285,13 @@ class GraphClient(object):
         # Publish an anchor node curing the affected areas.
         self.check_for_degeneracy(all_opt_nodes, all_est_nodes)
 
+        # Check for large discrepancies in the data.
+        # If so publish submap constraints.
+        self.check_for_submap_constraints(labels, all_opt_nodes)
+
         return True
 
     def reduce_and_synchronize(self, all_opt_nodes, all_est_nodes):
-        # If the graph is reduced, we need to reduce the optimized nodes too.
-        # Synchronize the node lists based on their TS.
-        # We always sync to the optimized nodes.
-        if self.global_graph.is_reduced:
-            rospy.logwarn(f'[GraphClient] Reducing global graph with {len(self.global_graph.reduced_ind)} indices.')
-            all_opt_nodes = [all_opt_nodes[i] for i in self.global_graph.reduced_ind]
-
         (all_opt_nodes, all_est_nodes, opt_idx, est_idx) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
         n_nodes = len(all_est_nodes)
         assert(n_nodes == len(all_opt_nodes))
@@ -281,7 +304,8 @@ class GraphClient(object):
         positions = np.array([np.array(x.position) for x in all_est_nodes])
         self.robot_graph.build_from_poses(positions)
         # self.robot_graph.reduce_graph_using_indices(est_idx)
-        self.robot_eval.compute_wavelets(self.robot_graph.G)
+        if self.config.client_mode == 'multiscale':
+            self.robot_eval.compute_wavelets(self.robot_graph.G)
         return (all_opt_nodes, all_est_nodes)
 
     def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
@@ -297,7 +321,7 @@ class GraphClient(object):
             begin_send = max(i - pivot, 0)
             end_send = min(i + (self.config.degenerate_window - pivot), n_nodes)
             rospy.logerr(f'[GraphClient] Sending degenerate anchros from {begin_send} to {end_send}')
-            self.commander.send_degenerate_anchors(all_opt_nodes, begin_send, end_send)
+            self.commander.send_anchors(all_opt_nodes, begin_send, end_send)
 
     def update_degenerate_anchors(self):
         all_opt_nodes = self.optimized_signal.get_all_nodes(self.config.robot_name)
@@ -312,7 +336,9 @@ class GraphClient(object):
         elif self.config.client_mode == 'euclidean':
             return self.perform_euclidean_evaluation(key, all_opt_nodes, all_est_nodes)
         elif self.config.client_mode == 'always':
-            return self.perform_always(key, all_opt_nodes, all_est_nodes)
+            return self.perform_relative(key, all_opt_nodes, all_est_nodes)
+        elif self.config.client_mode == 'absolute':
+            return self.perform_absolute(key, all_opt_nodes, all_est_nodes)
         else:
             rospy.logerr('[GraphClient] Unknown mode specified {mode}'.format(mode=self.config.client_mode))
             return None
@@ -332,7 +358,14 @@ class GraphClient(object):
         robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
-            return None
+            rospy.logwarn(f'[GraphClient] We have a size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}. Trying to fix it.')
+
+            positions = np.array([np.array(x.position) for x in all_opt_nodes])
+            self.global_graph.build_from_poses(positions)
+            self.eval.compute_wavelets(self.global_graph.G)
+            psi = self.eval.get_wavelets()
+            n_dim = psi.shape[0]
+
         if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
             rospy.logwarn(f'[GraphClient] Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
             return None
@@ -350,23 +383,28 @@ class GraphClient(object):
         opt_traj = self.signal.compute_trajectory(all_est_nodes)
         euclidean_dist = np.linalg.norm(est_traj[:,1:4] - opt_traj[:,1:4], axis=1)
         n_nodes = est_traj.shape[0]
-        labels = [0] * n_nodes
+        labels = [[0]] * n_nodes
         for i in range(0, n_nodes):
-            if euclidean_dist[i] > 5.0:
-                labels[i] = 1
-            elif euclidean_dist[i] > 3.0:
-                labels[i] = 2
-            elif euclidean_dist[i] > 1.0:
-                labels[i] = 3
+            if euclidean_dist[i] > 1.0:
+                labels[i].append(1)
         return ClassificationResult(key, all_opt_nodes, euclidean_dist, labels)
 
-    def perform_always(self, key, all_opt_nodes, all_est_nodes):
+    def perform_relative(self, key, all_opt_nodes, all_est_nodes):
+        return self.set_label_for_all_nodes(1, key, all_opt_nodes, all_est_nodes)
+
+    def perform_absolute(self, key, all_opt_nodes, all_est_nodes):
+        n_all_nodes = len(all_opt_nodes)
+        self.commander.send_anchors(all_opt_nodes, 0, n_all_nodes)
+        return []
+        # return self.set_label_for_all_nodes(5, key, all_opt_nodes, all_est_nodes)
+
+    def set_label_for_all_nodes(self, label, key, all_opt_nodes, all_est_nodes):
         n_nodes = len(all_opt_nodes)
-        labels = [3] * n_nodes
+        labels = [[label]] * n_nodes
         return ClassificationResult(key, all_opt_nodes, None, labels)
 
     def evaluate_and_publish_features(self, labels):
-        if labels == None or labels.size() == 0:
+        if labels == None or labels == [] or labels.size() == 0:
             return
         self.commander.evaluate_labels_per_node(labels)
 

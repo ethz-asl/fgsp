@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+import rospy
+import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 
@@ -9,6 +11,7 @@ from utils import Utils
 class RobotConstraints(object):
     def __init__(self):
         self.submap_constraints = {}
+        self.previous_timestamps = []
 
     def add_submap_constraints(self, ts_from, ts_to, T_a_b):
         lc = LcModel(ts_from, ts_to, T_a_b)
@@ -20,6 +23,11 @@ class RobotConstraints(object):
 
         if ts_from_ns not in self.submap_constraints:
             self.submap_constraints[ts_from_ns] = []
+        for i in range(len(self.submap_constraints[ts_from_ns])):
+            if self.submap_constraints[ts_from_ns][i].ts_to == ts_to:
+                self.submap_constraints[ts_from_ns][i] = lc
+                return
+
         self.submap_constraints[ts_from_ns].append(lc)
 
     def construct_path_msgs(self):
@@ -30,6 +38,32 @@ class RobotConstraints(object):
             path_msg = self.construct_path_msg_for_submap(ts_ns_from, loop_closures)
             path_msgs.append(path_msg)
         return path_msgs
+
+    def construct_path_msgs_using_ts(self, timestamps):
+        path_msgs = []
+        print(f'Constructing path message for {len(self.submap_constraints)} different submaps.')
+        for ts_from_ns in self.submap_constraints:
+            if not self.should_publish_map(ts_from_ns, timestamps):
+                continue
+            if ts_from_ns not in self.previous_timestamps:
+                self.previous_timestamps.append(ts_from_ns)
+
+            rospy.logwarn('[RobotConstraints] Found a valid timestamp!!! ')
+            loop_closures = list(self.submap_constraints[ts_from_ns])
+            path_msg = self.construct_path_msg_for_submap(ts_from_ns, loop_closures)
+            path_msgs.append(path_msg)
+        return path_msgs
+
+    def should_publish_map(self, ts_from_ns, timestamps):
+        if ts_from_ns in self.previous_timestamps:
+            return True
+
+        ts_diff = np.absolute(timestamps - ts_from_ns)
+        ts_min = np.amin(ts_diff)
+        diff_s = Utils.ts_ns_to_seconds(ts_min)
+        rospy.logwarn('[RobotConstraints] min diff ts is {diff}'.format(diff=diff_s))
+
+        return diff_s < 3
 
     def construct_path_msg_for_submap(self, ts_ns_from, loop_closures):
         path_msg = Path()

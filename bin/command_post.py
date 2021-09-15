@@ -29,6 +29,7 @@ class CommandPost(object):
         self.small_constraint_counter = 0
         self.mid_constraint_counter = 0
         self.large_constraint_counter = 0
+        self.anchor_constraint_counter = 0
         self.history = None
 
     def reset_msgs(self):
@@ -39,6 +40,7 @@ class CommandPost(object):
         self.small_constraint_counter = 0
         self.mid_constraint_counter = 0
         self.large_constraint_counter = 0
+        self.anchor_constraint_counter = 0
 
     def evaluate_labels_per_node(self, labels):
         # Should always publish for all states as we don't know
@@ -98,13 +100,14 @@ class CommandPost(object):
         self.verification_request.header.stamp = rospy.Time.now()
         self.pub_verify.publish(self.verification_request)
 
-    def send_degenerate_anchors(self, all_opt_nodes, begin_send, end_send):
+    def send_anchors(self, all_opt_nodes, begin_send, end_send):
         rospy.logerr(f'Sending degenerate anchors for {end_send - begin_send} nodes.')
         indices = np.arange(begin_send, end_send, 1)
-        self.send_degenerate_anchors_based_on_indices(all_opt_nodes, indices)
+        self.send_anchors_based_on_indices(all_opt_nodes, indices)
 
-    def send_degenerate_anchors_based_on_indices(self, opt_nodes, indices):
-        rospy.logerr(f'Sending degenerate anchors for {len(indices)} nodes.')
+    def send_anchors_based_on_indices(self, opt_nodes, indices):
+        n_constraints = len(indices)
+        rospy.logerr(f'Sending anchors for {n_constraints} nodes.')
         for i in indices:
             pose_msg = self.create_pose_msg_from_node(opt_nodes[i])
             self.degenerate_path_msg.poses.append(pose_msg)
@@ -114,7 +117,8 @@ class CommandPost(object):
                 self.degenerate_indices.append(i)
 
         self.degenerate_path_msg.header.stamp = rospy.Time.now()
-        self.pub_degenerate.publish(self.degenerate_path_msg)
+        self.pub_anchor.publish(self.degenerate_path_msg)
+        self.anchor_constraint_counter = self.anchor_constraint_counter + n_constraints
 
     def update_degenerate_anchors(self, all_opt_nodes):
         if len(self.degenerate_indices) == 0:

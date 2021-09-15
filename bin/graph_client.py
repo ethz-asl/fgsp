@@ -185,7 +185,8 @@ class GraphClient(object):
         # self.publish_client_update()
 
         rospy.loginfo('[GraphClient] Updating completed (sent {n_constraints} constraints)'.format(n_constraints=self.commander.get_total_amount_of_constraints()))
-        rospy.loginfo('[GraphClient] In detail: {n_low} / {n_mid} / {n_high}'.format(n_low=self.commander.small_constraint_counter, n_mid=self.commander.mid_constraint_counter, n_high=self.commander.large_constraint_counter))
+        rospy.loginfo('[GraphClient] In detail relatives: {n_low} / {n_mid} / {n_high}'.format(n_low=self.commander.small_constraint_counter, n_mid=self.commander.mid_constraint_counter, n_high=self.commander.large_constraint_counter))
+        rospy.loginfo('[GraphClient] In detail anchors: {n_anchor}'.format(n_anchor=self.commander.anchor_constraint_counter))
         self.mutex.acquire()
         self.is_updating = False
         self.last_update_seq = self.global_graph.graph_seq
@@ -303,7 +304,8 @@ class GraphClient(object):
         positions = np.array([np.array(x.position) for x in all_est_nodes])
         self.robot_graph.build_from_poses(positions)
         # self.robot_graph.reduce_graph_using_indices(est_idx)
-        self.robot_eval.compute_wavelets(self.robot_graph.G)
+        if self.config.client_mode == 'multiscale':
+            self.robot_eval.compute_wavelets(self.robot_graph.G)
         return (all_opt_nodes, all_est_nodes)
 
     def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
@@ -319,7 +321,7 @@ class GraphClient(object):
             begin_send = max(i - pivot, 0)
             end_send = min(i + (self.config.degenerate_window - pivot), n_nodes)
             rospy.logerr(f'[GraphClient] Sending degenerate anchros from {begin_send} to {end_send}')
-            self.commander.send_degenerate_anchors(all_opt_nodes, begin_send, end_send)
+            self.commander.send_anchors(all_opt_nodes, begin_send, end_send)
 
     def update_degenerate_anchors(self):
         all_opt_nodes = self.optimized_signal.get_all_nodes(self.config.robot_name)
@@ -334,7 +336,9 @@ class GraphClient(object):
         elif self.config.client_mode == 'euclidean':
             return self.perform_euclidean_evaluation(key, all_opt_nodes, all_est_nodes)
         elif self.config.client_mode == 'always':
-            return self.perform_always(key, all_opt_nodes, all_est_nodes)
+            return self.perform_relative(key, all_opt_nodes, all_est_nodes)
+        elif self.config.client_mode == 'absolute':
+            return self.perform_absolute(key, all_opt_nodes, all_est_nodes)
         else:
             rospy.logerr('[GraphClient] Unknown mode specified {mode}'.format(mode=self.config.client_mode))
             return None
@@ -385,13 +389,22 @@ class GraphClient(object):
                 labels[i].append(1)
         return ClassificationResult(key, all_opt_nodes, euclidean_dist, labels)
 
-    def perform_always(self, key, all_opt_nodes, all_est_nodes):
+    def perform_relative(self, key, all_opt_nodes, all_est_nodes):
+        return self.set_label_for_all_nodes(1, key, all_opt_nodes, all_est_nodes)
+
+    def perform_absolute(self, key, all_opt_nodes, all_est_nodes):
+        n_all_nodes = len(all_opt_nodes)
+        self.commander.send_anchors(all_opt_nodes, 0, n_all_nodes)
+        return []
+        # return self.set_label_for_all_nodes(5, key, all_opt_nodes, all_est_nodes)
+
+    def set_label_for_all_nodes(self, label, key, all_opt_nodes, all_est_nodes):
         n_nodes = len(all_opt_nodes)
-        labels = [[1]] * n_nodes
+        labels = [[label]] * n_nodes
         return ClassificationResult(key, all_opt_nodes, None, labels)
 
     def evaluate_and_publish_features(self, labels):
-        if labels == None or labels.size() == 0:
+        if labels == None or labels == [] or labels.size() == 0:
             return
         self.commander.evaluate_labels_per_node(labels)
 

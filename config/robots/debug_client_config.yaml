@@ -15,7 +15,7 @@ verification_service:        '/graph_monitor/verification'
 client_update_topic:         "/graph_client/latest_graph"
 
 # Constraint construction:   multiscale, euclidean, always, absolute
-client_mode:                 'absolute'
+client_mode:                 'multiscale'
 
 # Div
 dataroot:                    "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"

@@ -94,8 +94,8 @@ class GraphMonitor(object):
         # self.verification_handler.send_verification_request()
 
         # Compute the submap constraints and publish them if enabled.
-        # if self.config.enable_submap_constraints:
-            # self.compute_and_publish_submaps()
+        if self.config.enable_submap_constraints:
+            self.compute_and_publish_submaps()
 
         # Compute the global graph and signal, then publish it
         if self.config.enable_graph_building:

@@ -192,6 +192,13 @@ class WaveletEvaluator(object):
             # if dists[2] > 0.05:
             #     local_labels.append(3)
 
+            if dists[0] > 0.5:
+                local_labels.append(1)
+            if dists[1] > 0.21: # for h_naymal_2 we had 0.2
+                local_labels.append(2)
+            if dists[2] > 0.11:
+                local_labels.append(3)
+
             # -----------------------------------------------
 
             # hagerbach anymal 2
@@ -211,12 +218,12 @@ class WaveletEvaluator(object):
             #     local_labels.append(3)
 
             # h floor
-            if dists[0] > 0.31:
-                local_labels.append(1)
-            if dists[1] > 0.21: # for h_naymal_2 we had 0.2
-                local_labels.append(2)
-            if dists[2] > 0.07:
-                local_labels.append(3)
+            # if dists[0] > 0.31:
+            #     local_labels.append(1)
+            # if dists[1] > 0.21: # for h_naymal_2 we had 0.2
+            #     local_labels.append(2)
+            # if dists[2] > 0.07:
+            #     local_labels.append(3)
 
             rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
             labels.append(local_labels)

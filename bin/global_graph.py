@@ -6,7 +6,9 @@ from pygsp import graphs, filters, reduction
 from geometry_msgs.msg import Point
 from maplab_msgs.msg import Graph
 from scipy import spatial
+from scipy.spatial.transform import Rotation
 from visualizer import Visualizer
+import eigenpy
 
 class GlobalGraph(object):
     def __init__(self, reduced=False):
@@ -96,10 +98,18 @@ class GlobalGraph(object):
         if n_poses <= 0:
             rospy.logerr(f"[GlobalGraph] Received empty path message.")
             return
-        self.coords = self.read_coordinates_from_poses(poses)
+        poses = self.read_coordinates_from_poses(poses)
+        self.coords = poses[:,0:3]
         rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
-        self.adj = self.create_adjacency_from_poses(self.coords)
+        self.adj = self.create_adjacency_from_poses(poses)
         rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
+
+    def read_timestamps_from_poses(self, poses):
+        n_coords = len(poses)
+        timestamps = np.zeros((n_coords, 1))
+        for i in range(0, n_coords):
+            timestamps[i] = Utils.ros_time_to_ns(poses[i].pose.header.stamp)
+        return timestamps
 
     def build_from_poses(self, poses):
         start_time = time.time()
@@ -140,11 +150,15 @@ class GlobalGraph(object):
 
     def read_coordinates_from_poses(self, poses):
         n_coords = len(poses)
-        coords = np.zeros((n_coords, 3))
+        coords = np.zeros((n_coords, 7))
         for i in range(0, n_coords):
             coords[i,0] = poses[i].pose.position.x
             coords[i,1] = poses[i].pose.position.y
             coords[i,2] = poses[i].pose.position.z
+            coords[i,3] = poses[i].pose.orientation.x
+            coords[i,4] = poses[i].pose.orientation.y
+            coords[i,5] = poses[i].pose.orientation.z
+            coords[i,6] = poses[i].pose.orientation.w
         return coords
 
     def read_adjacency(self, graph_msg):
@@ -156,10 +170,11 @@ class GlobalGraph(object):
 
         return adj
 
-    def create_adjacency_from_poses(self, coords):
+    def create_adjacency_from_poses(self, poses):
         n_coords = coords.shape[0]
+        timestamps = self.read_timestamps_from_poses(poses)
         adj = np.zeros((n_coords, n_coords))
-        tree = spatial.KDTree(coords)
+        tree = spatial.KDTree(poses[:,0:3])
         max_pos_dist = 6.0
         # n_nearest_neighbors = min(20, n_coords)
         sigma = 1.0
@@ -167,17 +182,41 @@ class GlobalGraph(object):
         for i in range(n_coords):
             # nn_dists, nn_indices = tree.query(coords[i,:], p = 2, k = n_nearest_neighbors)
             # nn_indices = [nn_indices] if n_nearest_neighbors == 1 else nn_indices
-            nn_indices = tree.query_ball_point(coords[i,:], r = max_pos_dist, p = 2)
+            nn_indices = tree.query_ball_point(poses[i,:], r = max_pos_dist, p = 2)
 
             # print(f'Found the following indices: {nn_indices} / {n_coords}')
             for nn_i in nn_indices:
                 if nn_i == i:
                     continue
-                dist = spatial.distance.euclidean(coords[i,:], coords[nn_i,:])
-                adj[i, nn_i] = np.exp(-dist/normalization)
+                w_d = self.compute_distance_weight(poses[i,0:3], poses[nn_i,0:3])
+                w_r = self.compute_rotation_weight(poses[i,:], poses[nn_i,:])
+                w_t = self.compute_temporal_decay(timestamps[i], timestamps[nn_i])
+                adj[i, nn_i] = w_t * (w_d + w_r)
 
         assert np.all(adj >= 0)
         return adj
+
+    def compute_distance_weight(self, coords_lhs, coords_rhs):
+        dist = spatial.distance.euclidean(coords[i,:], coords[nn_i,:])
+        return np.exp(-dist/normalization)
+
+    def compute_rotation_weight(self, coords_lhs, coords_rhs):
+        # angle_lhs = np.linalg.norm(Rotation.from_quat(coords_lhs[3:]).as_rotvec())
+        # angle_rhs = np.linalg.norm(Rotation.from_quat(coords_rhs[3:]).as_rotvec())
+        # angle = angle_lhs - angle_rhs
+        T_G_lhs = Utils.convert_pos_quat_to_transformation(coords_lhs[0:3], coords_lhs[3:])
+        T_G_rhs = Utils.convert_pos_quat_to_transformation(coords_rhs[0:3], coords_rhs[3:])
+        T_lhs_rhs = np.linalg.inv(T_G_lhs) @ T_G_rhs
+        rotation = eigenpy.AngleAxis(T_lhs_rhs[0:3,0:3]).angle
+
+        eps = 0.001
+        return 0.5 * (1 + np.cos(angle)) + eps
+
+    def compute_temporal_decay(self, timestmap_lhs, timestamp_rhs):
+        ts_diff_s = Utils.ts_ns_to_seconds(np.absolute(timestmap_lhs - timestamp_rhs))
+        alpha = 1.5
+        beta = 1000
+        return alpha * np.exp(-ts_diff_s / beta)
 
     def read_submap_indices(self, graph_msg):
         return graph_msg.submap_indices

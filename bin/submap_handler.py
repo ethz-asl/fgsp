@@ -44,7 +44,7 @@ class SubmapHandler(object):
         header = Header()
         header.stamp = rospy.Time.now()
         header.frame_id = 'darpa'
-        map_points = np.zeros((1,4))
+        map_points = np.zeros((1,3))
 
         for i in range(0, n_submaps):
             if i not in submaps:
@@ -52,7 +52,6 @@ class SubmapHandler(object):
                 continue
             T_G_L = submaps[i].get_pivot_pose_LiDAR()
             submap = submaps[i].compute_dense_map()
-            submap[:,3] = i
             submap_points = Utils.transform_pointcloud(submap, T_G_L)
             map_points = np.append(map_points, submap_points, axis=0)
 

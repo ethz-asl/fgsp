@@ -15,7 +15,6 @@ from config import MonitorConfig
 from plotter import Plotter
 
 class GraphMonitor(object):
-
     def __init__(self):
         self.is_initialized = False
 
@@ -51,7 +50,6 @@ class GraphMonitor(object):
         self.is_initialized = True
         self.latest_opt_traj_msg = None
         self.mutex.release()
-
 
     def graph_callback(self, msg):
         if self.is_initialized is False:

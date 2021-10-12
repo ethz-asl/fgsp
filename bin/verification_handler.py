@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 
 import rospy
 from maplab_msgs.msg import VerificationCheckRequest
@@ -12,14 +12,14 @@ class VerificationHandler(object):
         rospy.loginfo("[VerificationHandler] Initialized.")
 
     def handle_verification(self, msg):
-        rospy.loginfo(f"[VerificationHandler] From {msg.robot_name}  with {msg.submap_ids}")
+        rospy.loginfo("[VerificationHandler] From {robot_name}  with {submap_ids}".format(robot_name=msg.robot_name, submap_ids=msg.submap_ids))
         if msg.robot_name not in self.robot_requests:
             self.robot_requests[msg.robot_name] = []
 
         for submap in msg.submap_ids:
             if submap not in self.robot_requests[msg.robot_name]:
                 self.robot_requests[msg.robot_name].append(submap)
-        rospy.loginfo(f"[VerificationHandler] requests {self.robot_requests}")
+        rospy.loginfo("[VerificationHandler] requests {requests}".format(requests=self.robot_requests))
 
     def send_verification_request(self):
         submap_ids = []

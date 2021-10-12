@@ -48,7 +48,7 @@ class SubmapHandler(object):
 
         for i in range(0, n_submaps):
             if i not in submaps:
-                rospy.logerr(f'Submap with key {i} not found.')
+                rospy.logerr('Submap with key {i} not found.'.format(i=i))
                 continue
             T_G_L = submaps[i].get_pivot_pose_LiDAR()
             submap = submaps[i].compute_dense_map()
@@ -61,7 +61,7 @@ class SubmapHandler(object):
             map_points = map_points[1:,:]
             map_pointcloud_ros = pc2.create_cloud(header, FIELDS_XYZ, map_points)
             self.map_pub.publish(map_pointcloud_ros)
-            rospy.loginfo(f"Published map with {n_points} points.")
+            rospy.loginfo("Published map with {n_points} points.".format(n_points=n_points))
 
     def compute_constraints(self, submaps):
         candidates = self.find_close_submaps(submaps)

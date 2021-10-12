@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 import rospy
 import time
 import numpy as np
@@ -59,17 +59,17 @@ class GlobalGraph(object):
             self.graph_seq = graph_msg.header.seq
         self.is_built = True
         execution_time = (time.time() - start_time)
-        rospy.loginfo(f'[GlobalGraph] Building complete ({execution_time} sec)')
+        rospy.loginfo('[GlobalGraph] Building complete ({execution_time} sec)'.format(execution_time=execution_time))
         self.latest_graph_msg = graph_msg
 
     def build_graph(self):
         if len(self.adj.tolist()) == 0:
-            rospy.loginfo(f"[GlobalGraph] Path adjacency matrix is empty. Aborting graph building.")
+            rospy.loginfo("[GlobalGraph] Path adjacency matrix is empty. Aborting graph building.")
             return False
         self.G = graphs.Graph(self.adj)
 
         if self.G.N != self.coords.shape[0]:
-            rospy.logerr(f"[GlobalGraph] Path graph size is {self.G.N} but coords are {self.coords.shape}")
+            rospy.logerr("[GlobalGraph] Path graph size is {coords} but coords are {coords}".format(n=self.G.N, coords=self.coords.shape))
             return False
         if self.G.N <= 1:
             rospy.logdebug("[GlobalGraph] Path graph vertex count is less than 2.")
@@ -96,7 +96,7 @@ class GlobalGraph(object):
         start_time = time.time()
         n_poses = len(poses)
         if n_poses <= 0:
-            rospy.logerr(f"[GlobalGraph] Received empty path message.")
+            rospy.logerr("[GlobalGraph] Received empty path message.")
             return
         poses = self.read_coordinates_from_poses(poses)
         self.coords = poses[:,0:3]
@@ -115,7 +115,7 @@ class GlobalGraph(object):
         start_time = time.time()
         n_poses = poses.shape[0]
         if n_poses <= 0:
-            rospy.logerr(f"[GlobalGraph] Received empty path message.")
+            rospy.logerr("[GlobalGraph] Received empty path message.")
             return
         self.coords = poses
         rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
@@ -206,7 +206,7 @@ class GlobalGraph(object):
         # angle = angle_lhs - angle_rhs
         T_G_lhs = Utils.convert_pos_quat_to_transformation(coords_lhs[0:3], coords_lhs[3:])
         T_G_rhs = Utils.convert_pos_quat_to_transformation(coords_rhs[0:3], coords_rhs[3:])
-        T_lhs_rhs = np.linalg.inv(T_G_lhs) @ T_G_rhs
+        T_lhs_rhs = np.matmul(np.linalg.inv(T_G_lhs), T_G_rhs)
         rotation = eigenpy.AngleAxis(T_lhs_rhs[0:3,0:3]).angle
 
         eps = 0.001
@@ -227,7 +227,7 @@ class GlobalGraph(object):
         self.reduce_graph_using_indices(self.reduced_ind)
 
     def reduce_graph_using_indices(self, reduced_ind):
-        rospy.loginfo(f'[GlobalGraph] Reducing graph using {len(reduced_ind)}/{self.G.N} indices.')
+        rospy.loginfo('[GlobalGraph] Reducing graph using {reduced}/{coords} indices.'.format(reduced=len(reduced_ind), coords=self.G.N))
         self.coords = self.coords[reduced_ind]
         self.G = reduction.kron_reduction(self.G, reduced_ind)
         self.adj = self.G.W.toarray()
@@ -293,7 +293,7 @@ class GlobalGraph(object):
 
         n_coords = self.G.N
         if n_coords > self.coords.shape[0] or n_coords > self.adj.shape[0]:
-            rospy.logerr(f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}')
+            rospy.logerr('Size mismatch in global graph {n_global} vs. {n_coords} vs. {n_adj}'.format(n_global=n_coords, n_coords=self.coords.shape[0], n_adj=self.adj.shape[0]))
             return
 
         # First publish the coordinates of the global graph.

@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 
 import rospy
 import numpy as np
@@ -134,4 +134,4 @@ if __name__ == "__main__":
     model = SubmapModel()
     model.construct_data(submap_msg)
 
-    print(f"Model for robot {model.robot_name} contains {len(model.poses)} poses and {len(model.pointclouds)} clouds.")
+    print("Model for robot {robot_name} contains {n_poses} poses and {n_clouds} clouds.".format(robot_name=model.robot_name, n_poses=len(model.poses), n_clouds=len(model.pointclouds)))

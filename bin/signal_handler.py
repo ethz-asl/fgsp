@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 import rospy
 import numpy as np
 from pygsp import graphs, filters, reduction
@@ -32,17 +32,17 @@ class SignalHandler(object):
                 path_msg.poses.append(node.pose)
             path_msg.header.stamp = rospy.Time.now()
             path_msg.header.frame_id = 'darpa'
-            pub = rospy.Publisher(f'/graph_monitor/{key}/monitor_path', Path, queue_size=10)
+            pub = rospy.Publisher('/graph_monitor/{key}/monitor_path'.format(key=key), Path, queue_size=10)
             pub.publish(path_msg)
 
     def convert_signal(self, signal_msg):
         grouped_signals = self.group_robots(signal_msg.nodes)
         self.publish_grouped_robots(grouped_signals)
-        rospy.loginfo(f'[SignalHandler] Grouped signals are {grouped_signals.keys()}')
+        rospy.loginfo('[SignalHandler] Grouped signals are {keys}'.format(keys=grouped_signals.keys()))
 
         for key, nodes in grouped_signals.items():
             n_nodes = len(nodes)
-            rospy.logwarn(f'[SignalHandler] For {key} we have {n_nodes} nodes.')
+            rospy.logwarn('[SignalHandler] For {key} we have {n_nodes} nodes.'.format(key=key, n_nodes=n_nodes))
             if (n_nodes <= 0):
                 continue
 
@@ -188,7 +188,7 @@ class SignalHandler(object):
         color_idx = 0
         viz = Visualizer()
         for robot, nodes in self.signals.items():
-            rospy.logwarn(f'[SignalHandler] Publishing signal for {robot}')
+            rospy.logwarn('[SignalHandler] Publishing signal for {robot}'.format(robot=robot))
             topic = topic_fmt.format(key=robot)
             for node in nodes:
                 viz.add_signal_coordinate(node.position, color_idx)

@@ -1,3 +1,5 @@
+#! /usr/bin/env python2
+
 class font:
    PURPLE = '\033[95m'
    CYAN = '\033[96m'
@@ -25,8 +27,7 @@ class Plotter(object):
  //********       /**        /**//******  ***  /**
   ////////        //         //  //////  ///   // '''
 
-        # print(f'{font.CLEAR}\n{banner}\n\n\n')
-        print(f'\n{banner}\n\n\n')
+        print('\n{banner}\n\n\n'.format(banner = banner))
 
     @staticmethod
     def PlotClientBanner():
@@ -40,70 +41,69 @@ class Plotter(object):
  //********        //******  ***/**//****** ***  /**  //**
   ////////          //////  /// //  ////// ///   //    //  '''
 
-        # print(f'{font.CLEAR}\n{banner}\n\n\n')
-        print(f'\n{banner}\n\n\n')
+        print('\n{banner}\n\n\n'.format(banner = banner))
 
     @staticmethod
     def PrintMonitorConfig(config):
-        print(f'{font.BLUE} --- General Configuration -------------------------------------------------- {font.END}')
-        print(f'{font.BOLD} Update rate:{font.END} {1e9/config.rate.sleep_dur.to_nsec()}hz')
-        print(f'{font.BOLD} Compute submap-to-submap constraints:{font.END} {config.enable_submap_constraints}')
-        print(f'{font.BOLD} Reduce optimized graph using Kron:{font.END} {config.reduce_global_graph}')
-        print(f'{font.BOLD} Minimal node count in optimized graph:{font.END} {config.min_node_count}')
-        print(f'{font.BOLD} Minimal submap count:{font.END} {config.submap_min_count}')
-        print(f'{font.BOLD} Submap pivot distance:{font.END} {config.pivot_distance}')
-        print(f'{font.BOLD} Submap k-nearest neighbors:{font.END} {config.n_nearest_neighbors}')
-        print(f'{font.BOLD} Submap visualize map:{font.END} {config.enable_submap_map_publishing}')
-        print(f'{font.BOLD} Submap compute LiDAR poses:{font.END} {config.compute_poses_in_LiDAR}')
-        print(f'{font.BOLD} Submap ICP refinement:{font.END} {config.refine_with_ICP}')
+        print('{color} --- General Configuration -------------------------------------------------- {end}'.format(color=font.BLUE, end=font.END))
+        print('{bold} Update rate:{end} {val}hz'.format(bold=font.BOLD, end=font.END, val = 1e9/config.rate.sleep_dur.to_nsec()))
+        print('{bold} Compute submap-to-submap constraints:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_submap_constraints))
+        print('{bold} Reduce optimized graph using Kron:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.reduce_global_graph))
+        print('{bold} Minimal node count in optimized graph:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.min_node_count))
+        print('{bold} Minimal submap count:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.submap_min_count))
+        print('{bold} Submap pivot distance:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.pivot_distance))
+        print('{bold} Submap k-nearest neighbors:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.n_nearest_neighbors))
+        print('{bold} Submap visualize map:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_submap_map_publishing))
+        print('{bold} Submap compute LiDAR poses:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.compute_poses_in_LiDAR))
+        print('{bold} Submap ICP refinement:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.refine_with_ICP))
         print('\n')
 
-        print(f'{font.YELLOW} --- Subscriber Configuration (Input) --------------------------------------- {font.END}')
-        print(f'{font.BOLD} Optimized graph topic:{font.END} {config.in_graph_topic}')
-        print(f'{font.BOLD} Optimized trajectory topic:{font.END} {config.in_traj_opt_topic}')
-        print(f'{font.BOLD} Optimized submap topic:{font.END} {config.opt_pc_topic}')
-        print(f'{font.BOLD} Verifcation request topic:{font.END} {config.verification_service_topic}')
+        print('{color} --- Subscriber Configuration (Input) --------------------------------------- {end}'.format(color=font.YELLOW, end=font.END))
+        print('{bold} Optimized graph topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.in_graph_topic))
+        print('{bold} Optimized trajectory topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.in_traj_opt_topic))
+        print('{bold} Optimized submap topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.opt_pc_topic))
+        print('{bold} Verifcation request topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.verification_service_topic))
         print('\n')
 
-        print(f'{font.GREEN} --- Publisher Configuration (Output) --------------------------------------- {font.END}')
-        print(f'{font.BOLD} Optimized graph topic:{font.END} {config.out_graph_topic}')
-        print(f'{font.BOLD} Optimized trajectory topic:{font.END} {config.out_traj_opt_topic}')
-        print(f'{font.BOLD} Optimized submap constraints topic:{font.END} {config.submap_topic}')
+        print('{color} --- Publisher Configuration (Output) --------------------------------------- {end}'.format(color=font.GREEN, end=font.END))
+        print('{bold} Optimized graph topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.out_graph_topic))
+        print('{bold} Optimized trajectory topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.out_traj_opt_topic))
+        print('{bold} Optimized submap constraints topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.submap_topic))
         print('\n')
 
     @staticmethod
     def PrintClientConfig(config):
-        print(f'{font.BLUE} --- General Configuration -------------------------------------------------- {font.END}')
-        print(f'{font.BOLD} Update rate:{font.END} {1e9/config.rate.sleep_dur.to_nsec()}hz')
-        print(f'{font.BOLD} Dataroot:{font.END} {config.dataroot}')
-        print(f'{font.BOLD} Path to the random forest model:{font.END} {config.random_forest_model}')
-        print(f'{font.BOLD} Robot name:{font.END} {config.robot_name}')
-        print(f'{font.BOLD} Enable submap constraints:{font.END} {config.enable_submap_constraints}')
-        print(f'{font.BOLD} Enable anchor constraints:{font.END} {config.enable_anchor_constraints}')
-        print(f'{font.BOLD} Enable signal recording:{font.END} {config.enable_signal_recording}')
-        print(f'{font.BOLD} Enable trajectory recording:{font.END} {config.enable_trajectory_recording}')
-        print(f'{font.BOLD} Signal export path:{font.END} {config.signal_export_path}')
-        print(f'{font.BOLD} Trajectory export path:{font.END} {config.trajectory_export_path}')
+        print('{color} --- General Configuration -------------------------------------------------- {end}'.format(color=font.BLUE, end=font.END))
+        print('{bold} Update rate:{end} {val}hz'.format(bold=font.BOLD, end=font.END, val = 1e9/config.rate.sleep_dur.to_nsec()))
+        print('{bold} Dataroot:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.dataroot))
+        print('{bold} Path to the random forest model:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.random_forest_model))
+        print('{bold} Robot name:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.robot_name))
+        print('{bold} Enable submap constraints:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_submap_constraints))
+        print('{bold} Enable anchor constraints:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_anchor_constraints))
+        print('{bold} Enable signal recording:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_signal_recording))
+        print('{bold} Enable trajectory recording:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_trajectory_recording))
+        print('{bold} Signal export path:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.signal_export_path))
+        print('{bold} Trajectory export path:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.trajectory_export_path))
         print('\n')
 
-        print(f'{font.YELLOW} --- Subscriber Configuration (Input) --------------------------------------- {font.END}')
-        print(f'{font.BOLD} Optimized graph topic:{font.END} {config.opt_graph_topic}')
-        print(f'{font.BOLD} Optimized trajectory topic:{font.END} {config.opt_traj_topic}')
-        print(f'{font.BOLD} Estimated trajectory topic:{font.END} {config.est_traj_topic}')
-        print(f'{font.BOLD} Estimated trajectory (Path) topic:{font.END} {config.est_traj_path_topic}')
-        print(f'{font.BOLD} Client update topic:{font.END} {config.client_update_topic}')
+        print('{color} --- Subscriber Configuration (Input) --------------------------------------- {end}'.format(color=font.YELLOW, end=font.END))
+        print('{bold} Optimized graph topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.opt_graph_topic))
+        print('{bold} Optimized trajectory topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.opt_traj_topic))
+        print('{bold} Estimated trajectory topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.est_traj_topic))
+        print('{bold} Estimated trajectory (Path) topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.est_traj_path_topic))
+        print('{bold} Client update topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.client_update_topic))
         print('\n')
 
-        print(f'{font.GREEN} --- Publisher Configuration (Output) --------------------------------------- {font.END}')
-        print(f'{font.BOLD} Anchor node topic:{font.END} {config.anchor_node_topic}')
-        print(f'{font.BOLD} Relative node topic:{font.END} {config.relative_node_topic}')
-        print(f'{font.BOLD} Intra constraints topic:{font.END} {config.intra_constraint_topic}')
-        print(f'{font.BOLD} Verifcation service topic:{font.END} {config.verification_service_topic}')
+        print('{color} --- Publisher Configuration (Output) --------------------------------------- {end}'.format(color=font.GREEN, end=font.END))
+        print('{bold} Anchor node topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.anchor_node_topic))
+        print('{bold} Relative node topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.relative_node_topic))
+        print('{bold} Intra constraints topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.intra_constraint_topic))
+        print('{bold} Verifcation service topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.verification_service_topic))
         print('\n')
 
     @staticmethod
     def PrintSeparator():
-        print(f"{font.BOLD} ===================================================================================================== {font.END}")
+        print("{bold} ===================================================================================================== {end}".format(bold=font.BOLD, end=font.END))
 
 
 if __name__ == '__main__':

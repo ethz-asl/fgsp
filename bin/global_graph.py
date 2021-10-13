@@ -1,6 +1,7 @@
 #! /usr/bin/env python2
 import rospy
 import time
+import sys
 import numpy as np
 from pygsp import graphs, filters, reduction
 from geometry_msgs.msg import Point
@@ -9,7 +10,6 @@ from scipy import spatial
 from scipy.spatial.transform import Rotation
 from visualizer import Visualizer
 from utils import Utils
-import eigenpy
 
 class GlobalGraph(object):
     def __init__(self, reduced=False):
@@ -181,7 +181,10 @@ class GlobalGraph(object):
                 if nn_i == i:
                     continue
                 w_d = self.compute_distance_weight(poses[i,0:3], poses[nn_i,0:3])
-                w_r = self.compute_rotation_weight(poses[i,:], poses[nn_i,:])
+                if sys.version_info[0] >= 3:
+                    w_r = 0
+                else:
+                    w_r = self.compute_rotation_weight(poses[i,:], poses[nn_i,:])
                 w_t = self.compute_temporal_decay(poses[i,7], poses[nn_i,7])
                 adj[i, nn_i] = w_t * (w_d + w_r)
 
@@ -195,6 +198,7 @@ class GlobalGraph(object):
         return np.exp(-dist/normalization)
 
     def compute_rotation_weight(self, coords_lhs, coords_rhs):
+        import eigenpy
         # angle_lhs = np.linalg.norm(Rotation.from_quat(coords_lhs[3:]).as_rotvec())
         # angle_rhs = np.linalg.norm(Rotation.from_quat(coords_rhs[3:]).as_rotvec())
         # angle = angle_lhs - angle_rhs

@@ -70,12 +70,13 @@ class WaveletEvaluator(object):
 
     def compute_wavelet_coeffs_using_wavelet(self, wavelet, x_signal):
         n_values = x_signal.shape[0]
-        W = np.zeros((n_values, self.n_scales))
+        n_dim = x_signal.shape[1] if len(x_signal.shape) >= 2 else 1
+        W = np.zeros((n_values, self.n_scales, n_dim)).squeeze()
         for i in range(0, n_values):
             for j in range(0, self.n_scales):
                 W[i,j] = np.matmul(wavelet[i,:,j].transpose(), x_signal)
 
-        return W
+        return W if n_dim == 1 else np.mean(W, axis=2)
 
     def check_submap(self, coeffs_1, coeffs_2, submap_ids):
         submap_coeffs_1 = coeffs_1[submap_ids, :]
@@ -148,16 +149,12 @@ class WaveletEvaluator(object):
                 self.feature_names[11]:[np.sum(D[3, 5:])],
             })
             all_data = all_data.append(data)
-
         return np.nan_to_num(all_data)
 
     def classify_simple(self, data):
         n_nodes = data.shape[0]
         labels = []
         for i in range(0, n_nodes):
-            # low_mean = np.mean([data[i,0], data[i,3], data[i,6], data[i,9]])
-            # mid_mean = np.mean([data[i,1], data[i,4], data[i,7], data[i,10]])
-            # high_mean = np.mean([data[i,2], data[i,5], data[i,8], data[i,11]])
             low_mean = data[i,0]
             mid_mean = data[i,1]
             high_mean = data[i,2]

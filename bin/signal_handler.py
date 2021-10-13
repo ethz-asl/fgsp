@@ -138,13 +138,31 @@ class SignalHandler(object):
         x = np.linalg.norm(pos_signal, ord=2, axis=1)
         return x
 
-    def compute_signal(self, nodes):
+    def compute_pos_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
         traj_origin = traj[0,1:4]
 
-        pos_signal = (traj[:,1:4] - traj_origin).squeeze()
+        pos_signal = (traj[:,4:8] - traj_origin).squeeze()
 
         return np.linalg.norm(pos_signal, ord=2, axis=1)
+
+    def compute_rot_signal(self, nodes):
+        traj = self.compute_trajectory(nodes)
+        wxyz = traj[0,4:8]
+        traj_origin = Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm()
+
+        n_nodes = len(nodes)
+        x_rot = [0] * n_nodes
+        for i in range(0, n_nodes):
+            wxyz = traj[i,4:8]
+            rot_diff = np.matmul(opt_origin, Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_matrix().transpose())
+            x_rot[i] = np.trace(rot_diff)
+        return np.array(x_rot)
+
+    def compute_signal(self, nodes):
+        positions = self.compute_pos_signal(nodes)
+        rotations = self.compute_rot_signal(nodes)
+        return np.column_stack((positions, rotations))
 
     def compute_trajectory(self, nodes):
         n_nodes = len(nodes)

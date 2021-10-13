@@ -220,7 +220,6 @@ class GraphClient(object):
             self.robot_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
             rospy.logwarn('[GraphClient] for {src} we have {x_shape} and {coords_shape}'.format(src=src, x_shape=x.shape, coords_shape=self.robot_graph.coords.shape))
 
-
     def record_traj_for_key(self, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(src=src)
         np.save(filename, traj)
@@ -267,7 +266,6 @@ class GraphClient(object):
         all_est_nodes = self.signal.get_all_nodes(key)
         all_opt_nodes = self.optimized_signal.get_all_nodes(key)
         n_opt_nodes = len(all_opt_nodes)
-
 
         # Compute the features and publish the results.
         # This evaluates per node the scale of the difference

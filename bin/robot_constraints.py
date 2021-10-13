@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 
 import rospy
 import numpy as np
@@ -18,7 +18,7 @@ class RobotConstraints(object):
         ts_from_ns = Utils.ros_time_to_ns(ts_from)
         ts_to_ns = Utils.ros_time_to_ns(ts_to)
         if ts_from_ns == ts_to_ns:
-            print(f'Timestamp from and to are identical.')
+            print('Timestamp from and to are identical.')
             return
 
         if ts_from_ns not in self.submap_constraints:
@@ -32,7 +32,7 @@ class RobotConstraints(object):
 
     def construct_path_msgs(self):
         path_msgs = []
-        print(f'Constructing path message for {len(self.submap_constraints)} different submaps.')
+        print('Constructing path message for {n_submaps} different submaps.'.format(n_submaps=len(self.submap_constraints)))
         for ts_ns_from in self.submap_constraints:
             loop_closures = list(self.submap_constraints[ts_ns_from])
             path_msg = self.construct_path_msg_for_submap(ts_ns_from, loop_closures)
@@ -41,7 +41,7 @@ class RobotConstraints(object):
 
     def construct_path_msgs_using_ts(self, timestamps):
         path_msgs = []
-        print(f'Constructing path message for {len(self.submap_constraints)} different submaps.')
+        print('Constructing path message for {n_submaps} different submaps.'.format(n_submaps=len(self.submap_constraints)))
         for ts_from_ns in self.submap_constraints:
             if not self.should_publish_map(ts_from_ns, timestamps):
                 continue

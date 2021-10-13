@@ -105,7 +105,6 @@ class Plotter(object):
     def PrintSeparator():
         print("{bold} ===================================================================================================== {end}".format(bold=font.BOLD, end=font.END))
 
-
 if __name__ == '__main__':
     Plotter.PlotMonitorBanner()
     Plotter.PlotClientBanner()

@@ -8,7 +8,6 @@ from multiprocessing import Lock
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
-from verification_handler import VerificationHandler
 from submap_handler import SubmapHandler
 from submap_model import SubmapModel
 from config import MonitorConfig
@@ -33,14 +32,12 @@ class GraphMonitor(object):
         if self.config.enable_graph_building:
             rospy.Subscriber(self.config.in_graph_topic, Graph, self.graph_callback)
             rospy.Subscriber(self.config.in_traj_opt_topic, Trajectory, self.traj_opt_callback)
-            rospy.Subscriber(self.config.verification_service_topic, VerificationCheckRequest, self.verification_callback)
             self.pub_graph = rospy.Publisher(self.config.out_graph_topic, Graph, queue_size=10)
             self.pub_traj = rospy.Publisher(self.config.out_traj_opt_topic, Trajectory, queue_size=10)
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=self.config.reduce_global_graph)
         self.optimized_signal = SignalHandler()
-        self.verification_handler = VerificationHandler()
         self.submap_handler = SubmapHandler(self.config)
 
         # Key management to keep track of the received messages.
@@ -84,13 +81,7 @@ class GraphMonitor(object):
             self.optimized_keys.append(key)
         self.latest_opt_traj_msg = msg
 
-    def verification_callback(self, msg):
-        self.verification_handler.handle_verification(msg)
-
     def update(self):
-        # Publish verifications to the server.
-        # self.verification_handler.send_verification_request()
-
         # Compute the submap constraints and publish them if enabled.
         if self.config.enable_submap_constraints:
             self.compute_and_publish_submaps()

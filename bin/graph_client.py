@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 import os
 import time
 
@@ -76,14 +76,14 @@ class GraphClient(object):
             return
         cur_ts = Utils.ros_time_to_ns(rospy.Time.now())
         export_folder = self.config.dataroot + '/data/' + self.config.robot_name + '_%d'%np.float32(cur_ts)
-        rospy.logwarn(f'[GraphClient] Setting up dataroot folder to {export_folder}')
+        rospy.logwarn('[GraphClient] Setting up dataroot folder to {export_folder}'.format(export_folder=export_folder))
         if not os.path.exists(export_folder):
             os.mkdir(export_folder)
             os.mkdir(export_folder + '/data')
         self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
-        rospy.loginfo(f"[GraphClient] Received graph message from monitor {msg.header.frame_id}.")
+        rospy.loginfo("[GraphClient] Received graph message from monitor {frame}.".format(frame=msg.header.frame_id))
         if not (self.is_initialized and(self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
         self.mutex.acquire()
@@ -100,7 +100,7 @@ class GraphClient(object):
             return
         # Theoretically this does exactly the same as the graph_callback, but
         # lets separate it for now to be a bit more flexible.
-        rospy.loginfo(f'[GraphClient] Received client update')
+        rospy.loginfo('[GraphClient] Received client update')
         client_seq = graph_msg.header.seq
         self.mutex.acquire()
         graph_seq = self.global_graph.graph_seq
@@ -115,7 +115,7 @@ class GraphClient(object):
             return
 
         keys = self.optimized_signal.convert_signal(msg)
-        rospy.loginfo(f"[GraphClient] Received opt trajectory message from {keys}.")
+        rospy.loginfo("[GraphClient] Received opt trajectory message from {keys}.".format(keys=keys))
 
         for key in keys:
             if self.key_in_optimized_keys(key):
@@ -215,10 +215,10 @@ class GraphClient(object):
         graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(src=src)
         if src == 'opt':
             self.global_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
-            rospy.logwarn(f'[GraphClient] for {src} we have {x.shape} and {self.global_graph.coords.shape}')
+            rospy.logwarn('[GraphClient] for {src} we have {x_shape} and {coords_shape}'.format(src=src, x_shape=x.shape, coords_shape=self.global_graph.coords.shape))
         elif src == 'est':
             self.robot_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
-            rospy.logwarn(f'[GraphClient] for {src} we have {x.shape} and {self.robot_graph.coords.shape}')
+            rospy.logwarn('[GraphClient] for {src} we have {x_shape} and {coords_shape}'.format(src=src, x_shape=x.shape, coords_shape=self.robot_graph.coords.shape))
 
 
     def record_traj_for_key(self, traj, src):
@@ -238,7 +238,7 @@ class GraphClient(object):
         if self.key_in_optimized_keys(self.config.robot_name):
             self.compare_stored_signals(self.config.robot_name)
         else:
-            rospy.logwarn(f"[GraphClient] Found no optimized version of {self.config.robot_name} for comparison.")
+            rospy.logwarn("[GraphClient] Found no optimized version of {robot} for comparison.".format(robot=self.config.robot_name))
         self.mutex.release()
 
     def check_for_submap_constraints(self, labels, all_opt_nodes):
@@ -262,7 +262,7 @@ class GraphClient(object):
         self.mutex.release()
 
     def compare_stored_signals(self, key):
-        rospy.logwarn(f"[GraphClient] Comparing signals for {key}.")
+        rospy.logwarn("[GraphClient] Comparing signals for {key}.".format(key=key))
         # Retrieve the estimated and optimized versions of the trajectory.
         all_est_nodes = self.signal.get_all_nodes(key)
         all_opt_nodes = self.optimized_signal.get_all_nodes(key)
@@ -275,7 +275,7 @@ class GraphClient(object):
         self.record_raw_est_trajectory(self.signal.compute_trajectory(all_est_nodes))
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
         if all_opt_nodes is None or all_est_nodes is None:
-            rospy.logerr(f'[GraphClient] Synchronization failed')
+            rospy.logerr('[GraphClient] Synchronization failed')
             return False
 
         labels = self.compute_all_labels(key, all_opt_nodes, all_est_nodes)
@@ -320,13 +320,13 @@ class GraphClient(object):
             pivot = self.config.degenerate_window // 2
             begin_send = max(i - pivot, 0)
             end_send = min(i + (self.config.degenerate_window - pivot), n_nodes)
-            rospy.logerr(f'[GraphClient] Sending degenerate anchros from {begin_send} to {end_send}')
+            rospy.logerr('[GraphClient] Sending degenerate anchros from {begin_send} to {end_send}'.format(begin_send=begin_send, end_send=end_send))
             self.commander.send_anchors(all_opt_nodes, begin_send, end_send)
 
     def update_degenerate_anchors(self):
         all_opt_nodes = self.optimized_signal.get_all_nodes(self.config.robot_name)
         if len(all_opt_nodes) == 0:
-            rospy.logerr(f'[GraphClient] Robot {self.config.robot_name} does not have any optimized nodes yet.')
+            rospy.logerr('[GraphClient] Robot {robot} does not have any optimized nodes yet.'.format(robot=self.config.robot_name))
             return
         self.commander.update_degenerate_anchors(all_opt_nodes)
 
@@ -358,7 +358,7 @@ class GraphClient(object):
         robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
-            rospy.logwarn(f'[GraphClient] We have a size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}. Trying to fix it.')
+            rospy.logwarn('[GraphClient] We have a size mismatch: {n_dim} vs. {x_est} vs. {x_opt}. Trying to fix it.'.format(n_dim=n_dim, x_est=x_est.shape[0], x_opt=x_opt.shape[0]))
 
             positions = np.array([np.array(x.position) for x in all_opt_nodes])
             self.global_graph.build_from_poses(positions)
@@ -367,7 +367,7 @@ class GraphClient(object):
             n_dim = psi.shape[0]
 
         if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
-            rospy.logwarn(f'[GraphClient] Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
+            rospy.logwarn('[GraphClient] Optimized wavelet does not match robot wavelet: {psi} vs. {robot_psi}'.format(psi=psi.shape, robot_psi=robot_psi.shape))
             return None
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.

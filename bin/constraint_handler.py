@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 
 import rospy
 import numpy as np
@@ -15,7 +15,7 @@ class ConstraintHandler(object):
             rospy.logerr("Submap constraint verfication failed.")
             return False
         n_constraints  = len(constraint_msg.id_from)
-        rospy.loginfo(f"Submap constraint message is verified. Processing {n_constraints} constraints")
+        rospy.loginfo("Submap constraint message is verified. Processing {n_constraints} constraints".format(n_constraints=n_constraints))
 
         # Received new message, reinitialize the constraints.
         # Each message contains all currently used constraints.
@@ -57,7 +57,7 @@ class ConstraintHandler(object):
             diff_from = time_now - constraint_msg.timestamp_from[i]
             diff_to = time_now - constraint_msg.timestamp_to[i]
             if diff_from.to_nsec() < 0 or diff_to.to_nsec() < 0:
-                rospy.logerr(f"[ConstraintHandler] Difference is negative. From is {diff_from.to_nsec()} and to is {diff_to.to_nsec()}.")
+                rospy.logerr("[ConstraintHandler] Difference is negative. From is {ts_from} and to is {ts_to}.".format(ts_from=diff_from.to_nsec(), ts_to=diff_to.to_nsec()))
                 return False
         return True
 
@@ -90,7 +90,7 @@ class ConstraintHandler(object):
 
     def create_msg_for_intra_constraints(self, robot_name, labels, all_opt_nodes):
         if robot_name not in self.intra_contraints:
-            rospy.logerr(f"Robot {robot_name} does not have intra mission constraints.")
+            rospy.logerr("Robot {robot_name} does not have intra mission constraints.".format(robot_name=robot_name))
             return []
         timestamps = self.filter_large_constraints(labels, all_opt_nodes)
         if timestamps.shape[0] > 0:

@@ -1,6 +1,7 @@
 #! /usr/bin/env python2
 import rospy
 import numpy as np
+from scipy.spatial.transform import Rotation
 from pygsp import graphs, filters, reduction
 from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
@@ -142,7 +143,7 @@ class SignalHandler(object):
         traj = self.compute_trajectory(nodes)
         traj_origin = traj[0,1:4]
 
-        pos_signal = (traj[:,4:8] - traj_origin).squeeze()
+        pos_signal = (traj[:,1:4] - traj_origin).squeeze()
 
         return np.linalg.norm(pos_signal, ord=2, axis=1)
 
@@ -155,7 +156,7 @@ class SignalHandler(object):
         x_rot = [0] * n_nodes
         for i in range(0, n_nodes):
             wxyz = traj[i,4:8]
-            rot_diff = np.matmul(opt_origin, Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_matrix().transpose())
+            rot_diff = np.matmul(traj_origin, Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm().transpose())
             x_rot[i] = np.trace(rot_diff)
         return np.array(x_rot)
 

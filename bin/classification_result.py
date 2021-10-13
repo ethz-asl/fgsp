@@ -138,7 +138,6 @@ class ClassificationResult(object):
 
         # Retrieve the index in opt_nodes.
         partition_idx = np.where(ts_diff == ts_min)[0][0]
-        print(partition_idx)
         return self.partitions[partition_idx]
 
     def construct_mid_area_constraint(self, idx, relative_constraint, history):

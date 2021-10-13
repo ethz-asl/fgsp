@@ -174,9 +174,9 @@ class WaveletEvaluator(object):
 
             if dists[0] > 0.5:
                 local_labels.append(1)
-            if dists[1] > 0.21: # for h_naymal_2 we had 0.2
+            if dists[1] > 0.6: # for h_naymal_2 we had 0.2
                 local_labels.append(2)
-            if dists[2] > 0.11:
+            if dists[2] > 0.7:
                 local_labels.append(3)
 
             # -----------------------------------------------

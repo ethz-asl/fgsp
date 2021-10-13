@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 
 import rospy
 import copy
@@ -8,14 +8,12 @@ from multiprocessing import Lock
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
-from verification_handler import VerificationHandler
 from submap_handler import SubmapHandler
 from submap_model import SubmapModel
 from config import MonitorConfig
 from plotter import Plotter
 
 class GraphMonitor(object):
-
     def __init__(self):
         self.is_initialized = False
 
@@ -34,14 +32,12 @@ class GraphMonitor(object):
         if self.config.enable_graph_building:
             rospy.Subscriber(self.config.in_graph_topic, Graph, self.graph_callback)
             rospy.Subscriber(self.config.in_traj_opt_topic, Trajectory, self.traj_opt_callback)
-            rospy.Subscriber(self.config.verification_service_topic, VerificationCheckRequest, self.verification_callback)
             self.pub_graph = rospy.Publisher(self.config.out_graph_topic, Graph, queue_size=10)
             self.pub_traj = rospy.Publisher(self.config.out_traj_opt_topic, Trajectory, queue_size=10)
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(reduced=self.config.reduce_global_graph)
         self.optimized_signal = SignalHandler()
-        self.verification_handler = VerificationHandler()
         self.submap_handler = SubmapHandler(self.config)
 
         # Key management to keep track of the received messages.
@@ -52,11 +48,10 @@ class GraphMonitor(object):
         self.latest_opt_traj_msg = None
         self.mutex.release()
 
-
     def graph_callback(self, msg):
         if self.is_initialized is False:
             return
-        rospy.loginfo(f"[GraphMonitor] Received graph message from server.")
+        rospy.loginfo("[GraphMonitor] Received graph message from server.")
         self.mutex.acquire()
 
         # We only trigger the graph building if the msg contains new information.
@@ -73,11 +68,11 @@ class GraphMonitor(object):
 
         # If the graph is reduced, we need to reduce the optimized nodes too.
         if self.graph.is_reduced:
-            rospy.logwarn(f'[GraphMonitor] Reducing trajectory with {len(self.graph.reduced_ind)} indices.')
+            # rospy.logwarn('[GraphMonitor] Reducing trajectory with {len(self.graph.reduced_ind)} indices.')
             msg.nodes = [msg.nodes[i] for i in self.graph.reduced_ind]
 
         if self.graph.has_skipped():
-            rospy.logwarn(f'[GraphMonitor] Skipping trajectory with {len(self.graph.skip_ind)} indices.')
+            # rospy.logwarn('[GraphMonitor] Skipping trajectory with {len(self.graph.skip_ind)} indices.')
             msg.nodes = [element for i,element in enumerate(msg.nodes) if i not in self.graph.skip_ind]
 
         for key in keys:
@@ -86,13 +81,7 @@ class GraphMonitor(object):
             self.optimized_keys.append(key)
         self.latest_opt_traj_msg = msg
 
-    def verification_callback(self, msg):
-        self.verification_handler.handle_verification(msg)
-
     def update(self):
-        # Publish verifications to the server.
-        # self.verification_handler.send_verification_request()
-
         # Compute the submap constraints and publish them if enabled.
         if self.config.enable_submap_constraints:
             self.compute_and_publish_submaps()
@@ -105,17 +94,17 @@ class GraphMonitor(object):
             self.graph.publish()
             self.optimized_signal.publish()
         except Exception as e:
-            rospy.logerr(f'[GraphMonitor] Unable to publish results to client.')
+            rospy.logerr('[GraphMonitor] Unable to publish results to client.')
 
     def compute_and_publish_graph(self):
         self.mutex.acquire()
         if self.graph.is_built is False:
-            rospy.logwarn(f"[GraphMonitor] Graph is not built yet!")
+            rospy.logwarn("[GraphMonitor] Graph is not built yet!")
             self.mutex.release()
             return
-        rospy.loginfo(f"[GraphMonitor] Computing global graph with {self.graph.graph_size()}.")
+        rospy.loginfo("[GraphMonitor] Computing global graph with {graph_size}.".format(graph_size=self.graph.graph_size()))
         if self.graph.graph_size() < self.config.min_node_count:
-            rospy.logwarn(f"[GraphMonitor] Not enough nodes ({self.graph.graph_size()} < self.config.min_node_count)")
+            rospy.logwarn("[GraphMonitor] Not enough nodes ({graph_size} < {min_node_count})".format(graph_size=self.graph.graph_size(), min_node_count=self.config.min_node_count))
             self.mutex.release()
             return;
         self.mutex.release()
@@ -163,26 +152,26 @@ class GraphMonitor(object):
         n_submaps = len(submaps)
         if n_submaps == 0:
             return None
-        rospy.loginfo(f"[GraphMonitor] Computing constraints for {n_submaps} submaps.")
+        rospy.loginfo("[GraphMonitor] Computing constraints for {n_submaps} submaps.".format(n_submaps=n_submaps))
         return self.submap_handler.compute_constraints(submaps)
 
     def publish_graph_and_traj(self):
         graph_msg = self.graph.to_graph_msg()
         self.pub_graph.publish(graph_msg)
-        rospy.loginfo(f"[GraphMonitor] Published global graph.")
+        rospy.loginfo("[GraphMonitor] Published global graph.")
 
         if self.config.send_separate_traj_msgs:
             self.send_separate_traj_msgs()
         elif self.latest_opt_traj_msg is not None:
             self.pub_traj.publish(self.latest_opt_traj_msg)
-            rospy.loginfo(f"[GraphMonitor] Published trajectory for keys {self.optimized_keys}.")
+            rospy.loginfo("[GraphMonitor] Published trajectory for keys {key}.".format(key=self.optimized_keys))
 
     def send_separate_traj_msgs(self):
         for key in self.optimized_keys:
             traj_msg = self.optimized_signal.to_signal_msg(key)
             self.pub_traj.publish(traj_msg)
             time.sleep(0.10)
-            rospy.loginfo(f"[GraphMonitor] Published separate trajectory for {key}.")
+            rospy.loginfo("[GraphMonitor] Published separate trajectory for {key}.".format(key=key))
 
     def publish_all_submaps(self, submaps):
         self.submap_handler.publish_submaps(submaps)

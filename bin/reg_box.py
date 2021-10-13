@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 
 import copy
 import numpy as np
@@ -17,8 +17,6 @@ class RegBox(object):
         cloud_a = self.create_point_cloud(points_a)
         cloud_b = self.create_point_cloud(points_b)
         return self.apply_point_to_point(cloud_a, cloud_b, T_prior)
-        #return self.apply_point_to_plane(cloud_a, cloud_b, T_prior)
-
 
     def create_point_cloud(self, points):
         pcd = o3d.geometry.PointCloud()
@@ -78,7 +76,7 @@ def random_test(regbox):
     points_a = np.random.rand(100,4)
     points_b = np.random.rand(100,4)
     T_reg = regbox.register(points_a, points_b)
-    print(f"Registration result:\n {T_reg}")
+    print("Registration result:\n {T_reg}".format(T_reg=T_reg))
 
 
 if __name__ == "__main__":

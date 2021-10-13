@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 
 import rospy
 import numpy as np
@@ -7,13 +7,7 @@ from enum import Enum
 
 import pandas
 import scipy.spatial
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import metrics
-from sklearn.tree import export_graphviz
 import pickle
-from joblib import dump, load
-from random_forest_predictor import RandomForestPredictor
 
 class SubmapState(Enum):
     ALL_GOOD = 1
@@ -26,31 +20,25 @@ class WaveletEvaluator(object):
     def __init__(self, n_scales = 7):
         self.n_scales = n_scales
         self.psi = None
-        self.clf = RandomForestPredictor()
         self.feature_names = ['Euclidean_L', 'Euclidean_B', 'Euclidean_H','Correlation_L', 'Correlation_B', 'Correlation_H', 'Manhattan_L', 'Manhattan_B', 'Manhattan_H', 'Chebyshev_L', 'Chebyshev_B', 'Chebyshev_H']
 
     def set_scales(self, n_scales):
         self.n_scales = n_scales
 
-    def is_available(self):
-        return self.clf.initialized
-
     def compare_signals(self, G, x_1, x_2):
         # Compute the wavelets for each node and scale.
         psi = self.compute_wavelets(G)
-        rospy.logdebug(f"[WaveletEvaluator] psi = {psi.shape}")
+        rospy.logdebug("[WaveletEvaluator] psi = {psi}".format(psi=psi.shape))
 
         # Compute the wavelet coefficients for x_1 and x_2.
         W_1 = self.compute_wavelet_coeffs(psi, x_1)
         W_2 = self.compute_wavelet_coeffs(psi, x_2)
-        rospy.logdebug(f"[WaveletEvaluator] W_1 = {W_1.shape}")
-        rospy.logdebug(f"[WaveletEvaluator] W_2 = {W_2.shape}")
 
     def get_wavelets(self):
         return self.psi
 
     def compute_wavelets(self, G):
-        rospy.loginfo(f"[WaveletEvaluator] Computing wavelets for {self.n_scales} scales.")
+        rospy.loginfo("[WaveletEvaluator] Computing wavelets for {n_scales} scales.".format(n_scales=self.n_scales))
         g = filters.Meyer(G, self.n_scales)
 
         # Evalute filter bank on the frequencies (eigenvalues).
@@ -82,12 +70,13 @@ class WaveletEvaluator(object):
 
     def compute_wavelet_coeffs_using_wavelet(self, wavelet, x_signal):
         n_values = x_signal.shape[0]
-        W = np.zeros((n_values, self.n_scales))
+        n_dim = x_signal.shape[1] if len(x_signal.shape) >= 2 else 1
+        W = np.zeros((n_values, self.n_scales, n_dim)).squeeze()
         for i in range(0, n_values):
             for j in range(0, self.n_scales):
                 W[i,j] = np.matmul(wavelet[i,:,j].transpose(), x_signal)
 
-        return W
+        return W if n_dim == 1 else np.mean(W, axis=2)
 
     def check_submap(self, coeffs_1, coeffs_2, submap_ids):
         submap_coeffs_1 = coeffs_1[submap_ids, :]
@@ -160,21 +149,12 @@ class WaveletEvaluator(object):
                 self.feature_names[11]:[np.sum(D[3, 5:])],
             })
             all_data = all_data.append(data)
-
         return np.nan_to_num(all_data)
-
-    def classify_forest(self, features):
-        (prediction, pred_prob) = self.clf.predict(features)
-
-        return prediction
 
     def classify_simple(self, data):
         n_nodes = data.shape[0]
         labels = []
         for i in range(0, n_nodes):
-            # low_mean = np.mean([data[i,0], data[i,3], data[i,6], data[i,9]])
-            # mid_mean = np.mean([data[i,1], data[i,4], data[i,7], data[i,10]])
-            # high_mean = np.mean([data[i,2], data[i,5], data[i,8], data[i,11]])
             low_mean = data[i,0]
             mid_mean = data[i,1]
             high_mean = data[i,2]
@@ -194,9 +174,9 @@ class WaveletEvaluator(object):
 
             if dists[0] > 0.5:
                 local_labels.append(1)
-            if dists[1] > 0.21: # for h_naymal_2 we had 0.2
+            if dists[1] > 0.6: # for h_naymal_2 we had 0.2
                 local_labels.append(2)
-            if dists[2] > 0.11:
+            if dists[2] > 0.7:
                 local_labels.append(3)
 
             # -----------------------------------------------
@@ -230,7 +210,7 @@ class WaveletEvaluator(object):
         return labels
 
 if __name__ == '__main__':
-    print(f" --- Test Driver for the Wavelet Evaluator ----------------------")
+    print(" --- Test Driver for the Wavelet Evaluator ----------------------")
     eval = WaveletEvaluator()
 
     # Create a reduced graph for quicker tests.
@@ -238,12 +218,10 @@ if __name__ == '__main__':
     ind = np.arange(0, G.N, 10)
     Gs = reduction.kron_reduction(G, ind)
     Gs.compute_fourier_basis()
-    print(f'Size after reduction is {Gs.N}')
 
 
     # Compute wavelets.
     psi = eval.compute_wavelets(Gs)
-    print(f'psi shape is {psi.shape}')
 
     # Compute wavelet coefficients for two signals.
     x_1 = Gs.coords
@@ -253,10 +231,5 @@ if __name__ == '__main__':
 
     W_1 = eval.compute_wavelet_coeffs_using_wavelet(psi, x_1)
     W_2 = eval.compute_wavelet_coeffs_using_wavelet(psi, x_2)
-    print(f"W_1 = {W_1.shape} andd W_2 = {W_2.shape}")
-
     features = eval.compute_features(W_1, W_2)
-    print(f"Feature vector shape: {features.shape}")
-
     label = eval.classify_simple(features)
-    print(f"Submap return label: {label}")

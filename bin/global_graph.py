@@ -1,12 +1,15 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 import rospy
 import time
+import sys
 import numpy as np
 from pygsp import graphs, filters, reduction
 from geometry_msgs.msg import Point
 from maplab_msgs.msg import Graph
 from scipy import spatial
+from scipy.spatial.transform import Rotation
 from visualizer import Visualizer
+from utils import Utils
 
 class GlobalGraph(object):
     def __init__(self, reduced=False):
@@ -57,17 +60,17 @@ class GlobalGraph(object):
             self.graph_seq = graph_msg.header.seq
         self.is_built = True
         execution_time = (time.time() - start_time)
-        rospy.loginfo(f'[GlobalGraph] Building complete ({execution_time} sec)')
+        rospy.loginfo('[GlobalGraph] Building complete ({execution_time} sec)'.format(execution_time=execution_time))
         self.latest_graph_msg = graph_msg
 
     def build_graph(self):
         if len(self.adj.tolist()) == 0:
-            rospy.loginfo(f"[GlobalGraph] Path adjacency matrix is empty. Aborting graph building.")
+            rospy.loginfo("[GlobalGraph] Path adjacency matrix is empty. Aborting graph building.")
             return False
         self.G = graphs.Graph(self.adj)
 
         if self.G.N != self.coords.shape[0]:
-            rospy.logerr(f"[GlobalGraph] Path graph size is {self.G.N} but coords are {self.coords.shape}")
+            rospy.logerr("[GlobalGraph] Path graph size is {coords} but coords are {coords}".format(n=self.G.N, coords=self.coords.shape))
             return False
         if self.G.N <= 1:
             rospy.logdebug("[GlobalGraph] Path graph vertex count is less than 2.")
@@ -94,18 +97,19 @@ class GlobalGraph(object):
         start_time = time.time()
         n_poses = len(poses)
         if n_poses <= 0:
-            rospy.logerr(f"[GlobalGraph] Received empty path message.")
+            rospy.logerr("[GlobalGraph] Received empty path message.")
             return
-        self.coords = self.read_coordinates_from_poses(poses)
+        poses = self.read_coordinates_from_poses(poses)
+        self.coords = poses[:,0:3]
         rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
-        self.adj = self.create_adjacency_from_poses(self.coords)
+        self.adj = self.create_adjacency_from_poses(poses)
         rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
 
     def build_from_poses(self, poses):
         start_time = time.time()
         n_poses = poses.shape[0]
         if n_poses <= 0:
-            rospy.logerr(f"[GlobalGraph] Received empty path message.")
+            rospy.logerr("[GlobalGraph] Received empty path message.")
             return
         self.coords = poses
         rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
@@ -140,11 +144,16 @@ class GlobalGraph(object):
 
     def read_coordinates_from_poses(self, poses):
         n_coords = len(poses)
-        coords = np.zeros((n_coords, 3))
+        coords = np.zeros((n_coords, 8))
         for i in range(0, n_coords):
             coords[i,0] = poses[i].pose.position.x
             coords[i,1] = poses[i].pose.position.y
             coords[i,2] = poses[i].pose.position.z
+            coords[i,3] = poses[i].pose.orientation.x
+            coords[i,4] = poses[i].pose.orientation.y
+            coords[i,5] = poses[i].pose.orientation.z
+            coords[i,6] = poses[i].pose.orientation.w
+            coords[i,7] = Utils.ros_time_to_ns(poses[i].pose.header.stamp)
         return coords
 
     def read_adjacency(self, graph_msg):
@@ -156,28 +165,56 @@ class GlobalGraph(object):
 
         return adj
 
-    def create_adjacency_from_poses(self, coords):
-        n_coords = coords.shape[0]
+    def create_adjacency_from_poses(self, poses):
+        n_coords = poses.shape[0]
         adj = np.zeros((n_coords, n_coords))
-        tree = spatial.KDTree(coords)
+        tree = spatial.KDTree(poses[:,0:3])
         max_pos_dist = 6.0
         # n_nearest_neighbors = min(20, n_coords)
-        sigma = 1.0
-        normalization = 2.0*(sigma**2)
         for i in range(n_coords):
             # nn_dists, nn_indices = tree.query(coords[i,:], p = 2, k = n_nearest_neighbors)
             # nn_indices = [nn_indices] if n_nearest_neighbors == 1 else nn_indices
-            nn_indices = tree.query_ball_point(coords[i,:], r = max_pos_dist, p = 2)
+            nn_indices = tree.query_ball_point(poses[i,0:3], r = max_pos_dist, p = 2)
 
             # print(f'Found the following indices: {nn_indices} / {n_coords}')
             for nn_i in nn_indices:
                 if nn_i == i:
                     continue
-                dist = spatial.distance.euclidean(coords[i,:], coords[nn_i,:])
-                adj[i, nn_i] = np.exp(-dist/normalization)
+                w_d = self.compute_distance_weight(poses[i,0:3], poses[nn_i,0:3])
+                if sys.version_info[0] >= 3:
+                    w_r = 0
+                else:
+                    w_r = self.compute_rotation_weight(poses[i,:], poses[nn_i,:])
+                w_t = self.compute_temporal_decay(poses[i,7], poses[nn_i,7])
+                adj[i, nn_i] = w_t * (w_d + w_r)
 
         assert np.all(adj >= 0)
         return adj
+
+    def compute_distance_weight(self, coords_lhs, coords_rhs):
+        sigma = 1.0
+        normalization = 2.0*(sigma**2)
+        dist = spatial.distance.euclidean(coords_lhs, coords_rhs)
+        return np.exp(-dist/normalization)
+
+    def compute_rotation_weight(self, coords_lhs, coords_rhs):
+        import eigenpy
+        # angle_lhs = np.linalg.norm(Rotation.from_quat(coords_lhs[3:]).as_rotvec())
+        # angle_rhs = np.linalg.norm(Rotation.from_quat(coords_rhs[3:]).as_rotvec())
+        # angle = angle_lhs - angle_rhs
+        T_G_lhs = Utils.convert_pos_quat_to_transformation(coords_lhs[0:3], coords_lhs[3:7])
+        T_G_rhs = Utils.convert_pos_quat_to_transformation(coords_rhs[0:3], coords_rhs[3:7])
+        T_lhs_rhs = np.matmul(np.linalg.inv(T_G_lhs), T_G_rhs)
+        rotation = eigenpy.AngleAxis(T_lhs_rhs[0:3,0:3]).angle
+
+        eps = 0.001
+        return 0.5 * (1 + np.cos(rotation)) + eps
+
+    def compute_temporal_decay(self, timestmap_lhs, timestamp_rhs):
+        ts_diff_s = Utils.ts_ns_to_seconds(np.absolute(timestmap_lhs - timestamp_rhs))
+        alpha = 1.5
+        beta = 1000
+        return alpha * np.exp(-ts_diff_s / beta)
 
     def read_submap_indices(self, graph_msg):
         return graph_msg.submap_indices
@@ -188,7 +225,7 @@ class GlobalGraph(object):
         self.reduce_graph_using_indices(self.reduced_ind)
 
     def reduce_graph_using_indices(self, reduced_ind):
-        rospy.loginfo(f'[GlobalGraph] Reducing graph using {len(reduced_ind)}/{self.G.N} indices.')
+        rospy.loginfo('[GlobalGraph] Reducing graph using {reduced}/{coords} indices.'.format(reduced=len(reduced_ind), coords=self.G.N))
         self.coords = self.coords[reduced_ind]
         self.G = reduction.kron_reduction(self.G, reduced_ind)
         self.adj = self.G.W.toarray()
@@ -254,7 +291,7 @@ class GlobalGraph(object):
 
         n_coords = self.G.N
         if n_coords > self.coords.shape[0] or n_coords > self.adj.shape[0]:
-            rospy.logerr(f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}')
+            rospy.logerr('Size mismatch in global graph {n_global} vs. {n_coords} vs. {n_adj}'.format(n_global=n_coords, n_coords=self.coords.shape[0], n_adj=self.adj.shape[0]))
             return
 
         # First publish the coordinates of the global graph.

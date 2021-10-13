@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 
 import rospy
 import numpy as np
@@ -138,7 +138,6 @@ class ClassificationResult(object):
 
         # Retrieve the index in opt_nodes.
         partition_idx = np.where(ts_diff == ts_min)[0][0]
-        print(partition_idx)
         return self.partitions[partition_idx]
 
     def construct_mid_area_constraint(self, idx, relative_constraint, history):
@@ -230,7 +229,8 @@ class ClassificationResult(object):
     def convert_transform(self, T_a_b):
         pos =  T_a_b[0:3, 3]
         R = T_a_b[0:3,0:3]
-        return pos, Rotation.from_matrix(R).as_quat() # x, y, z, w
+        # return pos, Rotation.from_matrix(R).as_quat() # x, y, z, w
+        return pos, Rotation.from_dcm(R).as_quat() # x, y, z, w
 
     def create_transformation_from_node(self, node):
         pose_msg = self.create_pose_msg_from_node(node)

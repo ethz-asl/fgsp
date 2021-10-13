@@ -44,15 +44,14 @@ class SubmapHandler(object):
         header = Header()
         header.stamp = rospy.Time.now()
         header.frame_id = 'darpa'
-        map_points = np.zeros((1,4))
+        map_points = np.zeros((1,3))
 
         for i in range(0, n_submaps):
             if i not in submaps:
-                rospy.logerr(f'Submap with key {i} not found.')
+                rospy.logerr('Submap with key {i} not found.'.format(i=i))
                 continue
             T_G_L = submaps[i].get_pivot_pose_LiDAR()
             submap = submaps[i].compute_dense_map()
-            submap[:,3] = i
             submap_points = Utils.transform_pointcloud(submap, T_G_L)
             map_points = np.append(map_points, submap_points, axis=0)
 
@@ -62,7 +61,7 @@ class SubmapHandler(object):
             map_points = map_points[1:,:]
             map_pointcloud_ros = pc2.create_cloud(header, FIELDS_XYZ, map_points)
             self.map_pub.publish(map_pointcloud_ros)
-            rospy.loginfo(f"Published map with {n_points} points.")
+            rospy.loginfo("Published map with {n_points} points.".format(n_points=n_points))
 
     def compute_constraints(self, submaps):
         candidates = self.find_close_submaps(submaps)
@@ -204,7 +203,8 @@ class SubmapHandler(object):
         submap_msg.robot_name_to.append(candidate_b.robot_name)
 
         t = T_L_a_L_b[0:3,3]
-        q = Rotation.from_matrix(T_L_a_L_b[0:3,0:3]).as_quat() # x, y, z, w
+        # q = Rotation.from_matrix(T_L_a_L_b[0:3,0:3]).as_quat() # x, y, z, w
+        q = Rotation.from_dcm(T_L_a_L_b[0:3,0:3]).as_quat() # x, y, z, w
 
         pose_cov_msg = PoseWithCovariance()
         pose_msg = Pose()

@@ -1,6 +1,7 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 import rospy
 import numpy as np
+from scipy.spatial.transform import Rotation
 from pygsp import graphs, filters, reduction
 from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
@@ -32,17 +33,17 @@ class SignalHandler(object):
                 path_msg.poses.append(node.pose)
             path_msg.header.stamp = rospy.Time.now()
             path_msg.header.frame_id = 'darpa'
-            pub = rospy.Publisher(f'/graph_monitor/{key}/monitor_path', Path, queue_size=10)
+            pub = rospy.Publisher('/graph_monitor/{key}/monitor_path'.format(key=key), Path, queue_size=10)
             pub.publish(path_msg)
 
     def convert_signal(self, signal_msg):
         grouped_signals = self.group_robots(signal_msg.nodes)
         self.publish_grouped_robots(grouped_signals)
-        rospy.loginfo(f'[SignalHandler] Grouped signals are {grouped_signals.keys()}')
+        rospy.loginfo('[SignalHandler] Grouped signals are {keys}'.format(keys=grouped_signals.keys()))
 
         for key, nodes in grouped_signals.items():
             n_nodes = len(nodes)
-            rospy.logwarn(f'[SignalHandler] For {key} we have {n_nodes} nodes.')
+            rospy.logwarn('[SignalHandler] For {key} we have {n_nodes} nodes.'.format(key=key, n_nodes=n_nodes))
             if (n_nodes <= 0):
                 continue
 
@@ -138,13 +139,31 @@ class SignalHandler(object):
         x = np.linalg.norm(pos_signal, ord=2, axis=1)
         return x
 
-    def compute_signal(self, nodes):
+    def compute_pos_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
         traj_origin = traj[0,1:4]
 
         pos_signal = (traj[:,1:4] - traj_origin).squeeze()
 
         return np.linalg.norm(pos_signal, ord=2, axis=1)
+
+    def compute_rot_signal(self, nodes):
+        traj = self.compute_trajectory(nodes)
+        wxyz = traj[0,4:8]
+        traj_origin = Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm()
+
+        n_nodes = len(nodes)
+        x_rot = [0] * n_nodes
+        for i in range(0, n_nodes):
+            wxyz = traj[i,4:8]
+            rot_diff = np.matmul(traj_origin, Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm().transpose())
+            x_rot[i] = np.trace(rot_diff)
+        return np.array(x_rot)
+
+    def compute_signal(self, nodes):
+        positions = self.compute_pos_signal(nodes)
+        rotations = self.compute_rot_signal(nodes)
+        return np.column_stack((positions, rotations))
 
     def compute_trajectory(self, nodes):
         n_nodes = len(nodes)
@@ -188,7 +207,7 @@ class SignalHandler(object):
         color_idx = 0
         viz = Visualizer()
         for robot, nodes in self.signals.items():
-            rospy.logwarn(f'[SignalHandler] Publishing signal for {robot}')
+            rospy.logwarn('[SignalHandler] Publishing signal for {robot}'.format(robot=robot))
             topic = topic_fmt.format(key=robot)
             for node in nodes:
                 viz.add_signal_coordinate(node.position, color_idx)

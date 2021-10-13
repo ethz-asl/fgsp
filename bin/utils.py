@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python2
 
 import math
 import rospy
@@ -51,7 +51,7 @@ class Utils(object):
     def convert_pointcloud2_msg_to_array(cloud_msg):
         points_list = []
         for data in pc2.read_points(cloud_msg, skip_nans=True):
-            points_list.append([data[0], data[1], data[2], data[3]])
+            points_list.append([data[0], data[1], data[2]])
         return np.array(points_list)
 
     @staticmethod
@@ -59,8 +59,7 @@ class Utils(object):
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(cloud[:, 0:3])
         pcd.transform(T)
-        dst = np.asarray(pcd.points)
-        return np.column_stack((dst, cloud[:, 3]))
+        return np.asarray(pcd.points)
 
     @staticmethod
     def downsample_pointcloud(cloud, voxel_size=0.15):

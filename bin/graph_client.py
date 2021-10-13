@@ -302,7 +302,10 @@ class GraphClient(object):
 
         # Reduce the robot graph and compute the wavelet basis functions.
         positions = np.array([np.array(x.position) for x in all_est_nodes])
-        self.robot_graph.build_from_poses(positions)
+        orientations = np.array([np.array(x.orientation) for x in all_est_nodes])
+        timestamps = np.array([np.array(Utils.ros_time_to_ns(x.ts)) for x in all_est_nodes])
+        poses = np.column_stack([positions, orientations, timestamps])
+        self.robot_graph.build_from_poses(poses)
         # self.robot_graph.reduce_graph_using_indices(est_idx)
         if self.config.client_mode == 'multiscale':
             self.robot_eval.compute_wavelets(self.robot_graph.G)
@@ -344,9 +347,6 @@ class GraphClient(object):
             return None
 
     def perform_multiscale_evaluation(self, key, all_opt_nodes, all_est_nodes):
-        if not self.eval.is_available:
-            return None
-
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)

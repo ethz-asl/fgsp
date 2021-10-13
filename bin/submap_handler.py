@@ -203,7 +203,8 @@ class SubmapHandler(object):
         submap_msg.robot_name_to.append(candidate_b.robot_name)
 
         t = T_L_a_L_b[0:3,3]
-        q = Rotation.from_matrix(T_L_a_L_b[0:3,0:3]).as_quat() # x, y, z, w
+        # q = Rotation.from_matrix(T_L_a_L_b[0:3,0:3]).as_quat() # x, y, z, w
+        q = Rotation.from_dcm(T_L_a_L_b[0:3,0:3]).as_quat() # x, y, z, w
 
         pose_cov_msg = PoseWithCovariance()
         pose_msg = Pose()

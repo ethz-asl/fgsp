@@ -305,6 +305,15 @@ class GraphClient(object):
         poses = np.column_stack([positions, orientations, timestamps])
         self.robot_graph.build_from_poses(poses)
         # self.robot_graph.reduce_graph_using_indices(est_idx)
+
+        # temporary test
+        positions = np.array([np.array(x.position) for x in all_est_nodes])
+        orientations = np.array([np.array(x.orientation) for x in all_est_nodes])
+        timestamps = np.array([np.array(Utils.ros_time_to_ns(x.ts)) for x in all_est_nodes])
+        global_poses = np.column_stack([positions, orientations, timestamps])
+        self.global_graph.build_from_poses(global_poses)
+        self.eval.compute_wavelets(self.global_graph.G)
+
         if self.config.client_mode == 'multiscale':
             self.robot_eval.compute_wavelets(self.robot_graph.G)
         return (all_opt_nodes, all_est_nodes)

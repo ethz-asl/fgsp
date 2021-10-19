@@ -54,8 +54,8 @@ class MonitorConfig(BaseConfig):
 
         # Reduction settings.
         self.reduce_global_graph = self.try_get_param("~reduce_global_graph", self.reduce_global_graph)
-        self.reduction_method = 'positive_ev'
-        self.reduce_to_n_percent = 100
+        self.reduction_method = self.try_get_param("~reduction_method", self.reduction_method)
+        self.reduce_to_n_percent = self.try_get_param("~reduce_to_n_percent", self.reduce_to_n_percent)
 
         # submap constraints
         self.pivot_distance = self.try_get_param("~submap_constraint_pivot_distance", self.pivot_distance)

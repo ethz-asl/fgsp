@@ -11,8 +11,8 @@ verification_server_request:          /maplab_server/verification
 
 # Reduction configuration
 reduce_global_graph:                  False
-reduction_method:                     'largest_ev' # positive_ev, largest_ev, every_other
-reduce_to_n_percent:                  80
+reduction_method:                     'largest_ev' # positive_ev, negative_ev, largest_ev, every_other
+reduce_to_n_percent:                  0.8
 
 opt_pc_topic:                         "/maplab_server/sparse_graph/submap"
 enable_graph_building:                True

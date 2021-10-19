@@ -226,9 +226,14 @@ class GlobalGraph(object):
     def reduce_graph(self):
         if self.config.reduction_method == 'every_other':
             self.reduced_ind = self.reduce_every_other()
+        elif self.config.reduction_method == 'positive_ev':
+            self.reduced_ind = self.reduce_largest_ev_positive(self.G.N)
+        elif self.config.reduction_method == 'negative_ev':
+            self.reduced_ind = self.reduce_largest_ev_negative(self.G.N)
         elif self.config.reduction_method == 'largest_ev':
-            self.reduced_ind = self.reduce_largest_ev_positive()
-        self.reduce_graph_using_indices(self.reduced_ind)
+            take_n = int(round(self.config.reduce_to_n_percent * self.G.N))
+
+            self.reduce_graph_using_indices(self.reduced_ind)
 
     def reduce_graph_using_indices(self, reduced_ind):
         rospy.loginfo('[GlobalGraph] Reducing graph using {reduced}/{coords} indices.'.format(reduced=len(reduced_ind), coords=self.G.N))
@@ -246,22 +251,35 @@ class GlobalGraph(object):
         n_nodes = np.shape(self.coords)[0]
         return np.arange(0, n_nodes, 2)
 
-    def reduce_largest_ev_positive(self):
+    def reduce_largest_ev_positive(self, take_n):
         idx = np.argmax(np.abs(self.G.U))
         idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
         indices = []
-        for i in range(0, self.G.N):
+        for i in range(0, take_n):
             if (self.G.U[i,idx_fourier] >= 0):
                 indices.append(i)
         return indices
 
-    def reduce_largest_ev_negative(self):
+    def reduce_largest_ev_negative(self, take_n):
         idx = np.argmax(np.abs(self.G.U))
         idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
         indices = []
-        for i in range(0, self.G.N):
+        for i in range(0, take_n):
             if (self.G.U[i,idx_fourier] < 0):
                 indices.append(i)
+        return indices
+
+    def reduce_largest_ev(self, take_n):
+        indices = []
+        ev = np.abs(self.G.U)
+        for i in range(0, take_n):
+            idx = np.argmax(ev)
+            idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
+            if ev[idx_vertex, idx_fourier] == -1:
+                rospy.logwarn('[GlobalGraph] Warning Could not reduce to requested number of nodes: {indices}/{take_n}'.format(indices=len(indices),take_n=take_n))
+                return indices
+            ev[idx_vertex, :] = -1
+            indices.append((idx_vertex)
         return indices
 
     def to_graph_msg(self):

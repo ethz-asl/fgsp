@@ -12,7 +12,8 @@ from visualizer import Visualizer
 from utils import Utils
 
 class GlobalGraph(object):
-    def __init__(self, reduced=False):
+    def __init__(self, config, reduced=False):
+        self.config = config
         self.adj = None
         self.coords = np.array([])
         self.G = None
@@ -181,11 +182,14 @@ class GlobalGraph(object):
                 if nn_i == i:
                     continue
                 w_d = self.compute_distance_weight(poses[i,0:3], poses[nn_i,0:3])
-                if sys.version_info[0] >= 3:
-                    w_r = 0
-                else:
+                if self.config.include_rotational_weight:
                     w_r = self.compute_rotation_weight(poses[i,:], poses[nn_i,:])
-                w_t = self.compute_temporal_decay(poses[i,7], poses[nn_i,7])
+                else:
+                    w_r = 0.0
+                if self.config.include_temporal_decay_weight:
+                    w_t = self.compute_temporal_decay(poses[i,7], poses[nn_i,7])
+                else:
+                    w_t = 1.0
                 adj[i, nn_i] = w_t * (w_d + w_r)
 
         assert np.all(adj >= 0)
@@ -220,8 +224,10 @@ class GlobalGraph(object):
         return graph_msg.submap_indices
 
     def reduce_graph(self):
-        #self.reduced_ind = self.reduce_every_other()
-        self.reduced_ind = self.reduce_largest_ev_positive()
+        if self.config.reduction_method == 'every_other':
+            self.reduced_ind = self.reduce_every_other()
+        elif self.config.reduction_method == 'largest_ev':
+            self.reduced_ind = self.reduce_largest_ev_positive()
         self.reduce_graph_using_indices(self.reduced_ind)
 
     def reduce_graph_using_indices(self, reduced_ind):

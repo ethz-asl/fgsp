@@ -36,7 +36,7 @@ class GraphMonitor(object):
             self.pub_traj = rospy.Publisher(self.config.out_traj_opt_topic, Trajectory, queue_size=10)
 
         # Handlers and evaluators.
-        self.graph = GlobalGraph(reduced=self.config.reduce_global_graph)
+        self.graph = GlobalGraph(self.config, reduced=self.config.reduce_global_graph)
         self.optimized_signal = SignalHandler()
         self.submap_handler = SubmapHandler(self.config)
 

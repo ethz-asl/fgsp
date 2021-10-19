@@ -52,8 +52,8 @@ class GraphClient(object):
             self.client_update_pub = rospy.Publisher(self.config.client_update_topic, Graph, queue_size=20)
 
         # Handlers and evaluators.
-        self.global_graph = GlobalGraph(reduced=False)
-        self.robot_graph = GlobalGraph(reduced=False)
+        self.global_graph = GlobalGraph(self.config, reduced=False)
+        self.robot_graph = GlobalGraph(self.config, reduced=False)
         self.latest_traj_msg = None
         self.signal = SignalHandler()
         self.optimized_signal = SignalHandler()

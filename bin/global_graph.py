@@ -232,18 +232,27 @@ class GlobalGraph(object):
             self.reduced_ind = self.reduce_largest_ev_negative(self.G.N)
         elif self.config.reduction_method == 'largest_ev':
             take_n = int(round(self.config.reduce_to_n_percent * self.G.N))
-
-            self.reduce_graph_using_indices(self.reduced_ind)
+            if take_n >= self.G.N:
+                rospy.logwarn('[GlobalGraph] Requested reduction amount is equal or greater than the graph size.')
+                print(take_n)
+                print(self.G.N)
+                return
+            self.reduced_ind = self.reduce_largest_ev(take_n)
+        else:
+            rospy.logerr('[GlobalGraph] Unknown graph reduction method: {method}. Aborting reduction.'.format(method=self.config.reduction_method))
+            return
+        self.reduce_graph_using_indices(self.reduced_ind)
 
     def reduce_graph_using_indices(self, reduced_ind):
         rospy.loginfo('[GlobalGraph] Reducing graph using {reduced}/{coords} indices.'.format(reduced=len(reduced_ind), coords=self.G.N))
         self.coords = self.coords[reduced_ind]
         self.G = reduction.kron_reduction(self.G, reduced_ind)
         self.adj = self.G.W.toarray()
-        self.adj[self.adj < 0] = 0
-        self.G = graphs.Graph(self.adj)
-
+        
         # TODO(lbern): check why kron results in some negative weights.
+        # self.adj[self.adj < 0] = 0
+        # self.G = graphs.Graph(self.adj)
+
         assert np.all(self.adj >= 0)
         self.G.compute_fourier_basis()
 
@@ -270,6 +279,7 @@ class GlobalGraph(object):
         return indices
 
     def reduce_largest_ev(self, take_n):
+        rospy.loginfo('[GlobalGraph] Reducing to largest {n} EVs'.format(n=take_n))
         indices = []
         ev = np.abs(self.G.U)
         for i in range(0, take_n):
@@ -279,7 +289,7 @@ class GlobalGraph(object):
                 rospy.logwarn('[GlobalGraph] Warning Could not reduce to requested number of nodes: {indices}/{take_n}'.format(indices=len(indices),take_n=take_n))
                 return indices
             ev[idx_vertex, :] = -1
-            indices.append((idx_vertex)
+            indices.append(idx_vertex)
         return indices
 
     def to_graph_msg(self):

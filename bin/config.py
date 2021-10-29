@@ -20,7 +20,7 @@ class MonitorConfig(BaseConfig):
         # Reduction settings.
         self.reduce_global_graph = False
         self.reduction_method = 'positive_ev'
-        self.reduce_to_n_percent = 100
+        self.reduce_to_n_percent = 1.0
 
         # submap constraints
         self.pivot_distance = 20
@@ -171,6 +171,11 @@ class DebugConfig(BaseConfig):
         # Graph construction
         self.include_rotational_weight = False
         self.include_temporal_decay_weight = False
+        # Reduction settings.
+        self.reduce_global_graph = True
+        self.reduction_method = 'largest_ev'
+        # self.reduction_method = 'every_other'
+        self.reduce_to_n_percent = 0.4
 
 
 

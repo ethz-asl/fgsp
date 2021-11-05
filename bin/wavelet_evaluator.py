@@ -162,7 +162,6 @@ class WaveletEvaluator(object):
             max_dist_idx = np.argmax(dists)
 
             np.set_printoptions(suppress=True)
-            rospy.loginfo('[WaveletEvaluator] dists are {dists}'.format(dists=dists))
             local_labels = []
             # h floor
             # if dists[0] > 0.4:
@@ -172,12 +171,12 @@ class WaveletEvaluator(object):
             # if dists[2] > 0.05:
             #     local_labels.append(3)
 
-            if dists[0] > 0.5:
-                local_labels.append(1)
-            if dists[1] > 0.6: # for h_naymal_2 we had 0.2
-                local_labels.append(2)
-            if dists[2] > 0.7:
-                local_labels.append(3)
+            # if dists[0] > 0.5:
+            #     local_labels.append(1)
+            # if dists[1] > 0.6: # for h_naymal_2 we had 0.2
+            #     local_labels.append(2)
+            # if dists[2] > 0.7:
+            #     local_labels.append(3)
 
             # -----------------------------------------------
 
@@ -205,7 +204,17 @@ class WaveletEvaluator(object):
             # if dists[2] > 0.07:
             #     local_labels.append(3)
 
-            rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
+            # EuRoC
+            if dists[0] > 0.1:
+                local_labels.append(1)
+            if dists[1] > 0.15:
+                local_labels.append(2)
+            if dists[2] > 0.03:
+                local_labels.append(3)
+
+            if len(local_labels) > 0:
+                rospy.loginfo('[WaveletEvaluator] dists are {dists}'.format(dists=dists))
+                rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
             labels.append(local_labels)
         return labels
 

@@ -23,7 +23,7 @@ include_temporal_decay_weight: True
 
 # Div
 dataroot:                      "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"
-robot_name:                    "anymal_1"
+robot_name:                    "euroc_3"
 random_forest_model:           "/config/forest.joblib"
 update_rate:                   0.05
 enable_client_update:          False

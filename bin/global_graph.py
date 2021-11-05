@@ -3,6 +3,7 @@ import rospy
 import time
 import sys
 import numpy as np
+from liegroups import SE3
 from pygsp import graphs, filters, reduction
 from geometry_msgs.msg import Point
 from maplab_msgs.msg import Graph
@@ -181,19 +182,48 @@ class GlobalGraph(object):
             for nn_i in nn_indices:
                 if nn_i == i:
                     continue
-                w_d = self.compute_distance_weight(poses[i,0:3], poses[nn_i,0:3])
-                if self.config.include_rotational_weight:
-                    w_r = self.compute_rotation_weight(poses[i,:], poses[nn_i,:])
+                if self.config.use_se3_computation:
+                    adj[i, nn_i] = self.compute_se3_weights(poses[i,:], poses[nn_i,:])
                 else:
-                    w_r = 0.0
-                if self.config.include_temporal_decay_weight:
-                    w_t = self.compute_temporal_decay(poses[i,7], poses[nn_i,7])
-                else:
-                    w_t = 1.0
-                adj[i, nn_i] = w_t * (w_d + w_r)
+                    adj[i, nn_i] = self.compute_simple_weights(poses[i,:], poses[nn_i,:])
 
         assert np.all(adj >= 0)
         return adj
+
+    def compute_simple_weights(self, poses_lhs, poses_rhs):
+        w_d = self.compute_distance_weight(poses_lhs[0:3], poses_rhs[0:3])
+        if self.config.include_rotational_weight:
+            w_r = self.compute_rotation_weight(poses_lhs, poses_rhs)
+        else:
+            w_r = 0.0
+        if self.config.include_temporal_decay_weight:
+            w_t = self.compute_temporal_decay(poses_lhs[7], poses_rhs[7])
+        else:
+            w_t = 1.0
+        return w_t * (w_d + w_r)
+
+    def compute_se3_weights(self, poses_lhs, poses_rhs):
+        T_G_lhs = Utils.convert_pos_quat_to_transformation(coords_lhs[0:3], coords_lhs[3:7])
+        T_G_rhs = Utils.convert_pos_quat_to_transformation(coords_rhs[0:3], coords_rhs[3:7])
+
+        pose1 = SE3.from_matrix(T)
+        pose2 = SE3.from_matrix(T2)
+        Xi_12 = (pose1.inv().dot(pose2)).log()
+        W = np.eye(4,4)
+        W[0,0] = 50
+        W[1,1] = 50
+        W[2,2] = 50
+        W[3,3] = 1
+        inner = np.trace(np.matmul(np.matmul(SE3.wedge(Xi_12),W),SE3.wedge(Xi_12).transpose()))
+
+        # Equal weighting for rotation and translation.
+        # inner = np.matmul(Xi_12.transpose(),Xi_12)
+
+        dist = np.sqrt(inner)
+        sigma = 1.0
+        normalization = 2.0*(sigma**2)
+        return np.exp(-dist/normalization)
+
 
     def compute_distance_weight(self, coords_lhs, coords_rhs):
         sigma = 1.0
@@ -248,7 +278,7 @@ class GlobalGraph(object):
         self.coords = self.coords[reduced_ind]
         self.G = reduction.kron_reduction(self.G, reduced_ind)
         self.adj = self.G.W.toarray()
-        
+
         # TODO(lbern): check why kron results in some negative weights.
         # self.adj[self.adj < 0] = 0
         # self.G = graphs.Graph(self.adj)

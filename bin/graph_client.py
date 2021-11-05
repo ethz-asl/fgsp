@@ -55,8 +55,8 @@ class GraphClient(object):
         self.global_graph = GlobalGraph(self.config, reduced=False)
         self.robot_graph = GlobalGraph(self.config, reduced=False)
         self.latest_traj_msg = None
-        self.signal = SignalHandler()
-        self.optimized_signal = SignalHandler()
+        self.signal = SignalHandler(self.config)
+        self.optimized_signal = SignalHandler(self.config)
         self.synchronizer = SignalSynchronizer(self.config)
         self.eval = WaveletEvaluator()
         self.robot_eval = WaveletEvaluator()
@@ -308,7 +308,7 @@ class GraphClient(object):
         self.robot_graph.build_from_poses(poses)
         # self.robot_graph.reduce_graph_using_indices(est_idx)
 
-        # temporary test
+        # TODO(lbern): fix this temporary test
         positions = np.array([np.array(x.position) for x in all_est_nodes])
         orientations = np.array([np.array(x.orientation) for x in all_est_nodes])
         timestamps = np.array([np.array(Utils.ros_time_to_ns(x.ts)) for x in all_est_nodes])

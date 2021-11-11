@@ -37,7 +37,7 @@ class GraphMonitor(object):
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(self.config, reduced=self.config.reduce_global_graph)
-        self.optimized_signal = SignalHandler()
+        self.optimized_signal = SignalHandler(self.config)
         self.submap_handler = SubmapHandler(self.config)
 
         # Key management to keep track of the received messages.

@@ -203,11 +203,11 @@ class GlobalGraph(object):
         return w_t * (w_d + w_r)
 
     def compute_se3_weights(self, poses_lhs, poses_rhs):
-        T_G_lhs = Utils.convert_pos_quat_to_transformation(coords_lhs[0:3], coords_lhs[3:7])
-        T_G_rhs = Utils.convert_pos_quat_to_transformation(coords_rhs[0:3], coords_rhs[3:7])
+        T_G_lhs = Utils.convert_pos_quat_to_transformation(poses_lhs[0:3], poses_lhs[3:7])
+        T_G_rhs = Utils.convert_pos_quat_to_transformation(poses_rhs[0:3], poses_rhs[3:7])
 
-        pose1 = SE3.from_matrix(T)
-        pose2 = SE3.from_matrix(T2)
+        pose1 = SE3.from_matrix(T_G_lhs)
+        pose2 = SE3.from_matrix(T_G_rhs)
         Xi_12 = (pose1.inv().dot(pose2)).log()
         W = np.eye(4,4)
         W[0,0] = 50
@@ -223,7 +223,6 @@ class GlobalGraph(object):
         sigma = 1.0
         normalization = 2.0*(sigma**2)
         return np.exp(-dist/normalization)
-
 
     def compute_distance_weight(self, coords_lhs, coords_rhs):
         sigma = 1.0

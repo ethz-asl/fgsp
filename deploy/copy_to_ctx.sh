@@ -21,4 +21,4 @@ rsync -a \
 
 
 # Copy the installation script to the context.
-# cp "${script_dir}/install_simple.sh" "${docker_ctx}"
+cp "${script_dir}/install_simple.sh" "${docker_ctx}"

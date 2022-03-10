@@ -10,6 +10,7 @@ config_dir=${script_dir}/../config
 # Copy the python files to the context.
 rsync -a \
   --exclude '*.pyc' \
+  --exclude '*.ipynb' \
   --exclude '__pycache__' \
   --exclude '.ipynb_checkpoints' \
   "${bin_dir}" "${docker_ctx}"

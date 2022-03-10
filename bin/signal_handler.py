@@ -1,6 +1,7 @@
 #! /usr/bin/env python2
 import rospy
 import numpy as np
+from liegroups import SE3
 from scipy.spatial.transform import Rotation
 from pygsp import graphs, filters, reduction
 from maplab_msgs.msg import Trajectory, TrajectoryNode
@@ -12,8 +13,9 @@ from signal_node import SignalNode
 from visualizer import Visualizer
 
 class SignalHandler(object):
-    def __init__(self):
+    def __init__(self, config):
         self.signals = {}
+        self.config = config
 
     def group_robots(self, signals):
         n_nodes = len(signals)
@@ -161,9 +163,36 @@ class SignalHandler(object):
         return np.array(x_rot)
 
     def compute_signal(self, nodes):
-        positions = self.compute_pos_signal(nodes)
-        rotations = self.compute_rot_signal(nodes)
-        return np.column_stack((positions, rotations))
+        if self.config.use_se3_computation:
+            return self.compute_se3_signal(nodes)
+        else:
+            positions = self.compute_pos_signal(nodes)
+            rotations = self.compute_rot_signal(nodes)
+            return np.column_stack((positions, rotations))
+
+    def compute_se3_signal(self, nodes):
+        traj = self.compute_trajectory(nodes)
+        T_G_origin = Utils.convert_pos_quat_to_transformation(traj[0,1:4], traj[0,4:8])
+        pose_origin = SE3.from_matrix(T_G_origin)
+
+        n_nodes = len(nodes)
+        x_se3 = [0] * n_nodes
+        for i in range(0, n_nodes):
+            T_G = Utils.convert_pos_quat_to_transformation(traj[i,1:4], traj[i,4:8])
+            pose_cur = SE3.from_matrix(T_G)
+            x_se3[i] = self.compute_se3_distance(pose_origin, pose_cur)
+        return np.array(x_se3)
+
+    def compute_se3_distance(self, pose_lhs, pose_rhs):
+        Xi_12 = (pose_lhs.inv().dot(pose_rhs)).log()
+        W = np.eye(4,4)
+        W[0,0] = 100
+        W[1,1] = 100
+        W[2,2] = 100
+        W[3,3] = 1
+
+        inner = np.trace(np.matmul(np.matmul(SE3.wedge(Xi_12),W),SE3.wedge(Xi_12).transpose()))
+        return np.sqrt(inner)
 
     def compute_trajectory(self, nodes):
         n_nodes = len(nodes)

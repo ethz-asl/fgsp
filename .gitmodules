@@ -1,3 +1,6 @@
 [submodule "dependencies/pygsp"]
 	path = dependencies/pygsp
 	url = git@github.com:epfl-lts2/pygsp.git
+[submodule "dependencies/liegroups"]
+	path = dependencies/liegroups
+	url = git@github.com:utiasSTARS/liegroups.git

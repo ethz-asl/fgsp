@@ -14,9 +14,13 @@ class MonitorConfig(BaseConfig):
         self.enable_graph_building = True
         self.enable_submap_constraints = True
         self.min_node_count = 10
-        self.reduce_global_graph = False
         self.submap_min_count = 3
         self.send_separate_traj_msgs = True
+
+        # Reduction settings.
+        self.reduce_global_graph = False
+        self.reduction_method = 'positive_ev'
+        self.reduce_to_n_percent = 1.0
 
         # submap constraints
         self.pivot_distance = 20
@@ -45,9 +49,13 @@ class MonitorConfig(BaseConfig):
         self.enable_submap_constraints = self.try_get_param("~enable_submap_constraints", self.enable_submap_constraints)
         self.enable_graph_building = self.try_get_param("~enable_graph_building", self.enable_graph_building)
         self.min_node_count = self.try_get_param("~min_node_count", self.min_node_count)
-        self.reduce_global_graph = self.try_get_param("~reduce_global_graph", self.reduce_global_graph)
         self.submap_min_count = self.try_get_param("~submap_min_count", self.submap_min_count)
         self.send_separate_traj_msgs = self.try_get_param("~send_separate_traj_msgs", self.send_separate_traj_msgs)
+
+        # Reduction settings.
+        self.reduce_global_graph = self.try_get_param("~reduce_global_graph", self.reduce_global_graph)
+        self.reduction_method = self.try_get_param("~reduction_method", self.reduction_method)
+        self.reduce_to_n_percent = self.try_get_param("~reduce_to_n_percent", self.reduce_to_n_percent)
 
         # submap constraints
         self.pivot_distance = self.try_get_param("~submap_constraint_pivot_distance", self.pivot_distance)
@@ -95,6 +103,11 @@ class ClientConfig(BaseConfig):
         # constraint construction
         self.client_mode = 'multiscale'
 
+        # Graph construction
+        self.include_rotational_weight = False
+        self.include_temporal_decay_weight = False
+        self.use_se3_computation = False
+
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
         self.opt_traj_topic = "/graph_monitor/sparse_graph/trajectory"
@@ -134,6 +147,11 @@ class ClientConfig(BaseConfig):
         # constraint construction
         self.client_mode = self.try_get_param("~client_mode", self.client_mode)
 
+        # Graph construction
+        self.include_rotational_weight = self.try_get_param("~include_rotational_weight", self.include_rotational_weight)
+        self.include_temporal_decay_weight = self.try_get_param("~include_temporal_decay_weight", self.include_temporal_decay_weight)
+        self.use_se3_computation = self.try_get_param("~use_se3_computation", self.use_se3_computation)
+
         # input
         self.opt_graph_topic = self.try_get_param("~opt_graph_topic", self.opt_graph_topic)
         self.opt_traj_topic = self.try_get_param("~opt_traj_topic", self.opt_traj_topic)
@@ -149,6 +167,19 @@ class ClientConfig(BaseConfig):
 
         # input and output
         self.client_update_topic = self.try_get_param("~client_update_topic", self.client_update_topic)
+
+class DebugConfig(BaseConfig):
+    def __init__(self):
+        # Graph construction
+        self.include_rotational_weight = False
+        self.include_temporal_decay_weight = False
+        # Reduction settings.
+        self.reduce_global_graph = True
+        self.reduction_method = 'largest_ev'
+        # self.reduction_method = 'every_other'
+        self.reduce_to_n_percent = 0.4
+
+
 
 if __name__ == '__main__':
     from plotter import Plotter

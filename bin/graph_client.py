@@ -52,11 +52,11 @@ class GraphClient(object):
             self.client_update_pub = rospy.Publisher(self.config.client_update_topic, Graph, queue_size=20)
 
         # Handlers and evaluators.
-        self.global_graph = GlobalGraph(reduced=False)
-        self.robot_graph = GlobalGraph(reduced=False)
+        self.global_graph = GlobalGraph(self.config, reduced=False)
+        self.robot_graph = GlobalGraph(self.config, reduced=False)
         self.latest_traj_msg = None
-        self.signal = SignalHandler()
-        self.optimized_signal = SignalHandler()
+        self.signal = SignalHandler(self.config)
+        self.optimized_signal = SignalHandler(self.config)
         self.synchronizer = SignalSynchronizer(self.config)
         self.eval = WaveletEvaluator()
         self.robot_eval = WaveletEvaluator()
@@ -184,9 +184,11 @@ class GraphClient(object):
         self.compare_estimations()
         # self.publish_client_update()
 
-        rospy.loginfo('[GraphClient] Updating completed (sent {n_constraints} constraints)'.format(n_constraints=self.commander.get_total_amount_of_constraints()))
-        rospy.loginfo('[GraphClient] In detail relatives: {n_low} / {n_mid} / {n_high}'.format(n_low=self.commander.small_constraint_counter, n_mid=self.commander.mid_constraint_counter, n_high=self.commander.large_constraint_counter))
-        rospy.loginfo('[GraphClient] In detail anchors: {n_anchor}'.format(n_anchor=self.commander.anchor_constraint_counter))
+        n_constraints = self.commander.get_total_amount_of_constraints()
+        if n_constraints > 0:
+            rospy.loginfo('[GraphClient] Updating completed (sent {n_constraints} constraints)'.format(n_constraints=n_constraints))
+            rospy.loginfo('[GraphClient] In detail relatives: {n_low} / {n_mid} / {n_high}'.format(n_low=self.commander.small_constraint_counter, n_mid=self.commander.mid_constraint_counter, n_high=self.commander.large_constraint_counter))
+            rospy.loginfo('[GraphClient] In detail anchors: {n_anchor}'.format(n_anchor=self.commander.anchor_constraint_counter))
         self.mutex.acquire()
         self.is_updating = False
         self.last_update_seq = self.global_graph.graph_seq
@@ -306,7 +308,7 @@ class GraphClient(object):
         self.robot_graph.build_from_poses(poses)
         # self.robot_graph.reduce_graph_using_indices(est_idx)
 
-        # temporary test
+        # TODO(lbern): fix this temporary test
         positions = np.array([np.array(x.position) for x in all_est_nodes])
         orientations = np.array([np.array(x.orientation) for x in all_est_nodes])
         timestamps = np.array([np.array(Utils.ros_time_to_ns(x.ts)) for x in all_est_nodes])

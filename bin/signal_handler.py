@@ -179,7 +179,7 @@ class SignalHandler(object):
         x_se3 = [0] * n_nodes
         for i in range(0, n_nodes):
             T_G = Utils.convert_pos_quat_to_transformation(traj[i,1:4], traj[i,4:8])
-            pose_cur = SE3.from_matrix(T_G_origin)
+            pose_cur = SE3.from_matrix(T_G)
             x_se3[i] = self.compute_se3_distance(pose_origin, pose_cur)
         return np.array(x_se3)
 

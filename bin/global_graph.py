@@ -208,6 +208,7 @@ class GlobalGraph(object):
 
         pose1 = SE3.from_matrix(T_G_lhs)
         pose2 = SE3.from_matrix(T_G_rhs)
+
         Xi_12 = (pose1.inv().dot(pose2)).log()
         W = np.eye(4,4)
         W[0,0] = 50

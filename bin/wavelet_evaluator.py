@@ -205,16 +205,16 @@ class WaveletEvaluator(object):
             #     local_labels.append(3)
 
             # EuRoC
-            if dists[0] > 0.1:
+            if dists[0] > 0.2:
                 local_labels.append(1)
-            if dists[1] > 0.15:
+            if dists[1] > 0.1:
                 local_labels.append(2)
-            if dists[2] > 0.03:
+            if dists[2] > 0.5:
                 local_labels.append(3)
 
-            if len(local_labels) > 0:
-                rospy.loginfo('[WaveletEvaluator] dists are {dists}'.format(dists=dists))
-                rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
+            # if len(local_labels) > 0:
+            rospy.loginfo('[WaveletEvaluator] dists are {dists}'.format(dists=dists))
+            rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
             labels.append(local_labels)
         return labels
 

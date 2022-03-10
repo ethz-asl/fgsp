@@ -19,3 +19,4 @@ RUN sh install_packages.sh && rm install_packages.sh
 WORKDIR /usr/home
 COPY ./* ./
 RUN chmod u+x graph_client.py
+ENTRYPOINT ["./set_env.sh"]

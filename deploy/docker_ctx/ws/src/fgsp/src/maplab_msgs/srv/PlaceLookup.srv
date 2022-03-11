@@ -1,0 +1,23 @@
+# Number of neighbors to retrieve
+int64 n_neighbors
+
+# Confidence threshold for returning potential candidates
+float32 confidence_threshold
+
+# Whether intra mission candidates should be returned
+bool enable_intra_mission_lookup
+
+# Whether inter mission candidates should be returned
+bool enable_inter_mission_lookup
+---
+# Mission IDs of target a
+string[] mission_ids_a
+
+# Mission IDs of source b
+string[] mission_ids_b
+
+# Timestamp of target a
+time[] timestamp_a
+
+# Timestamp of source b
+time[] timestamp_b

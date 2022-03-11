@@ -1,0 +1,5 @@
+# Partial or complete mission id hash of mission that should be deleted.
+std_msgs/String mission_id_to_delete
+---
+std_msgs/String message
+std_msgs/Bool success

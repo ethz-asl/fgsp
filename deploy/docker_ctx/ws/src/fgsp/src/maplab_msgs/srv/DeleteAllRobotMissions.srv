@@ -1,0 +1,5 @@
+# Robot name associated with the missions that should be deleted.
+std_msgs/String robot_name
+---
+std_msgs/String message
+std_msgs/Bool success

@@ -1,0 +1,20 @@
+# Retrieve an accumulated point cloud extracted from the dense map data attached
+# to the maplab map. All points within
+
+# Name of robot. Only used for debugging and logging purposes.
+string robot_name
+
+# Position and radius in global map coordinates
+geometry_msgs/Point center_G
+float32 radius_m
+
+# Pointcloud type to retreive
+# Options:
+uint32 POINT_CLOUD_TYPE_XYZI=1
+uint32 POINT_CLOUD_TYPE_XYZL=2
+uint32 POINT_CLOUD_TYPE_XYZIRT=3
+
+uint32 point_cloud_type
+---
+# Point cloud in global map frame.
+sensor_msgs/PointCloud2 point_cloud_G

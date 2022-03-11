@@ -1,22 +1,29 @@
 FROM ubuntu:18.04
 
 # Install the base packages.
-COPY install_base.sh /tmp/install_base.sh
-RUN sh /tmp/install_base.sh && rm /tmp/install_base.sh
+COPY install_base.sh ./install_base.sh
+RUN sh ./install_base.sh && rm ./install_base.sh
 
 # Install the ROS environment.
 ENV TZ=Europe/Zurich
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-COPY install_ros.sh /tmp/install_ros.sh
-RUN sh /tmp/install_ros.sh && rm /tmp/install_ros.sh
+COPY install_ros.sh ./install_ros.sh
+RUN sh ./install_ros.sh && rm ./install_ros.sh
 
-# Install the custom packages for which we will switch to /tmp.
-COPY install_packages.sh /tmp/install_packages.sh
-WORKDIR /tmp
-RUN sh install_packages.sh && rm install_packages.sh
-
-# Copy the FGSP files to the container.
+# Install the custom packages for which we will switch to the home directory.
 WORKDIR /usr/home
-COPY ./* ./
-RUN chmod u+x graph_client.py
-ENTRYPOINT ["./set_env.sh"]
+COPY ./ws ./ws
+COPY install_packages.sh ./install_packages.sh
+RUN sh ./install_packages.sh && rm ./install_packages.sh
+
+# Configure the catkin environment.
+WORKDIR /usr/home/ws
+RUN catkin init --workspace .
+RUN catkin config --merge-devel
+
+# Build the project.
+SHELL ["/bin/bash", "-c"]
+COPY compile.sh ../
+RUN ../compile.sh
+COPY set_env.sh ../
+ENTRYPOINT ["../set_env.sh"]

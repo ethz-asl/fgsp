@@ -1,0 +1,5 @@
+============
+Optimization
+============
+
+.. automodule:: pygsp.optimization

@@ -1,0 +1,42 @@
+# Subscribers.
+opt_graph_topic:               /graph_monitor/sparse_graph/graph
+opt_traj_topic:                /graph_monitor/sparse_graph/trajectory
+est_traj_topic:                /trajectory
+est_traj_path_topic:           /optimized_path
+opt_submap_constraint_topic:   /graph_monitor/submaps
+
+# Publishers.
+anchor_node_topic:             '/graph_client/anchor_nodes'
+relative_node_topic:           '/graph_client/relative_nodes'
+intra_constraints:             '/graph_client/relative_nodes'
+verification_service:          '/graph_monitor/verification'
+
+# Subscriber and Publisher
+client_update_topic:           "/graph_client/latest_graph"
+
+# Constraint construction:     multiscale, euclidean, always, absolute
+client_mode:                   'multiscale'
+
+# Graph configuration.
+use_se3_computation:           True
+include_rotational_weight:     False
+include_temporal_decay_weight: True
+
+# Div
+dataroot:                      "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"
+robot_name:                    "anymal_1"
+random_forest_model:           "/config/forest.joblib"
+update_rate:                   0.05
+enable_client_update:          False
+enable_anchor_constraints:     False
+enable_relative_constraints:   True
+enable_submap_constraints:     True
+enable_signal_recording:       True
+enable_trajectory_recording:   True
+signal_export_path:            "/data/{src}_signal.npy"
+graph_coords_export_path:      "/data/{src}_graph_coords.npy"
+graph_adj_export_path:         "/data/{src}_graph_adj.npy"
+trajectory_export_path:        "/data/{src}_trajectory.npy"
+trajectory_raw_export_path:    "/data/{src}_raw_trajectory.npy"
+degenerate_window:             20
+synchronization_max_diff_s:    4.0

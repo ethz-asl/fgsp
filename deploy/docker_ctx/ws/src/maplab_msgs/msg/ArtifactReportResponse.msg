@@ -1,0 +1,12 @@
+string url
+int64 id
+float64 x
+float64 y
+float64 z
+string type
+string submitted_datetime
+float64 run_clock
+string team
+string run
+string report_status
+int64 score_change

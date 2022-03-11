@@ -1,0 +1,7 @@
+# Array of map lookup requests
+maplab_msgs/MapLookupRequest[] map_lookups
+
+---
+
+# Array of map lookup responses
+maplab_msgs/MapLookupResponse[] map_lookups

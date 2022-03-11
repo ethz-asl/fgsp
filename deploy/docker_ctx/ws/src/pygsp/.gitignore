@@ -1,0 +1,42 @@
+__pycache__/
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+
+# Coverage reports
+.coverage
+htmlcov
+
+# Complexity
+output/*.html
+output/*/index.html
+
+# Sphinx documentation
+/doc/_build/
+/doc/examples/
+/doc/backrefs/
+
+# Vim swap files
+.*.swp
+
+# Mac OS garbage
+.DS_Store
+
+# Jupyter notebook
+.ipynb_checkpoints/
+
+# Visual Studio Code
+.vscode/

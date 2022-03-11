@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+
+  <name>cdpgo</name>
+  <version>0.0.1</version>
+  <description>CDPGO</description>
+  <license>Proprietary</license>
+
+  <url type="website">foo</url>
+  <maintainer email="berlukas@ethz.ch">Lukas Bernreiter</maintainer>
+  <author email="berlukas@ethz.ch">Lukas Bernreiter</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+
+  <depend>maplab_msgs</depend>
+  <depend>rospy</depend>
+</package>

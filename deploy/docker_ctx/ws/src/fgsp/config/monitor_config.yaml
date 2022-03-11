@@ -1,0 +1,30 @@
+in_graph_topic:                       /maplab_server/sparse_graph/graph
+in_traj_opt_topic:                    /maplab_server/sparse_graph/trajectory
+out_graph_topic:                      /graph_monitor/sparse_graph/graph
+out_traj_opt_topic:                   /graph_monitor/sparse_graph/trajectory
+min_node_count:                       20
+
+update_rate:                          0.05
+random_forest_model:                  "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
+verification_service:                 /graph_monitor/verification
+verification_server_request:          /maplab_server/verification
+
+# Reduction configuration
+reduce_global_graph:                  False
+reduction_method:                     'largest_ev' # positive_ev, negative_ev, largest_ev, every_other
+reduce_to_n_percent:                  0.8
+
+opt_pc_topic:                         "/maplab_server/sparse_graph/submap"
+enable_graph_building:                True
+enable_submap_constraints:            True
+enable_submap_map_publishing:         True
+accumulated_map_topic:                "/graph_monitor/map"
+submap_constraint_topic:              "/graph_monitor/submaps"
+submap_constraint_pivot_distance:     100.0
+submap_constraint_min_distance:       5.0
+submap_constraint_knn:                20
+submap_constraint_p_norm:             2
+submap_constraint_refine_icp:         False
+submap_constraint_export_lidar_poses: False
+submap_min_count:                     1
+send_separate_traj_msgs:              False

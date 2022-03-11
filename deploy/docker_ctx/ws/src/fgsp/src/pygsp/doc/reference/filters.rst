@@ -1,0 +1,5 @@
+=======
+Filters
+=======
+
+.. automodule:: pygsp.filters

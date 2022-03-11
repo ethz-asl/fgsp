@@ -16,4 +16,4 @@ docker build -t "fgsp.client" -f "${script_dir}/Dockerfile.client" "${docker_ctx
 
 # Clean up.
 echo "Finished building the images. Cleaning up."
-# rm -rf "${docker_ctx}"
+rm -rf "${docker_ctx}"

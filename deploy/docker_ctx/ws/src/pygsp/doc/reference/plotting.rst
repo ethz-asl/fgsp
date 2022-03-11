@@ -1,5 +1,0 @@
-========
-Plotting
-========
-
-.. automodule:: pygsp.plotting

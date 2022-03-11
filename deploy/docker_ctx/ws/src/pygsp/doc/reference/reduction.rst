@@ -1,5 +1,0 @@
-=========
-Reduction
-=========
-
-.. automodule:: pygsp.reduction

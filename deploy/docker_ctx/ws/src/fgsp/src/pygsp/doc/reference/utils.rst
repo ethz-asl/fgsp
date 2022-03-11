@@ -1,5 +1,0 @@
-=========
-Utilities
-=========
-
-.. automodule:: pygsp.utils

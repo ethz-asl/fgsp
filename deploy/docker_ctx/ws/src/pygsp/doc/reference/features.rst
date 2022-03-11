@@ -1,5 +1,0 @@
-========
-Features
-========
-
-.. automodule:: pygsp.features

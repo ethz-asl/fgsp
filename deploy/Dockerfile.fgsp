@@ -12,6 +12,7 @@ RUN sh ./install_ros.sh && rm ./install_ros.sh
 
 # Install the custom packages for which we will switch to the home directory.
 WORKDIR /usr/home
+COPY ./ws/src/liegroups/ ./ws/src/liegroups/
 COPY install_packages.sh ./install_packages.sh
 RUN sh ./install_packages.sh && rm ./install_packages.sh
 

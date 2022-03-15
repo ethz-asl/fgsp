@@ -4,4 +4,4 @@
 pip install pygsp pandas numpy scipy
 
 ## Install the dependencies
-# pip install -e ws/src/liegroups/.
+pip install -e ws/src/liegroups/.

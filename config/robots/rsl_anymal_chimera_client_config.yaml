@@ -15,7 +15,7 @@ verification_service:        '/graph_monitor/verification'
 client_update_topic:         "/graph_client/latest_graph"
 
 # Div
-dataroot:                    "/home/subt/mapping_ws/src/fgsp"
+dataroot:                    "/mnt/data"
 robot_name:                  "anymal_2"
 random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.1

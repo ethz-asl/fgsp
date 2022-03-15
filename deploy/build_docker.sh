@@ -12,7 +12,7 @@ mkdir -p "${docker_ctx}"
 "$script_dir/copy_to_ctx.sh"
 
 # Build the docker image.
-docker build -t "fgsp.client" -f "${script_dir}/Dockerfile.client" "${docker_ctx}"
+docker build -t "fgsp.monitor_and_client" -f "${script_dir}/Dockerfile.fgsp" "${docker_ctx}"
 
 # Clean up.
 echo "Finished building the images. Cleaning up."

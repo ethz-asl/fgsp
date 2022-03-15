@@ -1,0 +1,3 @@
+#!/usr/bin/env zsh
+
+docker run -it fgsp.client "roslaunch" "cdpgo" "rsl_anymal_cerberus_client.launch"

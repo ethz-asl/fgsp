@@ -1,0 +1,4 @@
+#!/usr/bin/env zsh
+
+fgsp_dir=$(catkin locate fgsp)
+docker run -it --mount type=bind,source="${fgsp_dir}",target=/mnt/data fgsp.monitor_and_client "roslaunch" "fgsp" "debug_client.launch"

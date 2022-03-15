@@ -11,7 +11,6 @@ from multiprocessing import Lock
 
 from global_graph import GlobalGraph
 from signal_handler import SignalHandler
-from graph_visualizer import GraphVisualizer
 from signal_synchronizer import SignalSynchronizer
 from wavelet_evaluator import WaveletEvaluator
 from command_post import CommandPost

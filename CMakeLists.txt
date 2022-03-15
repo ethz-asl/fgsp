@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(cdpgo)
+project(fgsp)
 
 add_definitions(-Wall)
 

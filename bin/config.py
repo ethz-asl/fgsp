@@ -45,7 +45,7 @@ class MonitorConfig(BaseConfig):
 
     def init_from_config(self):
         # general config
-        self.rate = rospy.Rate(self.try_get_param("~update_rate"), 0.1)
+        self.rate = rospy.Rate(self.try_get_param("~update_rate", 0.1))
         self.enable_submap_constraints = self.try_get_param("~enable_submap_constraints", self.enable_submap_constraints)
         self.enable_graph_building = self.try_get_param("~enable_graph_building", self.enable_graph_building)
         self.min_node_count = self.try_get_param("~min_node_count", self.min_node_count)

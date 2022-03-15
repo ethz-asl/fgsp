@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 # Install required dependencies
-pip install pygsp pandas numpy scipy
+pip2 install pygsp pandas numpy scipy open3d
 
 ## Install the dependencies
-pip install -e ws/src/liegroups/.
+pip2 install -e ws/src/liegroups/.

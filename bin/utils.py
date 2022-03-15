@@ -3,7 +3,7 @@
 import math
 import rospy
 import numpy as np
-import open3d as o3d
+from scipy.spatial.transform import Rotation
 import sensor_msgs.point_cloud2 as pc2
 
 class Utils(object):
@@ -40,9 +40,9 @@ class Utils(object):
 
     @staticmethod
     def convert_pos_quat_to_transformation(pos, quat):
-        R = o3d.geometry.get_rotation_matrix_from_quaternion(quat)
+        R1 = Rotation.from_quat(quat)
         T = np.empty((4, 4))
-        T[0:3, 0:3] = R
+        T[0:3, 0:3] = R1.as_dcm()
         T[0:3, 3] = pos
         T[3, :] = [0, 0, 0, 1]
         return T
@@ -56,20 +56,12 @@ class Utils(object):
 
     @staticmethod
     def transform_pointcloud(cloud, T):
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(cloud[:, 0:3])
-        pcd.transform(T)
-        return np.asarray(pcd.points)
+        return (np.dot(cloud, T[0:3,0:3].T) + T[0:3, 3].T)
 
     @staticmethod
     def downsample_pointcloud(cloud, voxel_size=0.15):
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(cloud[:, 0:3])
-        pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
-
-        dst = np.asarray(pcd.points)
-        # TODO(lbern): fix for intensity
-        return dst
+        # TODO: not yet implemented
+        return cloud
 
     @staticmethod
     def fix_nn_output(n_neighbors, idx, nn_dists, nn_indices):

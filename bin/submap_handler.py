@@ -8,7 +8,6 @@ import numpy as np
 from scipy import spatial
 from scipy.spatial.transform import Rotation
 
-from reg_box import RegBox
 from utils import Utils
 
 from maplab_msgs.msg import SubmapConstraint
@@ -30,7 +29,6 @@ FIELDS_XYZI = [
 class SubmapHandler(object):
     def __init__(self, config):
         self.config = config
-        self.reg_box = RegBox()
 
         self.map_pub = rospy.Publisher(config.accumulated_map_topic, PointCloud2, queue_size=10)
         self.submap_seq = 0
@@ -178,20 +176,7 @@ class SubmapHandler(object):
             T_G_B_b = candidate_b.get_pivot_pose_IMU()
             T_a_b = np.matmul(T_B_G_a, T_G_B_b)
 
-        if not self.config.refine_with_ICP:
-            return T_a_b
-
-        points_a = candidate_a.compute_dense_map()
-        points_b = candidate_b.compute_dense_map()
-
-        # Register the submaps.
-        T = self.reg_box.register(points_a, points_b, T_a_b)
-        #self.reg_box.draw_registration_result(points_a, points_b, T)
-        #self.reg_box.draw_registration_result(points_a, points_b, T_L_a_L_b)
-        if self.reg_box.verify_registration_result(T, T_a_b):
-            return T
-        else:
-            return T_L_a_L_b
+        return T_a_b
 
     def create_and_append_submap_constraint_msg(self, candidate_a, candidate_b, T_L_a_L_b, submap_msg):
         submap_msg.id_from.append(candidate_a.id)

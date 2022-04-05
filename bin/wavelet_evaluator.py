@@ -25,15 +25,6 @@ class WaveletEvaluator(object):
     def set_scales(self, n_scales):
         self.n_scales = n_scales
 
-    def compare_signals(self, G, x_1, x_2):
-        # Compute the wavelets for each node and scale.
-        psi = self.compute_wavelets(G)
-        rospy.logdebug("[WaveletEvaluator] psi = {psi}".format(psi=psi.shape))
-
-        # Compute the wavelet coefficients for x_1 and x_2.
-        W_1 = self.compute_wavelet_coeffs(psi, x_1)
-        W_2 = self.compute_wavelet_coeffs(psi, x_2)
-
     def get_wavelets(self):
         return self.psi
 
@@ -78,23 +69,6 @@ class WaveletEvaluator(object):
 
         return W if n_dim == 1 else np.mean(W, axis=2)
 
-    def check_submap(self, coeffs_1, coeffs_2, submap_ids):
-        submap_coeffs_1 = coeffs_1[submap_ids, :]
-        submap_coeffs_2 = coeffs_2[submap_ids, :]
-
-        D = self.compute_cosine_distance(submap_coeffs_1, submap_coeffs_2)
-        return self.evaluate_scales(D)
-
-    def compute_distances(self, coeffs_1, coeffs_2):
-        distances = np.zeros((9, self.n_scales))
-        for j in range(0, self.n_scales):
-            distances[1, j] = scipy.spatial.distance.euclidean(coeffs_1[:,j], coeffs_2[:,j])
-            distances[3, j] = scipy.spatial.distance.correlation(coeffs_1[:,j], coeffs_2[:,j])
-            distances[7, j] = scipy.spatial.distance.cityblock(coeffs_1[:,j], coeffs_2[:,j])
-            distances[8, j] = scipy.spatial.distance.chebyshev(coeffs_1[:,j], coeffs_2[:,j])
-
-        return distances
-
     def compute_distances_1D(self, coeffs_1, coeffs_2):
         distances = np.zeros((9, self.n_scales))
         for j in range(0, self.n_scales):
@@ -104,21 +78,6 @@ class WaveletEvaluator(object):
             distances[3, j] = scipy.spatial.distance.chebyshev(coeffs_1[j], coeffs_2[j])
 
         return distances
-
-    def compute_features_for_submap(self, coeffs_1, coeffs_2, submap_ids):
-        n_coeffs_1 = coeffs_1.shape[0]
-        n_coeffs_2 = coeffs_2.shape[0]
-        if n_coeffs_1 != n_coeffs_2:
-            return pandas.DataFrame({})
-
-        submap_ids = np.array(submap_ids, dtype=np.int)
-        mask_oob = submap_ids < n_coeffs_1
-        mask_oob = np.logical_and(mask_oob, submap_ids < n_coeffs_2)
-        submap_ids = submap_ids[mask_oob]
-
-        submap_coeffs_1 = coeffs_1[submap_ids, :]
-        submap_coeffs_2 = coeffs_2[submap_ids, :]
-        return self.compute_features(submap_coeffs_1, submap_coeffs_2)
 
     def compute_features(self, submap_coeffs_1, submap_coeffs_2):
         n_nodes = submap_coeffs_1.shape[0]
@@ -150,73 +109,6 @@ class WaveletEvaluator(object):
             })
             all_data = all_data.append(data)
         return np.nan_to_num(all_data)
-
-    def classify_simple(self, data):
-        n_nodes = data.shape[0]
-        labels = []
-        for i in range(0, n_nodes):
-            low_mean = data[i,0]
-            mid_mean = data[i,1]
-            high_mean = data[i,2]
-            dists = np.array([low_mean, mid_mean, high_mean])
-            max_dist_idx = np.argmax(dists)
-
-            np.set_printoptions(suppress=True)
-            local_labels = []
-            # h floor
-            # if dists[0] > 0.4:
-            #     local_labels.append(1)
-            # if dists[1] > 0.11: # for h_naymal_2 we had 0.2
-            #     local_labels.append(2)
-            # if dists[2] > 0.05:
-            #     local_labels.append(3)
-
-            # if dists[0] > 0.5:
-            #     local_labels.append(1)
-            # if dists[1] > 0.6: # for h_naymal_2 we had 0.2
-            #     local_labels.append(2)
-            # if dists[2] > 0.7:
-            #     local_labels.append(3)
-
-            # -----------------------------------------------
-
-            # hagerbach anymal 2
-            # if dists[0] > 0.31:
-            #     local_labels.append(1)
-            # if dists[1] > 0.21: # for h_naymal_2 we had 0.2
-            #     local_labels.append(2)
-            # if dists[2] > 0.037:
-            #     local_labels.append(3)
-
-            # hagerbach anymal 1
-            # if dists[0] > 2.96:
-            #     local_labels.append(1)
-            # if dists[1] > 0.80: # for h_naymal_2 we had 0.2
-            #     local_labels.append(2)
-            # if dists[2] > 0.025:
-            #     local_labels.append(3)
-
-            # h floor
-            # if dists[0] > 0.31:
-            #     local_labels.append(1)
-            # if dists[1] > 0.21: # for h_naymal_2 we had 0.2
-            #     local_labels.append(2)
-            # if dists[2] > 0.07:
-            #     local_labels.append(3)
-
-            # EuRoC
-            if dists[0] > 0.2:
-                local_labels.append(1)
-            if dists[1] > 0.1:
-                local_labels.append(2)
-            if dists[2] > 0.5:
-                local_labels.append(3)
-
-            # if len(local_labels) > 0:
-            rospy.loginfo('[WaveletEvaluator] dists are {dists}'.format(dists=dists))
-            rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
-            labels.append(local_labels)
-        return labels
 
 if __name__ == '__main__':
     print(" --- Test Driver for the Wavelet Evaluator ----------------------")

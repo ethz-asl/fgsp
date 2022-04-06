@@ -20,13 +20,13 @@ class CommandPost(object):
         self.bad_path_msg = None
         self.degenerate_path_msg = None
         self.degenerate_indices = []
-        rospy.loginfo("[CommandPost] Initialized command post center.")
         self.previous_relatives = {}
         self.small_constraint_counter = 0
         self.mid_constraint_counter = 0
         self.large_constraint_counter = 0
         self.anchor_constraint_counter = 0
         self.history = None
+        rospy.loginfo("[CommandPost] Initialized command post center.")
 
     def reset_msgs(self):
         self.good_path_msg = Path()

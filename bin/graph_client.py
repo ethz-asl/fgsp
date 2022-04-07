@@ -92,6 +92,7 @@ class GraphClient(object):
         # We only trigger the graph building if the msg contains new information.
         if self.global_graph.msg_contains_updates(msg) and self.config.client_mode == 'multiscale':
             self.global_graph.build(msg)
+            self.record_signal_for_key(np.array([0]), 'opt')
             self.eval.compute_wavelets(self.global_graph.G)
 
         self.mutex.release()
@@ -182,6 +183,7 @@ class GraphClient(object):
             self.is_updating = False
             self.mutex.release()
             return
+
         self.compare_estimations()
         # self.publish_client_update()
 
@@ -218,14 +220,17 @@ class GraphClient(object):
         graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(src=src)
         if src == 'opt':
             self.global_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
-            rospy.logwarn('[GraphClient] for {src} we have {x_shape} and {coords_shape}'.format(src=src, x_shape=x.shape, coords_shape=self.global_graph.coords.shape))
         elif src == 'est':
             self.robot_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
-            rospy.logwarn('[GraphClient] for {src} we have {x_shape} and {coords_shape}'.format(src=src, x_shape=x.shape, coords_shape=self.robot_graph.coords.shape))
+        rospy.logwarn('[GraphClient] for {src} we have {x_shape} and {coords_shape}'.format(src=src, x_shape=x.shape, coords_shape=self.robot_graph.coords.shape))
 
     def record_traj_for_key(self, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(src=src)
         np.save(filename, traj)
+
+    def record_features(self, features):
+        filename = self.config.dataroot + "/data/features.npy"
+        np.save(filename, features)
 
     def compare_estimations(self):
         if not self.config.enable_relative_constraints:
@@ -270,6 +275,7 @@ class GraphClient(object):
         all_opt_nodes = self.optimized_signal.get_all_nodes(key)
         n_opt_nodes = len(all_opt_nodes)
 
+
         # Compute the features and publish the results.
         # This evaluates per node the scale of the difference
         # and creates a relative constraint accordingly.
@@ -306,18 +312,20 @@ class GraphClient(object):
         orientations = np.array([np.array(x.orientation) for x in all_est_nodes])
         timestamps = np.array([np.array(Utils.ros_time_to_ns(x.ts)) for x in all_est_nodes])
         poses = np.column_stack([positions, orientations, timestamps])
+
         self.robot_graph.build_from_poses(poses)
         # self.robot_graph.reduce_graph_using_indices(est_idx)
 
         # TODO(lbern): fix this temporary test
-        positions = np.array([np.array(x.position) for x in all_est_nodes])
-        orientations = np.array([np.array(x.orientation) for x in all_est_nodes])
-        timestamps = np.array([np.array(Utils.ros_time_to_ns(x.ts)) for x in all_est_nodes])
+        # Due to the reduction we rebuild here.
+        positions = np.array([np.array(x.position) for x in all_opt_nodes])
+        orientations = np.array([np.array(x.orientation) for x in all_opt_nodes])
+        timestamps = np.array([np.array(Utils.ros_time_to_ns(x.ts)) for x in all_opt_nodes])
         global_poses = np.column_stack([positions, orientations, timestamps])
         self.global_graph.build_from_poses(global_poses)
-        self.eval.compute_wavelets(self.global_graph.G)
 
         if self.config.client_mode == 'multiscale':
+            self.eval.compute_wavelets(self.global_graph.G)
             self.robot_eval.compute_wavelets(self.robot_graph.G)
         return (all_opt_nodes, all_est_nodes)
 
@@ -385,6 +393,7 @@ class GraphClient(object):
         W_est = self.robot_eval.compute_wavelet_coeffs(x_est)
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
         features = self.eval.compute_features(W_opt, W_est)
+        self.record_features(features)
 
         labels =  self.classifier.classify(features)
         return ClassificationResult(key, all_opt_nodes, features, labels)

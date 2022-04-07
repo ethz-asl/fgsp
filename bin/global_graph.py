@@ -211,9 +211,9 @@ class GlobalGraph(object):
 
         Xi_12 = (pose1.inv().dot(pose2)).log()
         W = np.eye(4,4)
-        W[0,0] = 50
-        W[1,1] = 50
-        W[2,2] = 50
+        W[0,0] = 10
+        W[1,1] = 10
+        W[2,2] = 100
         W[3,3] = 1
         inner = np.trace(np.matmul(np.matmul(SE3.wedge(Xi_12),W),SE3.wedge(Xi_12).transpose()))
 

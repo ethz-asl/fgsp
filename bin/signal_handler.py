@@ -186,8 +186,8 @@ class SignalHandler(object):
     def compute_se3_distance(self, pose_lhs, pose_rhs):
         Xi_12 = (pose_lhs.inv().dot(pose_rhs)).log()
         W = np.eye(4,4)
-        W[0,0] = 100
-        W[1,1] = 100
+        W[0,0] = 10
+        W[1,1] = 10
         W[2,2] = 100
         W[3,3] = 1
 

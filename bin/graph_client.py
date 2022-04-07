@@ -13,6 +13,7 @@ from global_graph import GlobalGraph
 from signal_handler import SignalHandler
 from signal_synchronizer import SignalSynchronizer
 from wavelet_evaluator import WaveletEvaluator
+from simple_classifier import SimpleClassifier
 from command_post import CommandPost
 from classification_result import ClassificationResult
 from constraint_handler import ConstraintHandler
@@ -59,6 +60,7 @@ class GraphClient(object):
         self.synchronizer = SignalSynchronizer(self.config)
         self.eval = WaveletEvaluator()
         self.robot_eval = WaveletEvaluator()
+        self.classifier = SimpleClassifier()
         self.commander = CommandPost()
 
         # Key management to keep track of the received messages.
@@ -377,13 +379,14 @@ class GraphClient(object):
         if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
             rospy.logwarn('[GraphClient] Optimized wavelet does not match robot wavelet: {psi} vs. {robot_psi}'.format(psi=psi.shape, robot_psi=robot_psi.shape))
             return None
+
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.
         W_est = self.robot_eval.compute_wavelet_coeffs(x_est)
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
         features = self.eval.compute_features(W_opt, W_est)
 
-        labels =  self.eval.classify_simple(features)
+        labels =  self.classifier.classify(features)
         return ClassificationResult(key, all_opt_nodes, features, labels)
 
     def perform_euclidean_evaluation(self, key, all_opt_nodes, all_est_nodes):

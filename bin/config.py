@@ -84,7 +84,6 @@ class ClientConfig(BaseConfig):
         # general config
         self.rate = rospy.Rate(0.1)
         self.dataroot = '/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp'
-        self.random_forest_model = '/config/forest.joblib'
         self.robot_name = 'cerberus'
         self.enable_client_update = True
         self.enable_submap_constraints = True
@@ -128,7 +127,6 @@ class ClientConfig(BaseConfig):
         # general config
         self.rate = rospy.Rate(self.try_get_param("~update_rate", 0.1))
         self.dataroot = self.try_get_param("~dataroot", self.dataroot)
-        self.random_forest_model = self.try_get_param("~random_forest_model", self.random_forest_model)
         self.robot_name = self.try_get_param("~robot_name", self.robot_name)
         self.enable_client_update = self.try_get_param("~enable_client_update", self.enable_client_update)
         self.enable_submap_constraints = self.try_get_param("~enable_submap_constraints", self.enable_submap_constraints)

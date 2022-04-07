@@ -5,7 +5,6 @@ out_traj_opt_topic:                   /graph_monitor/sparse_graph/trajectory
 min_node_count:                       20
 
 update_rate:                          0.05
-random_forest_model:                  "/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp/config/forest.joblib"
 verification_service:                 /graph_monitor/verification
 verification_server_request:          /maplab_server/verification
 

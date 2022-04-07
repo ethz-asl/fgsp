@@ -76,7 +76,6 @@ class Plotter(object):
         print('{color} --- General Configuration -------------------------------------------------- {end}'.format(color=font.BLUE, end=font.END))
         print('{bold} Update rate:{end} {val}hz'.format(bold=font.BOLD, end=font.END, val = 1e9/config.rate.sleep_dur.to_nsec()))
         print('{bold} Dataroot:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.dataroot))
-        print('{bold} Path to the random forest model:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.random_forest_model))
         print('{bold} Robot name:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.robot_name))
         print('{bold} Enable submap constraints:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_submap_constraints))
         print('{bold} Enable anchor constraints:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_anchor_constraints))

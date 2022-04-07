@@ -17,7 +17,6 @@ client_update_topic:         "/graph_client/latest_graph"
 # Div
 dataroot:                    "/mnt/data"
 robot_name:                  "anymal_2"
-random_forest_model:         "/config/forest.joblib"
 update_rate:                 0.1
 enable_client_update:        False
 enable_anchor_constraints:   True

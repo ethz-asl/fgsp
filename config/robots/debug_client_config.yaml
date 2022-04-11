@@ -18,7 +18,8 @@ client_update_topic:           "/graph_client/latest_graph"
 client_mode:                   'multiscale'
 
 # Graph configuration.
-use_se3_computation:           True
+use_se3_computation:           False
+use_so3_computation:           True
 include_rotational_weight:     False
 include_temporal_decay_weight: False
 

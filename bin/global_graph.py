@@ -184,9 +184,12 @@ class GlobalGraph(object):
                     continue
                 if self.config.use_se3_computation:
                     adj[i, nn_i] = self.compute_se3_weights(poses[i,:], poses[nn_i,:])
+                elif self.config.use_so3_computation:
+                    adj[i, nn_i] = self.compute_so3_weights(poses[i,:], poses[nn_i,:])
                 else:
                     adj[i, nn_i] = self.compute_simple_weights(poses[i,:], poses[nn_i,:])
 
+        adj[adj < 0] = 0
         assert np.all(adj >= 0)
         return adj
 
@@ -224,6 +227,12 @@ class GlobalGraph(object):
         sigma = 1.0
         normalization = 2.0*(sigma**2)
         return np.exp(-dist/normalization)
+
+    def compute_so3_weights(self, pose_lhs, pose_rhs):
+        R_lhs = Utils.convert_quat_to_rotation(pose_lhs[3:7])
+        R_rhs = Utils.convert_quat_to_rotation(pose_rhs[3:7])
+        rot_diff = np.matmul(R_lhs, R_rhs.transpose())
+        return np.trace(rot_diff)
 
     def compute_distance_weight(self, coords_lhs, coords_rhs):
         sigma = 1.0

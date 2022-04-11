@@ -141,7 +141,7 @@ class SignalHandler(object):
         x = np.linalg.norm(pos_signal, ord=2, axis=1)
         return x
 
-    def compute_pos_signal(self, nodes):
+    def compute_r3_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
         traj_origin = traj[0,1:4]
 
@@ -149,7 +149,7 @@ class SignalHandler(object):
 
         return np.linalg.norm(pos_signal, ord=2, axis=1)
 
-    def compute_rot_signal(self, nodes):
+    def compute_so3_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
         wxyz = traj[0,4:8]
         traj_origin = Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm()
@@ -165,10 +165,10 @@ class SignalHandler(object):
     def compute_signal(self, nodes):
         if self.config.use_se3_computation:
             return self.compute_se3_signal(nodes)
+        elif self.config.use_so3_computation:
+            return self.compute_so3_signal(nodes)
         else:
-            positions = self.compute_pos_signal(nodes)
-            rotations = self.compute_rot_signal(nodes)
-            return np.column_stack((positions, rotations))
+            return self.compute_r3_signal(nodes)
 
     def compute_se3_signal(self, nodes):
         traj = self.compute_trajectory(nodes)

@@ -20,7 +20,7 @@ client_mode:                   'multiscale'
 # Graph configuration.
 use_se3_computation:           True
 include_rotational_weight:     False
-include_temporal_decay_weight: True
+include_temporal_decay_weight: False
 
 # Div
 dataroot:                      "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"

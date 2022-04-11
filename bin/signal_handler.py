@@ -188,8 +188,8 @@ class SignalHandler(object):
         W = np.eye(4,4)
         W[0,0] = 10
         W[1,1] = 10
-        W[2,2] = 100
-        W[3,3] = 1
+        W[2,2] = 1.5
+        W[3,3] = 1.5
 
         inner = np.trace(np.matmul(np.matmul(SE3.wedge(Xi_12),W),SE3.wedge(Xi_12).transpose()))
         return np.sqrt(inner)

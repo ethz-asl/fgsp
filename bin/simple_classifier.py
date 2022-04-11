@@ -18,19 +18,12 @@ class SimpleClassifier(object):
             np.set_printoptions(suppress=True)
             local_labels = []
             # h floor
-            # if dists[0] > 0.4:
-            #     local_labels.append(1)
-            # if dists[1] > 0.11: # for h_naymal_2 we had 0.2
-            #     local_labels.append(2)
-            # if dists[2] > 0.05:
-            #     local_labels.append(3)
-
-            # if dists[0] > 0.5:
-            #     local_labels.append(1)
-            # if dists[1] > 0.6: # for h_naymal_2 we had 0.2
-            #     local_labels.append(2)
-            # if dists[2] > 0.7:
-            #     local_labels.append(3)
+            if dists[0] > 1.0:
+                local_labels.append(1)
+            if dists[1] > 1.0:
+                local_labels.append(2)
+            if dists[2] > 1.0:
+                local_labels.append(3)
 
             # -----------------------------------------------
 
@@ -59,12 +52,12 @@ class SimpleClassifier(object):
             #     local_labels.append(3)
 
             # EuRoC
-            if dists[0] > 0.2:
-                local_labels.append(1)
-            if dists[1] > 0.1:
-                local_labels.append(2)
-            if dists[2] > 0.5:
-                local_labels.append(3)
+            # if dists[0] > 0.2:
+            #     local_labels.append(1)
+            # if dists[1] > 0.1:
+            #     local_labels.append(2)
+            # if dists[2] > 0.5:
+            #     local_labels.append(3)
 
             # if len(local_labels) > 0:
             rospy.loginfo('[WaveletEvaluator] dists are {dists}'.format(dists=dists))

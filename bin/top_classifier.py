@@ -20,11 +20,11 @@ class TopClassifier(object):
             col_idx = xy_indices[1][i]
             if labels[row_idx] == None:
                 labels[row_idx] = []
-            labels[row_idx].append(col_idx)
+            labels[row_idx].append(col_idx + 1)
+
+        print(labels)
 
         return labels
-
-
 
 if __name__ == '__main__':
     classifier = TopClassifier(3)

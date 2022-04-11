@@ -14,10 +14,17 @@ class ClassificationResult(object):
         self.opt_nodes = opt_nodes
         self.n_nodes = len(opt_nodes)
         self.features = features
-        self.labels = labels
+        self.labels = self.check_and_fix_labels(labels)
         self.history = {}
         self.partitions = self.partition_nodes(method='nth')
         self.ts_partitions = self.get_ts_from_nodes(self.partitions)
+
+    def check_and_fix_labels(self, labels):
+        n_nodes = len(labels)
+        for i in range(0, n_nodes):
+            if labels[i] is None:
+               labels[i] = []
+        return labels
 
     def partition_nodes(self, method = 'nth'):
         if method == 'nth':

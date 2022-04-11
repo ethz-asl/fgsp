@@ -14,6 +14,7 @@ from signal_handler import SignalHandler
 from signal_synchronizer import SignalSynchronizer
 from wavelet_evaluator import WaveletEvaluator
 from simple_classifier import SimpleClassifier
+from top_classifier import TopClassifier
 from command_post import CommandPost
 from classification_result import ClassificationResult
 from constraint_handler import ConstraintHandler
@@ -60,8 +61,10 @@ class GraphClient(object):
         self.synchronizer = SignalSynchronizer(self.config)
         self.eval = WaveletEvaluator()
         self.robot_eval = WaveletEvaluator()
-        self.classifier = SimpleClassifier()
         self.commander = CommandPost()
+
+        # self.classifier = SimpleClassifier()
+        self.classifier = TopClassifier(50)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []

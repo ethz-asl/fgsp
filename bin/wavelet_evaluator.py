@@ -17,7 +17,7 @@ class SubmapState(Enum):
 
 class WaveletEvaluator(object):
 
-    def __init__(self, n_scales = 12):
+    def __init__(self, n_scales = 6):
         self.n_scales = n_scales
         self.psi = None
         self.feature_names = ['Euclidean_L', 'Euclidean_B', 'Euclidean_H','Correlation_L', 'Correlation_B', 'Correlation_H', 'Manhattan_L', 'Manhattan_B', 'Manhattan_H', 'Chebyshev_L', 'Chebyshev_B', 'Chebyshev_H']
@@ -84,9 +84,17 @@ class WaveletEvaluator(object):
             D = np.nan_to_num(D)
             data = pandas.DataFrame({
                 # Euclidean distance.
-                self.feature_names[0]:[np.sum(D[0, 0:4])],
-                self.feature_names[1]:[np.sum(D[0, 4:8])],
-                self.feature_names[2]:[np.sum(D[0, 8:12])],
+                # self.feature_names[0]:[np.sum(D[0, 0])],
+                # self.feature_names[1]:[np.sum(D[0, 1])],
+                # self.feature_names[2]:[np.sum(D[0, 2])],
+
+                self.feature_names[0]:[np.sum(D[0, 0:2])],
+                self.feature_names[1]:[np.sum(D[0, 2:4])],
+                self.feature_names[2]:[np.sum(D[0, 4:6])],
+
+                # self.feature_names[0]:[np.sum(D[0, 0:4])],
+                # self.feature_names[1]:[np.sum(D[0, 4:8])],
+                # self.feature_names[2]:[np.sum(D[0, 8:12])],
             })
             all_data = all_data.append(data)
         return np.nan_to_num(all_data)

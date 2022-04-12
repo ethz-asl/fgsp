@@ -8,7 +8,7 @@ import numpy as np
 from scipy import spatial
 from scipy.spatial.transform import Rotation
 
-from utils import Utils
+from fgsp.common.utils import Utils
 
 from maplab_msgs.msg import SubmapConstraint
 from std_msgs.msg import Header

@@ -5,8 +5,8 @@ import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 
-from lc_model import LcModel
-from utils import Utils
+from fgsp.common.lc_model import LcModel
+from fgsp.common.utils import Utils
 
 class RobotConstraints(object):
     def __init__(self):

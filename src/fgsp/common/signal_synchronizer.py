@@ -3,7 +3,7 @@
 import rospy
 import numpy as np
 
-from utils import Utils
+from fgsp.common.utils import Utils
 
 class SignalSynchronizer(object):
 

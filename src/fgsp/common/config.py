@@ -1,6 +1,6 @@
 import rospy
 
-from utils import Utils
+from fgsp.common.utils import Utils
 
 class BaseConfig(object):
     def try_get_param(self, key, default=None):

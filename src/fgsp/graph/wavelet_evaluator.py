@@ -17,7 +17,7 @@ class SubmapState(Enum):
 
 class WaveletEvaluator(object):
 
-    def __init__(self, n_scales = 7):
+    def __init__(self, n_scales = 6):
         self.n_scales = n_scales
         self.psi = None
         self.feature_names = ['Euclidean_L', 'Euclidean_B', 'Euclidean_H','Correlation_L', 'Correlation_B', 'Correlation_H', 'Manhattan_L', 'Manhattan_B', 'Manhattan_H', 'Chebyshev_L', 'Chebyshev_B', 'Chebyshev_H']
@@ -70,12 +70,9 @@ class WaveletEvaluator(object):
         return W if n_dim == 1 else np.mean(W, axis=2)
 
     def compute_distances_1D(self, coeffs_1, coeffs_2):
-        distances = np.zeros((9, self.n_scales))
+        distances = np.zeros((1, self.n_scales))
         for j in range(0, self.n_scales):
             distances[0, j] = scipy.spatial.distance.euclidean(coeffs_1[j], coeffs_2[j])
-            distances[1, j] = scipy.spatial.distance.correlation(coeffs_1[j], coeffs_2[j])
-            distances[2, j] = scipy.spatial.distance.cityblock(coeffs_1[j], coeffs_2[j])
-            distances[3, j] = scipy.spatial.distance.chebyshev(coeffs_1[j], coeffs_2[j])
 
         return distances
 
@@ -84,28 +81,20 @@ class WaveletEvaluator(object):
         all_data = pandas.DataFrame()
         for i in range(n_nodes):
             D = self.compute_distances_1D(submap_coeffs_1[i,:], submap_coeffs_2[i,:])
-#             print(f'D is {D[:,2:4]}')
             D = np.nan_to_num(D)
             data = pandas.DataFrame({
                 # Euclidean distance.
+                # self.feature_names[0]:[np.sum(D[0, 0])],
+                # self.feature_names[1]:[np.sum(D[0, 1])],
+                # self.feature_names[2]:[np.sum(D[0, 2])],
+
                 self.feature_names[0]:[np.sum(D[0, 0:2])],
                 self.feature_names[1]:[np.sum(D[0, 2:4])],
-                self.feature_names[2]:[np.sum(D[0, 5:])],
+                self.feature_names[2]:[np.sum(D[0, 4:6])],
 
-                # Correlation.
-                self.feature_names[3]:[np.sum(D[1, 0:2])],
-                self.feature_names[4]:[np.sum(D[1, 2:4])],
-                self.feature_names[5]:[np.sum(D[1, 5:])],
-
-                # Cityblock distance.
-                self.feature_names[6]:[np.sum(D[2, 0:2])],
-                self.feature_names[7]:[np.sum(D[2, 2:4])],
-                self.feature_names[8]:[np.sum(D[2, 5:])],
-
-                # Chebyshev distance.
-                self.feature_names[9]:[np.sum(D[3, 0:2])],
-                self.feature_names[10]:[np.sum(D[3, 2:4])],
-                self.feature_names[11]:[np.sum(D[3, 5:])],
+                # self.feature_names[0]:[np.sum(D[0, 0:4])],
+                # self.feature_names[1]:[np.sum(D[0, 4:8])],
+                # self.feature_names[2]:[np.sum(D[0, 8:12])],
             })
             all_data = all_data.append(data)
         return np.nan_to_num(all_data)

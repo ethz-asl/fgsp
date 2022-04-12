@@ -39,12 +39,19 @@ class Utils(object):
        return position, orientation
 
     @staticmethod
+    def convert_quat_to_rotation(quat):
+        R = Rotation.from_quat(np.array([quat[1],quat[2],quat[3],quat[0]]))
+        return R.as_dcm()
+
+    @staticmethod
     def convert_pos_quat_to_transformation(pos, quat):
-        R1 = Rotation.from_quat(quat)
+        # takes xyzw as input
+        R = Rotation.from_quat(np.array([quat[1],quat[2],quat[3],quat[0]]))
         T = np.empty((4, 4))
-        T[0:3, 0:3] = R1.as_dcm()
+        T[0:3, 0:3] = R.as_dcm()
         T[0:3, 3] = pos
         T[3, :] = [0, 0, 0, 1]
+
         return T
 
     @staticmethod

@@ -8,9 +8,9 @@ from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 
-from utils import Utils
-from signal_node import SignalNode
-from visualizer import Visualizer
+from fgsp.common.utils import Utils
+from fgsp.common.signal_node import SignalNode
+from fgsp.common.visualizer import Visualizer
 
 class SignalHandler(object):
     def __init__(self, config):
@@ -141,7 +141,7 @@ class SignalHandler(object):
         x = np.linalg.norm(pos_signal, ord=2, axis=1)
         return x
 
-    def compute_pos_signal(self, nodes):
+    def compute_r3_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
         traj_origin = traj[0,1:4]
 
@@ -149,7 +149,7 @@ class SignalHandler(object):
 
         return np.linalg.norm(pos_signal, ord=2, axis=1)
 
-    def compute_rot_signal(self, nodes):
+    def compute_so3_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
         wxyz = traj[0,4:8]
         traj_origin = Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm()
@@ -165,10 +165,10 @@ class SignalHandler(object):
     def compute_signal(self, nodes):
         if self.config.use_se3_computation:
             return self.compute_se3_signal(nodes)
+        elif self.config.use_so3_computation:
+            return self.compute_so3_signal(nodes)
         else:
-            positions = self.compute_pos_signal(nodes)
-            rotations = self.compute_rot_signal(nodes)
-            return np.column_stack((positions, rotations))
+            return self.compute_r3_signal(nodes)
 
     def compute_se3_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
@@ -186,10 +186,10 @@ class SignalHandler(object):
     def compute_se3_distance(self, pose_lhs, pose_rhs):
         Xi_12 = (pose_lhs.inv().dot(pose_rhs)).log()
         W = np.eye(4,4)
-        W[0,0] = 100
-        W[1,1] = 100
-        W[2,2] = 100
-        W[3,3] = 1
+        W[0,0] = 10
+        W[1,1] = 10
+        W[2,2] = 1.5
+        W[3,3] = 1.5
 
         inner = np.trace(np.matmul(np.matmul(SE3.wedge(Xi_12),W),SE3.wedge(Xi_12).transpose()))
         return np.sqrt(inner)

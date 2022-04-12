@@ -2,6 +2,7 @@
 import rospy
 import time
 import sys
+
 import numpy as np
 from liegroups import SE3
 from pygsp import graphs, filters, reduction
@@ -9,8 +10,9 @@ from geometry_msgs.msg import Point
 from maplab_msgs.msg import Graph
 from scipy import spatial
 from scipy.spatial.transform import Rotation
-from visualizer import Visualizer
-from utils import Utils
+
+from fgsp.common.visualizer import Visualizer
+from fgsp.common.utils import Utils
 
 class GlobalGraph(object):
     def __init__(self, config, reduced=False):
@@ -184,9 +186,12 @@ class GlobalGraph(object):
                     continue
                 if self.config.use_se3_computation:
                     adj[i, nn_i] = self.compute_se3_weights(poses[i,:], poses[nn_i,:])
+                elif self.config.use_so3_computation:
+                    adj[i, nn_i] = self.compute_so3_weights(poses[i,:], poses[nn_i,:])
                 else:
                     adj[i, nn_i] = self.compute_simple_weights(poses[i,:], poses[nn_i,:])
 
+        adj[adj < 0] = 0
         assert np.all(adj >= 0)
         return adj
 
@@ -211,10 +216,10 @@ class GlobalGraph(object):
 
         Xi_12 = (pose1.inv().dot(pose2)).log()
         W = np.eye(4,4)
-        W[0,0] = 50
-        W[1,1] = 50
-        W[2,2] = 50
-        W[3,3] = 1
+        W[0,0] = 10
+        W[1,1] = 10
+        W[2,2] = 1
+        W[3,3] = 3
         inner = np.trace(np.matmul(np.matmul(SE3.wedge(Xi_12),W),SE3.wedge(Xi_12).transpose()))
 
         # Equal weighting for rotation and translation.
@@ -224,6 +229,12 @@ class GlobalGraph(object):
         sigma = 1.0
         normalization = 2.0*(sigma**2)
         return np.exp(-dist/normalization)
+
+    def compute_so3_weights(self, pose_lhs, pose_rhs):
+        R_lhs = Utils.convert_quat_to_rotation(pose_lhs[3:7])
+        R_rhs = Utils.convert_quat_to_rotation(pose_rhs[3:7])
+        rot_diff = np.matmul(R_lhs, R_rhs.transpose())
+        return np.trace(rot_diff)
 
     def compute_distance_weight(self, coords_lhs, coords_rhs):
         sigma = 1.0

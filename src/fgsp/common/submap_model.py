@@ -8,7 +8,7 @@ from maplab_msgs.msg import Submap, DenseNode
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import PointCloud2, PointField
 
-from utils import Utils
+from .utils import Utils
 
 class SubmapModel(object):
     def __init__(self):

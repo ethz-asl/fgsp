@@ -2,6 +2,7 @@
 
 import rospy
 import numpy as np
+from fgsp.common.utils import Utils
 
 class TopClassifier(object):
 

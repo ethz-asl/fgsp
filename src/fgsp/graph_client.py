@@ -9,18 +9,18 @@ from nav_msgs.msg import Path
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
 from multiprocessing import Lock
 
-from global_graph import GlobalGraph
-from signal_handler import SignalHandler
-from signal_synchronizer import SignalSynchronizer
-from wavelet_evaluator import WaveletEvaluator
-from simple_classifier import SimpleClassifier
-from top_classifier import TopClassifier
-from command_post import CommandPost
-from classification_result import ClassificationResult
-from constraint_handler import ConstraintHandler
-from config import ClientConfig
-from plotter import Plotter
-from utils import Utils
+from graph.wavelet_evaluator import WaveletEvaluator
+from graph.global_graph import GlobalGraph
+from controller.signal_handler import SignalHandler
+from controller.command_post import CommandPost
+from controller.constraint_handler import ConstraintHandler
+from common.signal_synchronizer import SignalSynchronizer
+from common.config import ClientConfig
+from common.plotter import Plotter
+from common.utils import Utils
+from classifier.simple_classifier import SimpleClassifier
+from classifier.top_classifier import TopClassifier
+from classifier.classification_result import ClassificationResult
 
 class GraphClient(object):
     def __init__(self):
@@ -64,7 +64,7 @@ class GraphClient(object):
         self.commander = CommandPost()
 
         # self.classifier = SimpleClassifier()
-        self.classifier = TopClassifier(10)
+        self.classifier = TopClassifier(20)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []

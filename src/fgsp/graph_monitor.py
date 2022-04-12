@@ -6,12 +6,12 @@ import time
 from maplab_msgs.msg import *
 from multiprocessing import Lock
 
-from global_graph import GlobalGraph
-from signal_handler import SignalHandler
-from submap_handler import SubmapHandler
-from submap_model import SubmapModel
-from config import MonitorConfig
-from plotter import Plotter
+from graph.global_graph import GlobalGraph
+from controller.signal_handler import SignalHandler
+from controller.submap_handler import SubmapHandler
+from common.submap_model import SubmapModel
+from common.config import MonitorConfig
+from common.plotter import Plotter
 
 class GraphMonitor(object):
     def __init__(self):

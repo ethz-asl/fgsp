@@ -2,8 +2,8 @@
 
 import rospy
 import numpy as np
-from robot_constraints import RobotConstraints
-from utils import Utils
+from fgsp.common.robot_constraints import RobotConstraints
+from fgsp.common.utils import Utils
 
 class ConstraintHandler(object):
     def __init__(self):

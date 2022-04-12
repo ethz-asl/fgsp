@@ -2,6 +2,7 @@
 import rospy
 import time
 import sys
+
 import numpy as np
 from liegroups import SE3
 from pygsp import graphs, filters, reduction
@@ -9,8 +10,9 @@ from geometry_msgs.msg import Point
 from maplab_msgs.msg import Graph
 from scipy import spatial
 from scipy.spatial.transform import Rotation
-from visualizer import Visualizer
-from utils import Utils
+
+from fgsp.common.visualizer import Visualizer
+from fgsp.common.utils import Utils
 
 class GlobalGraph(object):
     def __init__(self, config, reduced=False):

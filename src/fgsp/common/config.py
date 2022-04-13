@@ -29,7 +29,6 @@ class MonitorConfig(BaseConfig):
         self.p_norm = 2
         self.enable_submap_map_publishing = False
         self.compute_poses_in_LiDAR = False
-        self.refine_with_ICP = False
 
         # input
         self.in_graph_topic = '/maplab_server/sparse_graph/graph'
@@ -64,7 +63,6 @@ class MonitorConfig(BaseConfig):
         self.p_norm = self.try_get_param("~submap_constraint_p_norm", self.p_norm)
         self.enable_submap_map_publishing = self.try_get_param("~enable_submap_map_publishing", self.enable_submap_map_publishing)
         self.compute_poses_in_LiDAR = self.try_get_param("~submap_constraint_export_lidar_poses", self.compute_poses_in_LiDAR)
-        self.refine_with_ICP = self.try_get_param("~submap_constraint_refine_icp", self.refine_with_ICP)
 
         # input
         self.in_graph_topic = self.try_get_param("~in_graph_topic", self.in_graph_topic)
@@ -101,6 +99,8 @@ class ClientConfig(BaseConfig):
 
         # constraint construction
         self.client_mode = 'multiscale'
+        self.classifier = 'top'
+        self.top_classifier_select_n = 10
 
         # Graph construction
         self.include_rotational_weight = False
@@ -145,6 +145,8 @@ class ClientConfig(BaseConfig):
 
         # constraint construction
         self.client_mode = self.try_get_param("~client_mode", self.client_mode)
+        self.classifier = self.try_get_param("~classifier", self.classifier)
+        self.top_classifier_select_n = self.try_get_param("~top_classifier_select_n", self.top_classifier_select_n)
 
         # Graph construction
         self.include_rotational_weight = self.try_get_param("~include_rotational_weight", self.include_rotational_weight)

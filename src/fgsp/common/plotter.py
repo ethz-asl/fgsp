@@ -55,7 +55,9 @@ class Plotter(object):
         print('{bold} Submap k-nearest neighbors:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.n_nearest_neighbors))
         print('{bold} Submap visualize map:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_submap_map_publishing))
         print('{bold} Submap compute LiDAR poses:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.compute_poses_in_LiDAR))
-        print('{bold} Submap ICP refinement:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.refine_with_ICP))
+        print('{bold} Using SE(3) computation:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.use_se3_computation))
+        print('{bold} Using SO(3) computation:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.use_so3_computation))
+        print('{bold} Using R^3 computation:{end} {val}'.format(bold=font.BOLD, end=font.END, val = (!config.use_so3_computation && !config.use_se3_computation)))
         print('\n')
 
         print('{color} --- Subscriber Configuration (Input) --------------------------------------- {end}'.format(color=font.YELLOW, end=font.END))

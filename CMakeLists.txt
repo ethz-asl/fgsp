@@ -11,6 +11,6 @@ catkin_package(
 
 
 install(DIRECTORY
-  config src
+  config launch src
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

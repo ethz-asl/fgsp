@@ -55,9 +55,6 @@ class Plotter(object):
         print('{bold} Submap k-nearest neighbors:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.n_nearest_neighbors))
         print('{bold} Submap visualize map:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_submap_map_publishing))
         print('{bold} Submap compute LiDAR poses:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.compute_poses_in_LiDAR))
-        print('{bold} Using SE(3) computation:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.use_se3_computation))
-        print('{bold} Using SO(3) computation:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.use_so3_computation))
-        print('{bold} Using R^3 computation:{end} {val}'.format(bold=font.BOLD, end=font.END, val = (!config.use_so3_computation && !config.use_se3_computation)))
         print('\n')
 
         print('{color} --- Subscriber Configuration (Input) --------------------------------------- {end}'.format(color=font.YELLOW, end=font.END))
@@ -85,6 +82,18 @@ class Plotter(object):
         print('{bold} Enable trajectory recording:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_trajectory_recording))
         print('{bold} Signal export path:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.signal_export_path))
         print('{bold} Trajectory export path:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.trajectory_export_path))
+        print('\n')
+
+        print('{color} --- Operating Mode --------------------------------------------------------- {end}'.format(color=font.RED, end=font.END))
+        if config.use_se3_computation:
+            print('{bold} Using SE(3) computations {end}'.format(bold=font.BOLD, end=font.END))
+        elif config.use_so3_computation:
+            print('{bold} Using SO(3) computations {end}'.format(bold=font.BOLD, end=font.END))
+        else:
+            print('{bold} Using R^3 computations {end}'.format(bold=font.BOLD, end=font.END))
+            print('{bold} Including rotational weight: {end} {val}'.format(bold=font.BOLD, end=font.END, val = config.include_rotational_weight))
+            print('{bold} Including temporal decay: {end} {val}'.format(bold=font.BOLD, end=font.END, val = config.include_temporal_decay_weight))
+        print('{bold} Classifier: {end} {val}'.format(bold=font.BOLD, end=font.END, val = config.classifier))
         print('\n')
 
         print('{color} --- Subscriber Configuration (Input) --------------------------------------- {end}'.format(color=font.YELLOW, end=font.END))

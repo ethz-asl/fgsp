@@ -99,6 +99,8 @@ class ClientConfig(BaseConfig):
 
         # constraint construction
         self.client_mode = 'multiscale'
+        self.classifier = 'top'
+        self.top_classifier_select_n = 10
 
         # Graph construction
         self.include_rotational_weight = False
@@ -143,6 +145,8 @@ class ClientConfig(BaseConfig):
 
         # constraint construction
         self.client_mode = self.try_get_param("~client_mode", self.client_mode)
+        self.classifier = self.try_get_param("~classifier", self.classifier)
+        self.top_classifier_select_n = self.try_get_param("~top_classifier_select_n", self.top_classifier_select_n)
 
         # Graph construction
         self.include_rotational_weight = self.try_get_param("~include_rotational_weight", self.include_rotational_weight)

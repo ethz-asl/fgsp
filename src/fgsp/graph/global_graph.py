@@ -299,7 +299,7 @@ class GlobalGraph(object):
         self.G.compute_fourier_basis()
 
     def reduce_every_other(self):
-        n_nodes = np.shape(self.coords)[0]
+        n_nodes = self.coords.shape[0]
         return np.arange(0, n_nodes, 2)
 
     def reduce_largest_ev_positive(self, take_n):

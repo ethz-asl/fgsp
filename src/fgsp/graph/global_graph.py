@@ -106,7 +106,7 @@ class GlobalGraph(BaseGraph):
         poses = self.read_coordinates_from_poses(poses)
         self.coords = poses[:,0:3]
         rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
-        self.adj = self..create_adjacency_from_poses(poses)
+        self.adj = self.create_adjacency_from_poses(poses)
         rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
 
     def build_from_poses(self, poses):
@@ -117,7 +117,7 @@ class GlobalGraph(BaseGraph):
             return
         self.coords = poses
         rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
-        self.adj = self..create_adjacency_from_poses(self.coords)
+        self.adj = self.create_adjacency_from_poses(self.coords)
         rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
         self.build_graph()
 
@@ -178,13 +178,13 @@ class GlobalGraph(BaseGraph):
 
     def reduce_graph(self):
         if self.config.reduction_method == 'every_other':
-            self.reduced_ind = self..reduce_every_other()
+            self.reduced_ind = self.reduce_every_other()
         elif self.config.reduction_method == 'positive_ev':
-            self.reduced_ind = self..reduce_largest_ev_positive(self.G.N)
+            self.reduced_ind = self.reduce_largest_ev_positive(self.G.N)
         elif self.config.reduction_method == 'negative_ev':
-            self.reduced_ind = self..reduce_largest_ev_negative(self.G.N)
+            self.reduced_ind = self.reduce_largest_ev_negative(self.G.N)
         elif self.config.reduction_method == 'largest_ev':
-            take_n = int(round(self..config.reduce_to_n_percent * self.G.N))
+            take_n = int(round(self.config.reduce_to_n_percent * self.G.N))
             if take_n >= self.G.N:
                 rospy.logwarn('[GlobalGraph] Requested reduction amount is equal or greater than the graph size.')
                 print(take_n)

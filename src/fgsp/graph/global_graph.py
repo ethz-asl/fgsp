@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 from liegroups import SE3
-from pygsp import graphs, filters, reduction
+from pygsp import graphs, filters, reduction, utils
 from geometry_msgs.msg import Point
 from maplab_msgs.msg import Graph
 from scipy import spatial
@@ -53,6 +53,7 @@ class GlobalGraph(object):
         self.submap_ind = self.read_submap_indices(graph_msg)
         rospy.logdebug("[GlobalGraph] Building with ind: " + str(len(self.submap_ind)))
 
+        self.adj = utils.symmetrize(self.adj, method='average')
         if not self.build_graph():
             self.G = None
             self.is_built = False

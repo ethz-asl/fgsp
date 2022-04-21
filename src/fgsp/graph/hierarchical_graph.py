@@ -15,16 +15,7 @@ from fgsp.graph.base_graph import BaseGraph
 
 class HierarchicalGraph(BaseGraph):
     def __init__(self, config):
-        self.config = config
-        self.adj = None
-        self.coords = np.array([])
-        self.G = None
-        self.is_built = False
-        self.reduced_ind = []
-        self.skip_ind = []
-        self.submap_ind = []
-        self.graph_seq = -1
-        self.latest_graph_msg = None
+        BaseGraph.__init__(self, config)
         rospy.loginfo("[HierarchicalGraph] Initialized.")
 
     def build(self, graph_msg):
@@ -40,7 +31,8 @@ class HierarchicalGraph(BaseGraph):
         pass
 
 if __name__ == '__main__':
-    rospy.init_node('foo', log_level=rospy.DEBUG)
+    rospy.init_node('graph_test', log_level=rospy.DEBUG)
 
-    g = BaseGraph(None)
+    g = HierarchicalGraph(None)
     g.build(None)
+    print(g.is_built)

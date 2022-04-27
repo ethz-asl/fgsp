@@ -24,10 +24,10 @@ class BaseGraph(object):
     def build(self, graph_msg):
         rospy.logfatal("Called method in HierarchicalGraph")
 
-    def get_graph(self):
+    def build_from_poses(self, poses):
         rospy.logfatal("Called method in HierarchicalGraph")
 
-    def build_from_poses(self, poses):
+    def get_graph(self):
         rospy.logfatal("Called method in HierarchicalGraph")
 
     def write_graph_to_disk(self, coords_file, adj_file):
@@ -125,35 +125,35 @@ class BaseGraph(object):
         beta = 1000
         return alpha * np.exp(-ts_diff_s / beta)
 
-    def reduce_every_other(self):
-        n_nodes = self.coords.shape[0]
+    def reduce_every_other(self, coords):
+        n_nodes = coords.shape[0]
         return np.arange(0, n_nodes, 2)
 
-    def reduce_largest_ev_positive(self, take_n):
-        idx = np.argmax(np.abs(self.G.U))
-        idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
+    def reduce_largest_ev_positive(self, take_n, G):
+        idx = np.argmax(np.abs(G.U))
+        idx_vertex, idx_fourier = np.unravel_index(idx, G.U.shape)
         indices = []
         for i in range(0, take_n):
-            if (self.G.U[i,idx_fourier] >= 0):
+            if (G.U[i,idx_fourier] >= 0):
                 indices.append(i)
         return indices
 
-    def reduce_largest_ev_negative(self, take_n):
-        idx = np.argmax(np.abs(self.G.U))
-        idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
+    def reduce_largest_ev_negative(self, take_n, G):
+        idx = np.argmax(np.abs(G.U))
+        idx_vertex, idx_fourier = np.unravel_index(idx, G.U.shape)
         indices = []
         for i in range(0, take_n):
-            if (self.G.U[i,idx_fourier] < 0):
+            if (G.U[i,idx_fourier] < 0):
                 indices.append(i)
         return indices
 
-    def reduce_largest_ev(self, take_n):
+    def reduce_largest_ev(self, take_n, G):
         rospy.loginfo('[GlobalGraph] Reducing to largest {n} EVs'.format(n=take_n))
         indices = []
-        ev = np.abs(self.G.U)
+        ev = np.abs(G.U)
         for i in range(0, take_n):
             idx = np.argmax(ev)
-            idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
+            idx_vertex, idx_fourier = np.unravel_index(idx, G.U.shape)
             if ev[idx_vertex, idx_fourier] == -1:
                 rospy.logwarn('[GlobalGraph] Warning Could not reduce to requested number of nodes: {indices}/{take_n}'.format(indices=len(indices),take_n=take_n))
                 return indices

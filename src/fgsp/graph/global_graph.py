@@ -93,12 +93,10 @@ class GlobalGraph(BaseGraph):
         self.build_graph()
 
     def build_from_path(self, path_msg):
-        start_time = time.time()
         self.build_from_pose_msgs(path_msg.poses)
         return self.build_graph()
 
     def build_from_pose_msgs(self, poses):
-        start_time = time.time()
         n_poses = len(poses)
         if n_poses <= 0:
             rospy.logerr("[GlobalGraph] Received empty path message.")
@@ -110,7 +108,6 @@ class GlobalGraph(BaseGraph):
         rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
 
     def build_from_poses(self, poses):
-        start_time = time.time()
         n_poses = poses.shape[0]
         if n_poses <= 0:
             rospy.logerr("[GlobalGraph] Received empty path message.")
@@ -178,11 +175,11 @@ class GlobalGraph(BaseGraph):
 
     def reduce_graph(self):
         if self.config.reduction_method == 'every_other':
-            self.reduced_ind = self.reduce_every_other()
+            self.reduced_ind = self.reduce_every_other(self.coords)
         elif self.config.reduction_method == 'positive_ev':
-            self.reduced_ind = self.reduce_largest_ev_positive(self.G.N)
+            self.reduced_ind = self.reduce_largest_ev_positive(self.G.N, G)
         elif self.config.reduction_method == 'negative_ev':
-            self.reduced_ind = self.reduce_largest_ev_negative(self.G.N)
+            self.reduced_ind = self.reduce_largest_ev_negative(self.G.N, G)
         elif self.config.reduction_method == 'largest_ev':
             take_n = int(round(self.config.reduce_to_n_percent * self.G.N))
             if take_n >= self.G.N:

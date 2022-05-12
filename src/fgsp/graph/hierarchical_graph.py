@@ -20,7 +20,8 @@ class HierarchicalGraph(BaseGraph):
         self.adj = [None]
         self.coords = [None]
         self.idx = 0
-        rospy.loginfo("[HierarchicalGraph] Initialized.")
+        self.node_threshold = 200
+        rospy.loginfo("[HierarchicalGraph] Initialized with a threshold of {th}".format(th=self.node_threshold))
 
     def build(self, graph_msg):
         pass
@@ -52,15 +53,29 @@ class HierarchicalGraph(BaseGraph):
         self.build_graph()
 
     def build_hierarchy(self):
-        indices = self.reduce_every_other(self.coords[self.idx])
-        G_next = reduction.kron_reduction(G, indices)
+        current_n = self.G[self.idx].N
+        if current_n < self.node_threshold:
+            return True
+        self.coords.append(None)
+        self.adj.append(None)
+        self.G.append(None)
 
+        indices = self.reduce_every_other(self.coords[self.idx])
+        G_next = reduction.kron_reduction(self.G[self.idx], indices)
+
+        self.idx = self.idx + 1
+        self.G[self.idx] = G_next
+        self.adj[self.idx] = G_next.W.toarray()
+        self.coords[self.idx] = self.coords[indices]
+
+        return True
 
     def get_graph(self):
-        pass
+        return self.G[self.idx]
 
     def write_graph_to_disk(self, coords_file, adj_file):
-        pass
+        np.save(coords_file, self.coords[0])
+        np.save(adj_file, self.adj[0])
 
 if __name__ == '__main__':
     rospy.init_node('graph_test', log_level=rospy.DEBUG)

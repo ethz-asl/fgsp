@@ -107,6 +107,7 @@ class ClientConfig(BaseConfig):
         self.include_temporal_decay_weight = False
         self.use_se3_computation = False
         self.use_so3_computation = False
+        self.use_graph_hierarchies = False
 
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
@@ -153,6 +154,7 @@ class ClientConfig(BaseConfig):
         self.include_temporal_decay_weight = self.try_get_param("~include_temporal_decay_weight", self.include_temporal_decay_weight)
         self.use_se3_computation = self.try_get_param("~use_se3_computation", self.use_se3_computation)
         self.use_so3_computation = self.try_get_param("~use_so3_computation", self.use_so3_computation)
+        self.use_graph_hierarchies = self.try_get_param("~use_graph_hierarchies", self.use_graph_hierarchies)
 
         # input
         self.opt_graph_topic = self.try_get_param("~opt_graph_topic", self.opt_graph_topic)

@@ -22,6 +22,7 @@ use_se3_computation:           True
 use_so3_computation:           False
 include_rotational_weight:     False
 include_temporal_decay_weight: False
+use_graph_hierarchies:         False
 
 # Div
 dataroot:                      "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"

@@ -10,7 +10,7 @@ from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
 from multiprocessing import Lock
 
 from graph.wavelet_evaluator import WaveletEvaluator
-from graph.global_graph import GlobalGraph
+from graph.global_graph import GlobalGraph, HierarchicalGraph
 from controller.signal_handler import SignalHandler
 from controller.command_post import CommandPost
 from controller.constraint_handler import ConstraintHandler
@@ -53,8 +53,13 @@ class GraphClient(object):
             self.client_update_pub = rospy.Publisher(self.config.client_update_topic, Graph, queue_size=20)
 
         # Handlers and evaluators.
-        self.global_graph = GlobalGraph(self.config, reduced=False)
-        self.robot_graph = GlobalGraph(self.config, reduced=False)
+        if self.config.use_graph_hierarchies:
+            self.global_graph = HierarchicalGraph(self.config)
+            self.robot_graph = HierarchicalGraph(self.config)
+        else:
+            self.global_graph = GlobalGraph(self.config, reduced=False)
+            self.robot_graph = GlobalGraph(self.config, reduced=False)
+
         self.latest_traj_msg = None
         self.signal = SignalHandler(self.config)
         self.optimized_signal = SignalHandler(self.config)

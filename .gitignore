@@ -130,3 +130,7 @@ dmypy.json
 
 # Tmp data
 *.npy
+
+# ROS2
+install/
+log/

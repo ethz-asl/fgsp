@@ -1,15 +1,23 @@
+#! /usr/bin/env python3
+
 from fgsp.common.utils import Utils
 from fgsp.common.logger import Logger
 
 class BaseConfig(object):
+    def __init__(self, node):
+        self.node = node
+
     def try_get_param(self, key, default=None):
         Logger.LogDebug('[BaseConfig] try_get_param: {key} with default {default}'.format(key=key, default=default))
-        return rospy.get_param(key) if rospy.has_param(key) else default
+        self.node.declare_parameter(key, default)
+        return self.node.get_parameter(key).value
 
 class MonitorConfig(BaseConfig):
-    def __init__(self):
+    def __init__(self, node):
+        super().__init__(node)
+
         # general config
-        self.rate = rospy.Rate(0.01)
+        self.rate = 2
         self.enable_graph_building = True
         self.enable_submap_constraints = True
         self.min_node_count = 10
@@ -43,7 +51,7 @@ class MonitorConfig(BaseConfig):
 
     def init_from_config(self):
         # general config
-        self.rate = rospy.Rate(self.try_get_param("~update_rate", 0.1))
+        self.rate = self.try_get_param("~update_rate", self.rate)
         self.enable_submap_constraints = self.try_get_param("~enable_submap_constraints", self.enable_submap_constraints)
         self.enable_graph_building = self.try_get_param("~enable_graph_building", self.enable_graph_building)
         self.min_node_count = self.try_get_param("~min_node_count", self.min_node_count)
@@ -77,9 +85,11 @@ class MonitorConfig(BaseConfig):
 
 
 class ClientConfig(BaseConfig):
-    def __init__(self):
+    def __init__(self, node):
+        super().__init__(node)
+
         # general config
-        self.rate = rospy.Rate(0.1)
+        self.rate = 2
         self.dataroot = '/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp'
         self.robot_name = 'cerberus'
         self.enable_client_update = True
@@ -125,7 +135,7 @@ class ClientConfig(BaseConfig):
 
     def init_from_config(self):
         # general config
-        self.rate = rospy.Rate(self.try_get_param("~update_rate", 0.1))
+        self.rate = self.try_get_param("~update_rate", self.rate)
         self.dataroot = self.try_get_param("~dataroot", self.dataroot)
         self.robot_name = self.try_get_param("~robot_name", self.robot_name)
         self.enable_client_update = self.try_get_param("~enable_client_update", self.enable_client_update)

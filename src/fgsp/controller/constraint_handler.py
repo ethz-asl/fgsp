@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 
 import numpy as np
+from rclpy.clock import Clock
+
 from fgsp.common.robot_constraints import RobotConstraints
 from fgsp.common.utils import Utils
 from fgsp.common.logger import Logger
@@ -52,13 +54,6 @@ class ConstraintHandler(object):
             Logger.LogError(f'ConstraintHandler: We have a poses mismatch.')
             return False
 
-        time_now = rospy.Time.now()
-        for i in range(0, n_ts_from):
-            diff_from = time_now - constraint_msg.timestamp_from[i]
-            diff_to = time_now - constraint_msg.timestamp_to[i]
-            if diff_from.to_nsec() < 0 or diff_to.to_nsec() < 0:
-                Logger.LogError(f'ConstraintHandler: Difference is negative. From is {ts_from.to_nsec()} and to is {ts_to.to_nsec()}.')
-                return False
         return True
 
     def process_intra_constraints(self, constraint_msg, i):

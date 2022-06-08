@@ -1,9 +1,10 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 import os
 import time
 
+import rclpy
+from rclpy.node import Node
 import numpy as np
-import pandas
 from nav_msgs.msg import Path
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
 from multiprocessing import Lock
@@ -22,8 +23,10 @@ from classifier.simple_classifier import SimpleClassifier
 from classifier.top_classifier import TopClassifier
 from classifier.classification_result import ClassificationResult
 
-class GraphClient(object):
+class GraphClient(Node):
     def __init__(self):
+        super().__init__('FGSP_GraphClient')
+
         self.is_initialized = False
         self.is_updating = False
         self.last_update_seq = -1
@@ -440,6 +443,9 @@ class GraphClient(object):
 if __name__ == '__main__':
     rospy.init_node('graph_client')
     node = GraphClient()
+
+    # needs fixing
+    # https://answers.ros.org/question/358343/rate-and-sleep-function-in-rclpy-library-for-ros2/
     while not rospy.is_shutdown():
         node.update()
         node.config.rate.sleep()

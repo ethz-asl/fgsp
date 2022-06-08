@@ -1,6 +1,5 @@
 #! /usr/bin/env python2
 
-import rospy
 import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped

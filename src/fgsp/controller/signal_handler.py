@@ -10,6 +10,7 @@ from nav_msgs.msg import Path
 
 from fgsp.common.utils import Utils
 from fgsp.common.logger import Logger
+from fgsp.common.comms import Comms
 from fgsp.common.signal_node import SignalNode
 from fgsp.common.visualizer import Visualizer
 

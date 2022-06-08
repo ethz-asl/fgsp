@@ -1,7 +1,7 @@
 #! /usr/bin/env python2
 
+import rclpy
 import math
-import rospy
 import numpy as np
 from scipy.spatial.transform import Rotation
 import sensor_msgs.point_cloud2 as pc2
@@ -18,7 +18,7 @@ class Utils(object):
       k_ns_per_s = 1e9;
       ros_timestamp_sec = ts_ns / k_ns_per_s;
       ros_timestamp_nsec = ts_ns - (ros_timestamp_sec * k_ns_per_s);
-      return rospy.Time(ros_timestamp_sec, ros_timestamp_nsec)
+      return rclpy.time.Time(seconds=ros_timestamp_sec, nanoseconds=ros_timestamp_nsec)
 
     @staticmethod
     def ts_ns_to_seconds(ts_ns):

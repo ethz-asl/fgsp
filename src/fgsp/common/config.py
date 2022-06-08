@@ -1,10 +1,9 @@
-import rospy
-
 from fgsp.common.utils import Utils
+from fgsp.common.logger import Logger
 
 class BaseConfig(object):
     def try_get_param(self, key, default=None):
-        rospy.logdebug('[BaseConfig] try_get_param: {key} with default {default}'.format(key=key, default=default))
+        Logger.LogDebug('[BaseConfig] try_get_param: {key} with default {default}'.format(key=key, default=default))
         return rospy.get_param(key) if rospy.has_param(key) else default
 
 class MonitorConfig(BaseConfig):

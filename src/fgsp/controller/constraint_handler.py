@@ -1,9 +1,9 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 
-import rospy
 import numpy as np
 from fgsp.common.robot_constraints import RobotConstraints
 from fgsp.common.utils import Utils
+from fgsp.common.logger import Logger
 
 class ConstraintHandler(object):
     def __init__(self):
@@ -15,7 +15,7 @@ class ConstraintHandler(object):
             rospy.logerr("Submap constraint verfication failed.")
             return False
         n_constraints  = len(constraint_msg.id_from)
-        rospy.loginfo("Submap constraint message is verified. Processing {n_constraints} constraints".format(n_constraints=n_constraints))
+        Logger.LogInfo(f'ConstraintHandler: Submap constraint message is verified. Processing {n_constraints} constraints')
 
         # Received new message, reinitialize the constraints.
         # Each message contains all currently used constraints.
@@ -40,16 +40,16 @@ class ConstraintHandler(object):
         n_poses = len(constraint_msg.T_a_b)
 
         if n_id_from != n_id_to:
-            rospy.logerr("[ConstraintHandler] We have a ID mismatch.")
+            Logger.LogError(f'ConstraintHandler: We have a ID mismatch.')
             return False
         if n_id_from != n_ts_from:
-            rospy.logerr("[ConstraintHandler] We have a TS (from) mismatch.")
+            Logger.LogError(f'ConstraintHandler: We have a TS (from) mismatch.')
             return False
         if n_id_from != n_ts_to:
-            rospy.logerr("[ConstraintHandler] We have a TS (to) mismatch.")
+            Logger.LogError(f'ConstraintHandler: We have a TS (to) mismatch.')
             return False
         if n_id_from != n_poses:
-            rospy.logerr("[ConstraintHandler] We have a poses mismatch.")
+            Logger.LogError(f'ConstraintHandler: We have a poses mismatch.')
             return False
 
         time_now = rospy.Time.now()
@@ -57,7 +57,7 @@ class ConstraintHandler(object):
             diff_from = time_now - constraint_msg.timestamp_from[i]
             diff_to = time_now - constraint_msg.timestamp_to[i]
             if diff_from.to_nsec() < 0 or diff_to.to_nsec() < 0:
-                rospy.logerr("[ConstraintHandler] Difference is negative. From is {ts_from} and to is {ts_to}.".format(ts_from=diff_from.to_nsec(), ts_to=diff_to.to_nsec()))
+                Logger.LogError(f'ConstraintHandler: Difference is negative. From is {ts_from.to_nsec()} and to is {ts_to.to_nsec()}.')
                 return False
         return True
 
@@ -90,7 +90,7 @@ class ConstraintHandler(object):
 
     def create_msg_for_intra_constraints(self, robot_name, labels, all_opt_nodes):
         if robot_name not in self.intra_contraints:
-            rospy.logerr("Robot {robot_name} does not have intra mission constraints.".format(robot_name=robot_name))
+            Logger.LogError(f'ConstraintHandler: Robot {robot_name} does not have intra mission constraints.')
             return []
         timestamps = self.filter_large_constraints(labels, all_opt_nodes)
         if timestamps.shape[0] > 0:

@@ -7,6 +7,7 @@ from geometry_msgs.msg import PoseStamped
 
 from fgsp.common.lc_model import LcModel
 from fgsp.common.utils import Utils
+from fgsp.common.logger import Logger
 
 class RobotConstraints(object):
     def __init__(self):
@@ -32,7 +33,7 @@ class RobotConstraints(object):
 
     def construct_path_msgs(self):
         path_msgs = []
-        print('Constructing path message for {n_submaps} different submaps.'.format(n_submaps=len(self.submap_constraints)))
+        Logger.LogInfo(f'RobotConstraints: Constructing path message for {len(self.submap_constraints)} different submaps.')
         for ts_ns_from in self.submap_constraints:
             loop_closures = list(self.submap_constraints[ts_ns_from])
             path_msg = self.construct_path_msg_for_submap(ts_ns_from, loop_closures)
@@ -41,14 +42,14 @@ class RobotConstraints(object):
 
     def construct_path_msgs_using_ts(self, timestamps):
         path_msgs = []
-        print('Constructing path message for {n_submaps} different submaps.'.format(n_submaps=len(self.submap_constraints)))
+        Logger.LogInfo(f'RobotConstraints: Constructing path message for {len(self.submap_constraints)} different submaps.')
         for ts_from_ns in self.submap_constraints:
             if not self.should_publish_map(ts_from_ns, timestamps):
                 continue
             if ts_from_ns not in self.previous_timestamps:
                 self.previous_timestamps.append(ts_from_ns)
 
-            rospy.logwarn('[RobotConstraints] Found a valid timestamp!!! ')
+            Logger.LogWarn('RobotConstraints: Found a valid timestamp!!!')
             loop_closures = list(self.submap_constraints[ts_from_ns])
             path_msg = self.construct_path_msg_for_submap(ts_from_ns, loop_closures)
             path_msgs.append(path_msg)
@@ -61,7 +62,7 @@ class RobotConstraints(object):
         ts_diff = np.absolute(timestamps - ts_from_ns)
         ts_min = np.amin(ts_diff)
         diff_s = Utils.ts_ns_to_seconds(ts_min)
-        rospy.logwarn('[RobotConstraints] min diff ts is {diff}'.format(diff=diff_s))
+        Logger.LogWarn(f'[RobotConstraints] min diff ts is {diff_s}')
 
         return diff_s < 3
 

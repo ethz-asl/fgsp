@@ -7,6 +7,7 @@ from geometry_msgs.msg import PoseStamped
 from scipy.spatial.transform import Rotation
 
 from fgsp.common.utils import Utils
+from fgsp.common.logger import Logger
 from fgsp.common.transform_history import TransformHistory
 
 class ClassificationResult(object):
@@ -31,7 +32,7 @@ class ClassificationResult(object):
         if method == 'nth':
             return self.take_every_nth_node()
         else:
-            rospy.logwarn('Unknown partiion method {method} specified'.format(method=method))
+            Logger.LogWarn(f'Unknown partiion method {method} specified')
             return []
 
     def get_ts_from_nodes(self, nodes):

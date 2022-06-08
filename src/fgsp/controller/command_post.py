@@ -1,11 +1,12 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 
-import rospy
 import numpy as np
 import time
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
+
+from fgsp.common.logger import Logger
 
 class CommandPost(object):
     def __init__(self):
@@ -26,7 +27,8 @@ class CommandPost(object):
         self.large_constraint_counter = 0
         self.anchor_constraint_counter = 0
         self.history = None
-        rospy.loginfo("[CommandPost] Initialized command post center.")
+
+        Logger.LogInfo("CommandPost: Initialized command post center.")
 
     def reset_msgs(self):
         self.good_path_msg = Path()
@@ -78,13 +80,13 @@ class CommandPost(object):
         return pose_msg
 
     def send_anchors(self, all_opt_nodes, begin_send, end_send):
-        rospy.logerr('Sending degenerate anchors for {seq} nodes.'.format(seq=end_send - begin_send))
+        Logger.LogError(f'CommandPost: Sending degenerate anchors for {end_send - begin_send} nodes.')
         indices = np.arange(begin_send, end_send, 1)
         self.send_anchors_based_on_indices(all_opt_nodes, indices)
 
     def send_anchors_based_on_indices(self, opt_nodes, indices):
         n_constraints = len(indices)
-        rospy.logerr('Sending anchors for {n_constraints} nodes.'.format(n_constraints=n_constraints))
+        Logger.LogError(f'CommandPost: Sending anchors for {n_constraints} nodes.')
         for i in indices:
             pose_msg = self.create_pose_msg_from_node(opt_nodes[i])
             self.degenerate_path_msg.poses.append(pose_msg)
@@ -100,5 +102,5 @@ class CommandPost(object):
     def update_degenerate_anchors(self, all_opt_nodes):
         if len(self.degenerate_indices) == 0:
             return
-        rospy.logerr('Sending degenerate anchor update for {degenerate_indices}'.format(degenerate_indices=self.degenerate_indices))
+        Logger.LogError(f'CommandPost: Sending degenerate anchor update for {self.degenerate_indices}')
         self.send_degenerate_anchors_based_on_indices(all_opt_nodes, self.degenerate_indices)

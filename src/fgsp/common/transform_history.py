@@ -1,7 +1,7 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 
-import rospy
 import numpy as np
+from fgsp.common.logger import Logger
 
 class TransformHistory(object):
     def __init__(self):
@@ -27,7 +27,7 @@ class TransformHistory(object):
     def remove_child(self, child):
         res = [x for x, z in enumerate(self.children) if z == child]
         if len(res) == 0:
-            rospy.logwarn('[TransformHistory] Index retrieval failed for removal.')
+            Logger.LogWarn('TransformHistory: Index retrieval failed for removal.')
             return
         res = res[0]
         self.children.pop(res)
@@ -40,11 +40,11 @@ class TransformHistory(object):
         res = [x for x, z in enumerate(self.children) if z == child]
         n_res = len(res)
         if n_res == 0:
-            rospy.logwarn('[TransformHistory] Index retrieval failed for comparison.')
+            Logger.LogWarn('[TransformHistory] Index retrieval failed for comparison.')
             return False
 
         if len(res) > 1:
-            rospy.logwarn('[TransformHistory] Found multiple children for parent.')
+            Logger.LogWarn('[TransformHistory] Found multiple children for parent.')
         res = res[0]
         T_prev = self.transforms[res]
         T_diff = np.abs(T_prev - T)

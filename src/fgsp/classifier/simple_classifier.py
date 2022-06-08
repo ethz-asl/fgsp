@@ -3,6 +3,8 @@
 import rospy
 import numpy as np
 
+from fgsp.common.logger import Logger
+
 class SimpleClassifier(object):
 
     def classify(self, data):
@@ -60,7 +62,7 @@ class SimpleClassifier(object):
             #     local_labels.append(3)
 
             # if len(local_labels) > 0:
-            rospy.loginfo('[WaveletEvaluator] dists are {dists}'.format(dists=dists))
-            rospy.loginfo('local labels are {local_labels}'.format(local_labels=local_labels))
+            Logger.LogDebug(f'WaveletEvaluator: dists are {dists}')
+            Logger.LogDebug(f'WaveletEvaluator: Local labels are {local_labels}')
             labels.append(local_labels)
         return labels

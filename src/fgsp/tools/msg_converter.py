@@ -1,6 +1,5 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 
-import rospy
 import pandas
 import numpy as np
 
@@ -8,11 +7,13 @@ from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 
+from fgsp.common.logger import Logger
+
 class MessageConverter(object):
     def __init__(self):
         conv_topic = rospy.get_param("~conv_topic")
         rospy.Subscriber(conv_topic, Path, self.path_callback)
-        rospy.loginfo("[MessageConverter] Listening for paths from " + conv_topic)
+        Logger.LogInfo(f'MessageConverter: Listening for paths from {conv_topic}')
 
         traj_topic = rospy.get_param("~traj_topic")
         self.pub_trajectory = rospy.Publisher(traj_topic, Trajectory, queue_size=10)
@@ -20,7 +21,7 @@ class MessageConverter(object):
 
         self.robot_name = rospy.get_param("~conv_robot")
 
-        rospy.loginfo("[MessageConverter] Initialized")
+        Logger.LogInfo('MessageConverter: Initialized.')
 
     def path_callback(self, msg):
         # Convert the nav_msgs::Path to a maplab_msgs::Trajectory.

@@ -13,6 +13,7 @@ from scipy.spatial.transform import Rotation
 
 from fgsp.common.visualizer import Visualizer
 from fgsp.common.utils import Utils
+from fgsp.common.logger import Logger
 
 class GlobalGraph(object):
     def __init__(self, config, reduced=False):
@@ -27,7 +28,7 @@ class GlobalGraph(object):
         self.submap_ind = []
         self.graph_seq = -1
         self.latest_graph_msg = None
-        rospy.loginfo("[GlobalGraph] Initialized.")
+        Logger.LogInfo('GlobalGraph: Initialized.')
 
     def msg_contains_updates(self, graph_msg):
         if self.is_built is False:
@@ -47,11 +48,11 @@ class GlobalGraph(object):
     def build(self, graph_msg):
         start_time = time.time()
         self.coords = self.read_coordinates(graph_msg)
-        rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
+        Logger.LogDebug(f'GlobalGraph: Building with coords {self.coords.shape}.')
         self.adj = self.read_adjacency(graph_msg)
-        rospy.logdebug("[GlobalGraph] Building with adj: " + str(self.adj.shape))
+        Logger.LogDebug(f'GlobalGraph: Building with adj: {self.adj.shape}.')
         self.submap_ind = self.read_submap_indices(graph_msg)
-        rospy.logdebug("[GlobalGraph] Building with ind: " + str(len(self.submap_ind)))
+        Logger.LogDebug(f'GlobalGraph: Building with ind: {len(self.submap_ind)}.')
 
         if not self.build_graph():
             self.G = None
@@ -64,20 +65,20 @@ class GlobalGraph(object):
             self.graph_seq = graph_msg.header.seq
         self.is_built = True
         execution_time = (time.time() - start_time)
-        rospy.loginfo('[GlobalGraph] Building complete ({execution_time} sec)'.format(execution_time=execution_time))
+        Logger.LogInfo(f'GlobalGraph: Building complete ({execution_time} sec)')
         self.latest_graph_msg = graph_msg
 
     def build_graph(self):
         if len(self.adj.tolist()) == 0:
-            rospy.loginfo("[GlobalGraph] Path adjacency matrix is empty. Aborting graph building.")
+            Logger.LogInfo('GlobalGraph: Path adjacency matrix is empty. Aborting graph building.')
             return False
         self.G = graphs.Graph(self.adj)
 
         if self.G.N != self.coords.shape[0]:
-            rospy.logerr("[GlobalGraph] Path graph size is {coords} but coords are {coords}".format(n=self.G.N, coords=self.coords.shape))
+            Logger.LogError(f'GlobalGraph: Path graph size is {self.G.N} but coords are {self.coords.shape}')
             return False
         if self.G.N <= 1:
-            rospy.logdebug("[GlobalGraph] Path graph vertex count is less than 2.")
+            Logger.LogDebug('GlobalGraph: Path graph vertex count is less than 2.')
             return False
 
         self.G.set_coordinates(self.coords[:,[0,1]])
@@ -101,24 +102,24 @@ class GlobalGraph(object):
         start_time = time.time()
         n_poses = len(poses)
         if n_poses <= 0:
-            rospy.logerr("[GlobalGraph] Received empty path message.")
+            Logger.LogError('GlobalGraph: Received empty path message.')
             return
         poses = self.read_coordinates_from_poses(poses)
         self.coords = poses[:,0:3]
-        rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
+        Logger.LogDebug(f'GlobalGraph: Building with coords {self.coords.shape}.')
         self.adj = self.create_adjacency_from_poses(poses)
-        rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
+        Logger.LogDebug(f'GlobalGraph: Building with adj: {self.adj.shape}.')
 
     def build_from_poses(self, poses):
         start_time = time.time()
         n_poses = poses.shape[0]
         if n_poses <= 0:
-            rospy.logerr("[GlobalGraph] Received empty path message.")
+            Logger.LogError('GlobalGraph: Received empty path message.')
             return
         self.coords = poses
-        rospy.logdebug("[GlobalGraph] Building with coords " + str(self.coords.shape))
+        Logger.LogDebug(f'GlobalGraph Building with coords {self.coords.shape}.')
         self.adj = self.create_adjacency_from_poses(self.coords)
-        rospy.logdebug("[GlobalGraph] Building with adj " + str(self.adj.shape))
+        Logger.LogDebug(f'GlobalGraph: Building with adj: {self.adj.shape}.')
         self.build_graph()
 
     def skip_jumping_coords(self, prev_coords, next_coords):
@@ -274,18 +275,18 @@ class GlobalGraph(object):
         elif self.config.reduction_method == 'largest_ev':
             take_n = int(round(self.config.reduce_to_n_percent * self.G.N))
             if take_n >= self.G.N:
-                rospy.logwarn('[GlobalGraph] Requested reduction amount is equal or greater than the graph size.')
+                Logger.LogWarn('GlobalGraph: Requested reduction amount is equal or greater than the graph size.')
                 print(take_n)
                 print(self.G.N)
                 return
             self.reduced_ind = self.reduce_largest_ev(take_n)
         else:
-            rospy.logerr('[GlobalGraph] Unknown graph reduction method: {method}. Aborting reduction.'.format(method=self.config.reduction_method))
+            Logger.LogError(f'GlobalGraph: Unknown graph reduction method: {self.config.reduction_method}. Aborting reduction.')
             return
         self.reduce_graph_using_indices(self.reduced_ind)
 
     def reduce_graph_using_indices(self, reduced_ind):
-        rospy.loginfo('[GlobalGraph] Reducing graph using {reduced}/{coords} indices.'.format(reduced=len(reduced_ind), coords=self.G.N))
+        Logger.LogInfo(f'GlobalGraph: Reducing graph using {len(reduced_ind)}/{self.G.N} indices.')
         self.coords = self.coords[reduced_ind]
         self.G = reduction.kron_reduction(self.G, reduced_ind)
         self.adj = self.G.W.toarray()
@@ -320,14 +321,14 @@ class GlobalGraph(object):
         return indices
 
     def reduce_largest_ev(self, take_n):
-        rospy.loginfo('[GlobalGraph] Reducing to largest {n} EVs'.format(n=take_n))
+        Logger.LogInfo(f'GlobalGraph: Reducing to largest {take_n} EVs.')
         indices = []
         ev = np.abs(self.G.U)
         for i in range(0, take_n):
             idx = np.argmax(ev)
             idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
             if ev[idx_vertex, idx_fourier] == -1:
-                rospy.logwarn('[GlobalGraph] Warning Could not reduce to requested number of nodes: {indices}/{take_n}'.format(indices=len(indices),take_n=take_n))
+                Logger.LogWarn(f'GlobalGraph: Warning Could not reduce to requested number of nodes: {len(indices)}/{take_n}.')
                 return indices
             ev[idx_vertex, :] = -1
             indices.append(idx_vertex)
@@ -366,7 +367,7 @@ class GlobalGraph(object):
 
         n_coords = self.G.N
         if n_coords > self.coords.shape[0] or n_coords > self.adj.shape[0]:
-            rospy.logerr('Size mismatch in global graph {n_global} vs. {n_coords} vs. {n_adj}'.format(n_global=n_coords, n_coords=self.coords.shape[0], n_adj=self.adj.shape[0]))
+            Logger.LogError(f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}.')
             return
 
         # First publish the coordinates of the global graph.
@@ -386,5 +387,4 @@ class GlobalGraph(object):
 
                 viz.add_graph_adjacency(self.coords[i,:], self.coords[j,:])
         viz.visualize_adjacency()
-
-        rospy.loginfo("[GlobalGraph] Visualized global graph.")
+        Logger.LogInfo('GlobalGraph: Visualized global graph.')

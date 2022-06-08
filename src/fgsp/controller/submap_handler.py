@@ -9,6 +9,7 @@ from scipy import spatial
 from scipy.spatial.transform import Rotation
 
 from fgsp.common.utils import Utils
+from fgsp.common.logger import Logger
 
 from maplab_msgs.msg import SubmapConstraint
 from std_msgs.msg import Header
@@ -33,7 +34,7 @@ class SubmapHandler(object):
         self.map_pub = rospy.Publisher(config.accumulated_map_topic, PointCloud2, queue_size=10)
         self.submap_seq = 0
         self.previous_submap_neighbors = {}
-        rospy.loginfo("[SubmapHandler] Initialized.")
+        Logger.LogInfo("SubmapHandler: Initialized.")
 
     def publish_submaps(self, submaps):
         if not self.config.enable_submap_map_publishing:
@@ -46,7 +47,7 @@ class SubmapHandler(object):
 
         for i in range(0, n_submaps):
             if i not in submaps:
-                rospy.logerr('Submap with key {i} not found.'.format(i=i))
+                Logger.LogError(f'SubmapHandler: Submap with key {i} not found.')
                 continue
             T_G_L = submaps[i].get_pivot_pose_LiDAR()
             submap = submaps[i].compute_dense_map()
@@ -59,12 +60,12 @@ class SubmapHandler(object):
             map_points = map_points[1:,:]
             map_pointcloud_ros = pc2.create_cloud(header, FIELDS_XYZ, map_points)
             self.map_pub.publish(map_pointcloud_ros)
-            rospy.loginfo("Published map with {n_points} points.".format(n_points=n_points))
+            Logger.LogInfo(f'SubmapHandler: Published map with {n_points} points.')
 
     def compute_constraints(self, submaps):
         candidates = self.find_close_submaps(submaps)
         if np.count_nonzero(candidates) == 0:
-            rospy.logerr("Unable to find any close submaps.")
+            Logger.LogError('SubmapHandler: Unable to find any close submaps.')
             return
         return self.evaluate_candidates(submaps, candidates)
 
@@ -72,7 +73,7 @@ class SubmapHandler(object):
         n_submaps = len(submaps)
         candidates = np.zeros((n_submaps, n_submaps))
         if n_submaps <= 1:
-            rospy.logerr("Not enough submaps to find candidates.")
+            Logger.LogError('SubmapHandler: Not enough submaps to find candidates.')
             return candidates
         submap_positions = self.get_all_positions(submaps)
         tree = spatial.KDTree(submap_positions)

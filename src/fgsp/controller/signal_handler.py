@@ -9,6 +9,7 @@ from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 
 from fgsp.common.utils import Utils
+from fgsp.common.logger import Logger
 from fgsp.common.signal_node import SignalNode
 from fgsp.common.visualizer import Visualizer
 
@@ -41,11 +42,11 @@ class SignalHandler(object):
     def convert_signal(self, signal_msg):
         grouped_signals = self.group_robots(signal_msg.nodes)
         self.publish_grouped_robots(grouped_signals)
-        rospy.loginfo('[SignalHandler] Grouped signals are {keys}'.format(keys=grouped_signals.keys()))
+        Logger.LogInfo(f'SignalHandler: Grouped signals are {grouped_signals.keys()}')
 
         for key, nodes in grouped_signals.items():
             n_nodes = len(nodes)
-            rospy.logwarn('[SignalHandler] For {key} we have {n_nodes} nodes.'.format(key=key, n_nodes=n_nodes))
+            Logger.LogWarn(f'SignalHandler: For {key} we have {n_nodes} nodes.')
             if (n_nodes <= 0):
                 continue
 
@@ -236,7 +237,7 @@ class SignalHandler(object):
         color_idx = 0
         viz = Visualizer()
         for robot, nodes in self.signals.items():
-            rospy.logwarn('[SignalHandler] Publishing signal for {robot}'.format(robot=robot))
+            Logger.LogWarn(f'SignalHandler: Publishing signal for {robot}')
             topic = topic_fmt.format(key=robot)
             for node in nodes:
                 viz.add_signal_coordinate(node.position, color_idx)

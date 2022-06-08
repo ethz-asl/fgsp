@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 
 import rospy
 import numpy as np
@@ -8,6 +8,9 @@ from enum import Enum
 import pandas
 import scipy.spatial
 import pickle
+
+
+from fgsp.common.logger import Logger
 
 class SubmapState(Enum):
     ALL_GOOD = 1
@@ -29,7 +32,7 @@ class WaveletEvaluator(object):
         return self.psi
 
     def compute_wavelets(self, G):
-        rospy.loginfo("[WaveletEvaluator] Computing wavelets for {n_scales} scales.".format(n_scales=self.n_scales))
+        Logger.LogInfo(f'WaveletEvaluator: Computing wavelets for {self.n_scales} scales.')
         g = filters.Meyer(G, self.n_scales)
 
         # Evalute filter bank on the frequencies (eigenvalues).

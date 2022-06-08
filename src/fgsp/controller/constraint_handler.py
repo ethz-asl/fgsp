@@ -12,7 +12,7 @@ class ConstraintHandler(object):
 
     def add_constraints(self, constraint_msg):
         if not self.verify_constraint_msg(constraint_msg):
-            rospy.logerr("Submap constraint verfication failed.")
+            Logger.LogError('Submap constraint verfication failed.')
             return False
         n_constraints  = len(constraint_msg.id_from)
         Logger.LogInfo(f'ConstraintHandler: Submap constraint message is verified. Processing {n_constraints} constraints')

@@ -4,7 +4,6 @@ import time
 
 import numpy as np
 import pandas
-import rospy
 from nav_msgs.msg import Path
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
 from multiprocessing import Lock
@@ -18,6 +17,7 @@ from common.signal_synchronizer import SignalSynchronizer
 from common.config import ClientConfig
 from common.plotter import Plotter
 from common.utils import Utils
+from common.logger import Logger
 from classifier.simple_classifier import SimpleClassifier
 from classifier.top_classifier import TopClassifier
 from classifier.classification_result import ClassificationResult
@@ -80,14 +80,14 @@ class GraphClient(object):
             return
         cur_ts = Utils.ros_time_to_ns(rospy.Time.now())
         export_folder = self.config.dataroot + '/data/' + self.config.robot_name + '_%d'%np.float32(cur_ts)
-        rospy.logwarn('[GraphClient] Setting up dataroot folder to {export_folder}'.format(export_folder=export_folder))
+        Logger.LogWarn(f'GraphClient: Setting up dataroot folder to {export_folder}')
         if not os.path.exists(export_folder):
             os.mkdir(export_folder)
             os.mkdir(export_folder + '/data')
         self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
-        rospy.loginfo("[GraphClient] Received graph message from monitor {frame}.".format(frame=msg.header.frame_id))
+        Logger.LogInfo(f'GraphClient: Received graph message from monitor {msg.header.frame_id}.')
         if not (self.is_initialized and(self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
         self.mutex.acquire()
@@ -105,7 +105,7 @@ class GraphClient(object):
             return
         # Theoretically this does exactly the same as the graph_callback, but
         # lets separate it for now to be a bit more flexible.
-        rospy.loginfo('[GraphClient] Received client update')
+        Logger.LogInfo('GraphClient: Received client update.')
         client_seq = graph_msg.header.seq
         self.mutex.acquire()
         graph_seq = self.global_graph.graph_seq
@@ -120,7 +120,7 @@ class GraphClient(object):
             return
 
         keys = self.optimized_signal.convert_signal(msg)
-        rospy.loginfo("[GraphClient] Received opt trajectory message from {keys}.".format(keys=keys))
+        Logger.LogInfo(f'GraphClient: Received opt trajectory message from {keys}.')
 
         for key in keys:
             if self.key_in_optimized_keys(key):
@@ -147,7 +147,7 @@ class GraphClient(object):
 
         key = self.signal.convert_signal_from_path(self.latest_traj_msg, self.config.robot_name)
         if not key:
-            rospy.logerror("[GraphClient] Unable to convert msg to signal.")
+            Logger.LogError('GraphClient: Unable to convert msg to signal.')
             return False
 
         if self.key_in_keys(key):
@@ -157,9 +157,9 @@ class GraphClient(object):
 
     def submap_constraint_callback(self, msg):
         if not (self.is_initialized and self.config.enable_submap_constraints):
-            rospy.loginfo("[GraphClient] Received submap constraint message before being initialized.")
+            Logger.LogInfo('GraphClient: Received submap constraint message before being initialized.')
             return
-        rospy.loginfo("[GraphClient] Received submap constraint message.")
+        Logger.LogInfo('GraphClient: Received submap constraint message.')
         self.constraint_mutex.acquire()
         self.constraint_handler.add_constraints(msg)
         self.constraint_mutex.release()
@@ -169,19 +169,19 @@ class GraphClient(object):
         if self.is_updating:
             self.mutex.release()
             return
-        print('[GraphClient] {last_upd} and {graph_upd})'.format(last_upd=self.last_update_seq, graph_upd=self.global_graph.graph_seq))
+        Logger.LogInfo(f'GraphClient: {self.last_update_seq} and {self.global_graph.graph_seq})')
         # if self.last_update_seq > 0 and self.last_update_seq == self.global_graph.graph_seq:
             # self.mutex.release()
             # return
         self.is_updating = True
         self.mutex.release()
 
-        rospy.loginfo("[GraphClient] Updating...")
+        Logger.LogInfo('GraphClient: Updating...')
         self.commander.reset_msgs()
         # self.update_degenerate_anchors()
 
         if not self.process_latest_robot_data():
-            rospy.logwarn('[GraphClient] Unable to process latest robot data.')
+            Logger.LogWarn('GraphClient: Unable to process latest robot data.')
             self.mutex.acquire()
             self.is_updating = False
             self.mutex.release()
@@ -192,9 +192,9 @@ class GraphClient(object):
 
         n_constraints = self.commander.get_total_amount_of_constraints()
         if n_constraints > 0:
-            rospy.loginfo('[GraphClient] Updating completed (sent {n_constraints} constraints)'.format(n_constraints=n_constraints))
-            rospy.loginfo('[GraphClient] In detail relatives: {n_low} / {n_mid} / {n_high}'.format(n_low=self.commander.small_constraint_counter, n_mid=self.commander.mid_constraint_counter, n_high=self.commander.large_constraint_counter))
-            rospy.loginfo('[GraphClient] In detail anchors: {n_anchor}'.format(n_anchor=self.commander.anchor_constraint_counter))
+            Logger.LogInfo(f'GraphClient: Updating completed (sent {n_constraints} constraints)')
+            Logger.LogInfo(f'GraphClient: In detail relatives: {self.commander.small_constraint_counter} / {self.commander.mid_constraint_counter} / {self.commander.large_constraint_counter}')
+            Logger.LogInfo(f'GraphClient: In detail anchors: {self.commander.anchor_constraint_counter}')
         self.mutex.acquire()
         self.is_updating = False
         self.last_update_seq = self.global_graph.graph_seq
@@ -225,7 +225,7 @@ class GraphClient(object):
             self.global_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
         elif src == 'est':
             self.robot_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
-        rospy.logwarn('[GraphClient] for {src} we have {x_shape} and {coords_shape}'.format(src=src, x_shape=x.shape, coords_shape=self.robot_graph.coords.shape))
+        Logger.LogWarn(f'GraphClient: for {src} we have {x.shape} and {self.robot_graph.coords.shape}')
 
     def record_traj_for_key(self, traj, src):
         filename = self.config.dataroot + self.config.trajectory_export_path.format(src=src)
@@ -238,17 +238,17 @@ class GraphClient(object):
     def compare_estimations(self):
         if not self.config.enable_relative_constraints:
             return
-        rospy.loginfo("[GraphClient] Comparing estimations.")
+        Logger.LogInfo('GraphClient: Comparing estimations.')
         self.mutex.acquire()
         if self.global_graph.is_built is False and self.config.client_mode == 'multiscale':
-            rospy.logerr('[GraphClient] Graph is not built yet.')
+            Logger.LogError('GraphClient: Graph is not built yet.')
             self.mutex.release()
             return
         # Check whether we have an optimized version of it.
         if self.key_in_optimized_keys(self.config.robot_name):
             self.compare_stored_signals(self.config.robot_name)
         else:
-            rospy.logwarn("[GraphClient] Found no optimized version of {robot} for comparison.".format(robot=self.config.robot_name))
+            Logger.LogWarn(f'GraphClient: Found no optimized version of {self.config.robot_name} for comparison.')
         self.mutex.release()
 
     def check_for_submap_constraints(self, labels, all_opt_nodes):
@@ -272,7 +272,7 @@ class GraphClient(object):
         self.mutex.release()
 
     def compare_stored_signals(self, key):
-        rospy.logwarn("[GraphClient] Comparing signals for {key}.".format(key=key))
+        Logger.LogWarn(f'GraphClient: Comparing signals for {key}.')
         # Retrieve the estimated and optimized versions of the trajectory.
         all_est_nodes = self.signal.get_all_nodes(key)
         all_opt_nodes = self.optimized_signal.get_all_nodes(key)
@@ -285,7 +285,7 @@ class GraphClient(object):
         self.record_raw_est_trajectory(self.signal.compute_trajectory(all_est_nodes))
         all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
         if all_opt_nodes is None or all_est_nodes is None:
-            rospy.logerr('[GraphClient] Synchronization failed')
+            Logger.LogError('GraphClient: Synchronization failed.')
             return False
 
         labels = self.compute_all_labels(key, all_opt_nodes, all_est_nodes)
@@ -307,7 +307,7 @@ class GraphClient(object):
         assert(n_nodes == len(all_opt_nodes))
         assert(len(est_idx) == len(opt_idx))
         if n_nodes == 0:
-            rospy.logwarn('[GraphClient] Could not synchronize nodes.')
+            Logger.LogWarn('GraphClient: Could not synchronize nodes.')
             return (None, None)
 
         # Reduce the robot graph and compute the wavelet basis functions.
@@ -335,7 +335,7 @@ class GraphClient(object):
     def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
         if not self.config.enable_anchor_constraints:
             return
-        rospy.loginfo('[GraphClient] Checking for degeneracy.')
+        Logger.LogInfo('GraphClient: Checking for degeneracy.')
         n_nodes = len(all_opt_nodes)
         assert n_nodes == len(all_est_nodes)
         for i in range(0, n_nodes):
@@ -344,13 +344,13 @@ class GraphClient(object):
             pivot = self.config.degenerate_window // 2
             begin_send = max(i - pivot, 0)
             end_send = min(i + (self.config.degenerate_window - pivot), n_nodes)
-            rospy.logerr('[GraphClient] Sending degenerate anchros from {begin_send} to {end_send}'.format(begin_send=begin_send, end_send=end_send))
+            Logger.LogInfo(f'GraphClient: Sending degenerate anchros from {begin_send} to {end_send}')
             self.commander.send_anchors(all_opt_nodes, begin_send, end_send)
 
     def update_degenerate_anchors(self):
         all_opt_nodes = self.optimized_signal.get_all_nodes(self.config.robot_name)
         if len(all_opt_nodes) == 0:
-            rospy.logerr('[GraphClient] Robot {robot} does not have any optimized nodes yet.'.format(robot=self.config.robot_name))
+            Logger.LogError(f'[GraphClient] Robot {self.config.robot_name} does not have any optimized nodes yet.')
             return
         self.commander.update_degenerate_anchors(all_opt_nodes)
 
@@ -364,7 +364,7 @@ class GraphClient(object):
         elif self.config.client_mode == 'absolute':
             return self.perform_absolute(key, all_opt_nodes, all_est_nodes)
         else:
-            rospy.logerr('[GraphClient] Unknown mode specified {mode}'.format(mode=self.config.client_mode))
+            Logger.LogError(f'GraphClient: Unknown mode specified {self.config.client_mode}')
             return None
 
     def perform_multiscale_evaluation(self, key, all_opt_nodes, all_est_nodes):
@@ -379,7 +379,7 @@ class GraphClient(object):
         robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
-            rospy.logwarn('[GraphClient] We have a size mismatch: {n_dim} vs. {x_est} vs. {x_opt}. Trying to fix it.'.format(n_dim=n_dim, x_est=x_est.shape[0], x_opt=x_opt.shape[0]))
+            Logger.LogWarn(f'GraphClient We have a size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}. Trying to fix it.')
 
             positions = np.array([np.array(x.position) for x in all_opt_nodes])
             self.global_graph.build_from_poses(positions)
@@ -388,7 +388,7 @@ class GraphClient(object):
             n_dim = psi.shape[0]
 
         if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
-            rospy.logwarn('[GraphClient] Optimized wavelet does not match robot wavelet: {psi} vs. {robot_psi}'.format(psi=psi.shape, robot_psi=robot_psi.shape))
+            Logger.LogWarn(f'GraphClient: Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
             return None
 
         # Compute all the wavelet coefficients.

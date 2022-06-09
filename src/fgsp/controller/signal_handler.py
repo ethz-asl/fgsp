@@ -1,5 +1,4 @@
-#! /usr/bin/env python2
-import rospy
+#! /usr/bin/env python3
 import numpy as np
 from liegroups import SE3
 from scipy.spatial.transform import Rotation

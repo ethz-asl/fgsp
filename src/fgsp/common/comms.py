@@ -13,7 +13,7 @@ class Comms(object):
             self._instance.node = Node('fgsp_comms')
         return self._instance
 
-    def send(self, msg, type, topic):
+    def publish(self, msg, type, topic):
         publisher = self.node.create_publisher(type, topic, 10)
         publisher.publish(msg)
 
@@ -29,10 +29,10 @@ if __name__ == '__main__':
     msg2.data = "Bar"
 
     comms = Comms()
-    comms.send(msg, String, "/foo")
+    comms.publish(msg, String, "/foo")
 
     comms2 = Comms()
-    comms2.send(msg2, String, "/foo")
+    comms2.publish(msg2, String, "/foo")
 
     print(f'Singleton? {comms is comms2}')
 

@@ -17,6 +17,7 @@ class SignalHandler(object):
     def __init__(self, config):
         self.signals = {}
         self.config = config
+        self.comms = Comms()
 
     def group_robots(self, signals):
         n_nodes = len(signals)
@@ -34,7 +35,7 @@ class SignalHandler(object):
             path_msg = Path()
             for node in nodes:
                 path_msg.poses.append(node.pose)
-            path_msg.header.stamp = rospy.Time.now()
+            path_msg.header.stamp = self.time_now()
             path_msg.header.frame_id = 'darpa'
             pub = rospy.Publisher('/graph_monitor/{key}/monitor_path'.format(key=key), Path, queue_size=10)
             pub.publish(path_msg)
@@ -244,6 +245,9 @@ class SignalHandler(object):
             viz.visualize_signals(topic)
             viz.resetConstraintVisualization()
             color_idx += 1
+
+    def time_now(self):
+        return self.comms.node.get_clock.now()
 
 
 if __name__ == '__main__':

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from setuptools import setup
 
-package_name = fgsp
+package_name = 'fgsp'
+
 setup(
     name=package_name,
     version='2.0.0',

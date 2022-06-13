@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'graph_client = src.fgsp.graph_client:main',
+            'graph_monitor = src.fgsp.graph_monitor:main',
         ],
     },
 )

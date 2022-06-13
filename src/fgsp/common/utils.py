@@ -4,7 +4,7 @@ import rclpy
 import math
 import numpy as np
 from scipy.spatial.transform import Rotation
-import sensor_msgs.point_cloud2 as pc2
+from sensor_msgs_py import point_cloud2 as pc2
 
 class Utils(object):
 

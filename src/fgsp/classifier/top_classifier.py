@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import numpy as np
-from fgsp.common.utils import Utils
+from src.fgsp.common.utils import Utils
 
 class TopClassifier(object):
 

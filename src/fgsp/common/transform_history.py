@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import numpy as np
-from fgsp.common.logger import Logger
+from src.fgsp.common.logger import Logger
 
 class TransformHistory(object):
     def __init__(self):

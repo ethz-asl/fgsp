@@ -3,9 +3,9 @@
 import numpy as np
 from rclpy.clock import Clock
 
-from fgsp.common.robot_constraints import RobotConstraints
-from fgsp.common.utils import Utils
-from fgsp.common.logger import Logger
+from src.fgsp.common.robot_constraints import RobotConstraints
+from src.fgsp.common.utils import Utils
+from src.fgsp.common.logger import Logger
 
 class ConstraintHandler(object):
     def __init__(self):

@@ -1,11 +1,6 @@
 #! /usr/bin/env python3
 
 import numpy as np
-import sensor_msgs.point_cloud2 as pc2
-
-from maplab_msgs.msg import Submap, DenseNode
-from geometry_msgs.msg import PoseStamped
-from sensor_msgs.msg import PointCloud2, PointField
 
 from .utils import Utils
 

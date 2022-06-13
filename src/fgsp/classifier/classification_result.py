@@ -5,9 +5,9 @@ from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 from scipy.spatial.transform import Rotation
 
-from fgsp.common.utils import Utils
-from fgsp.common.logger import Logger
-from fgsp.common.transform_history import TransformHistory
+from src.fgsp.common.utils import Utils
+from src.fgsp.common.logger import Logger
+from src.fgsp.common.transform_history import TransformHistory
 
 class ClassificationResult(object):
     def __init__(self, robot_name, opt_nodes, features, labels):

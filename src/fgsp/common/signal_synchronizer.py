@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from fgsp.common.utils import Utils
-from fgsp.common.logger import Logger
+from src.fgsp.common.utils import Utils
+from src.fgsp.common.logger import Logger
 
 class SignalSynchronizer(object):
 

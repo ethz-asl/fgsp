@@ -6,8 +6,8 @@ from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 
-from fgsp.common.logger import Logger
-from fgsp.common.comms import Comms
+from src.fgsp.common.logger import Logger
+from src.fgsp.common.comms import Comms
 
 class CommandPost(object):
     def __init__(self, config):

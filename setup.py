@@ -6,7 +6,7 @@ package_name = 'fgsp'
 setup(
     name=package_name,
     version='2.0.0',
-    packages=[package_name, f'{package_name}.foo'],
+    packages=[f'src/{package_name}', f'src/{package_name}.classifier', f'src/{package_name}.graph', f'src/{package_name}.common', f'src/{package_name}.controller'],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -22,7 +22,7 @@ setup(
     entry_points={
         'console_scripts': [
             # 'graph_monitor = fgsp.graph_monitor:main',
-            'graph_client = fgsp.graph_client:main',
+            'graph_client = src.fgsp.graph_client:main',
         ],
     },
 )

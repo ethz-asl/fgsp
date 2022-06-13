@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from fgsp.common.logger import Logger
+from src.fgsp.common.logger import Logger
 
 class SimpleClassifier(object):
 

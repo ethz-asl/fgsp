@@ -8,11 +8,11 @@ from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 
-from fgsp.common.utils import Utils
-from fgsp.common.logger import Logger
-from fgsp.common.comms import Comms
-from fgsp.common.signal_node import SignalNode
-from fgsp.common.visualizer import Visualizer
+from src.fgsp.common.utils import Utils
+from src.fgsp.common.logger import Logger
+from src.fgsp.common.comms import Comms
+from src.fgsp.common.signal_node import SignalNode
+from src.fgsp.common.visualizer import Visualizer
 
 class SignalHandler(object):
     def __init__(self, config):

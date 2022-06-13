@@ -8,30 +8,29 @@ from nav_msgs.msg import Path
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
 from multiprocessing import Lock
 
-from fgsp.test import Test
-from fgsp.foo.test2 import Test2
-# from graph.wavelet_evaluator import WaveletEvaluator
-# from graph.global_graph import GlobalGraph
-# from controller.signal_handler import SignalHandler
-# from controller.command_post import CommandPost
-# from controller.constraint_handler import ConstraintHandler
-# from common.signal_synchronizer import SignalSynchronizer
-# from common.config import ClientConfig
-# from common.plotter import Plotter
-# from common.utils import Utils
-# from common.logger import Logger
-# from classifier.top_classifier import TopClassifier
-# from classifier.classification_result import ClassificationResult
+
+from src.fgsp.graph.wavelet_evaluator import WaveletEvaluator
+from src.fgsp.graph.global_graph import GlobalGraph
+from src.fgsp.controller.signal_handler import SignalHandler
+from src.fgsp.controller.command_post import CommandPost
+from src.fgsp.controller.constraint_handler import ConstraintHandler
+from src.fgsp.common.signal_synchronizer import SignalSynchronizer
+from src.fgsp.common.config import ClientConfig
+from src.fgsp.common.plotter import Plotter
+from src.fgsp.common.utils import Utils
+from src.fgsp.common.logger import Logger
+from src.fgsp.classifier.top_classifier import TopClassifier
+from src.fgsp.classifier.classification_result import ClassificationResult
 
 class GraphClient(Node):
     def __init__(self):
         super().__init__('FGSP_GraphClient')
 
-#         self.is_initialized = False
-#         self.is_updating = False
-#         self.last_update_seq = -1
-#         self.config = ClientConfig()
-#         self.config.init_from_config()
+        self.is_initialized = False
+        self.is_updating = False
+        self.last_update_seq = -1
+        self.config = ClientConfig(self)
+        self.config.init_from_config()
 #         Plotter.PlotClientBanner()
 #         Plotter.PrintClientConfig(self.config)
 #         Plotter.PrintSeparator()
@@ -441,19 +440,11 @@ class GraphClient(Node):
 #        return any(key in k for k in self.keys)
 
 def main(args=None):
-    print('foo')
-    t = Test()
-    t.print()
+    rclpy.init(args=args)
+    monitor = GraphClient()
+    rclpy.spin(monitor)
+    monitor.destroy_node()
+    rclpy.shutdown()
 
-    t2 = Test2()
-    t2.print()
-
-# if __name__ == '__main__':
-#     rospy.init_node('graph_client')
-#     node = GraphClient()
-
-#     # needs fixing
-#     # https://answers.ros.org/question/358343/rate-and-sleep-function-in-rclpy-library-for-ros2/
-#     while not rospy.is_shutdown():
-#         node.update()
-#         node.config.rate.sleep()
+if __name__ == '__main__':
+    main()

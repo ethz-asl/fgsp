@@ -6,7 +6,7 @@ from std_msgs.msg import Header, ColorRGBA
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
 
-from fgsp.common.comms import Comms
+from src.fgsp.common.comms import Comms
 
 
 class Visualizer(object):

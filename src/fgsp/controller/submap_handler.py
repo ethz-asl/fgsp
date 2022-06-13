@@ -1,15 +1,15 @@
 import math
 import os
 
-import sensor_msgs.point_cloud2 as pc2
+from sensor_msgs_py import point_cloud2 as pc2
 from geometry_msgs.msg import Pose, PoseWithCovariance
 import numpy as np
 from scipy import spatial
 from scipy.spatial.transform import Rotation
 
-from fgsp.common.utils import Utils
-from fgsp.common.comms import Comms
-from fgsp.common.logger import Logger
+from src.fgsp.common.utils import Utils
+from src.fgsp.common.comms import Comms
+from src.fgsp.common.logger import Logger
 
 from maplab_msgs.msg import SubmapConstraint
 from std_msgs.msg import Header

@@ -6,10 +6,9 @@ from enum import Enum
 
 import pandas
 import scipy.spatial
-import pickle
 
 
-from fgsp.common.logger import Logger
+from src.fgsp.common.logger import Logger
 
 class SubmapState(Enum):
     ALL_GOOD = 1

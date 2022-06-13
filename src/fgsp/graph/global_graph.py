@@ -10,9 +10,9 @@ from maplab_msgs.msg import Graph
 from scipy import spatial
 from scipy.spatial.transform import Rotation
 
-from fgsp.common.visualizer import Visualizer
-from fgsp.common.utils import Utils
-from fgsp.common.logger import Logger
+from src.fgsp.common.visualizer import Visualizer
+from src.fgsp.common.utils import Utils
+from src.fgsp.common.logger import Logger
 
 class GlobalGraph(object):
     def __init__(self, config, reduced=False):

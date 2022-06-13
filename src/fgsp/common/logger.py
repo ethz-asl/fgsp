@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import time
-from font import Font
+from .font import Font
 
 
 class Logger(object):

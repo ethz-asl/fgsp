@@ -17,7 +17,7 @@ class MonitorConfig(BaseConfig):
         super().__init__(node)
 
         # general config
-        self.rate = 2
+        self.rate = 0.1
         self.enable_graph_building = True
         self.enable_submap_constraints = True
         self.min_node_count = 10
@@ -89,7 +89,7 @@ class ClientConfig(BaseConfig):
         super().__init__(node)
 
         # general config
-        self.rate = 2
+        self.rate = 0.5
         self.dataroot = '/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp'
         self.robot_name = 'cerberus'
         self.enable_client_update = True

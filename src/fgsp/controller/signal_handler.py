@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+
 import numpy as np
 from liegroups import SE3
 from scipy.spatial.transform import Rotation
@@ -35,10 +36,9 @@ class SignalHandler(object):
             path_msg = Path()
             for node in nodes:
                 path_msg.poses.append(node.pose)
-            path_msg.header.stamp = self.time_now()
+            path_msg.header.stamp = self.comms.time_now()
             path_msg.header.frame_id = 'darpa'
-            pub = rospy.Publisher('/graph_monitor/{key}/monitor_path'.format(key=key), Path, queue_size=10)
-            pub.publish(path_msg)
+            self.comms.publish(path_msg, Path, f'/graph_monitor/{key}/monitor_path')
 
     def convert_signal(self, signal_msg):
         grouped_signals = self.group_robots(signal_msg.nodes)
@@ -245,9 +245,6 @@ class SignalHandler(object):
             viz.visualize_signals(topic)
             viz.resetConstraintVisualization()
             color_idx += 1
-
-    def time_now(self):
-        return self.comms.node.get_clock.now()
 
 
 if __name__ == '__main__':

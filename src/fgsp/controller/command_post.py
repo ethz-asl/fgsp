@@ -7,18 +7,13 @@ from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 
 from fgsp.common.logger import Logger
+from fgsp.common.comms import Comms
 
 class CommandPost(object):
-    def __init__(self):
-        anchor_node_topic = rospy.get_param("~anchor_node_topic")
-        relative_node_topic = rospy.get_param("~relative_node_topic")
-        verification_service = rospy.get_param("~verification_service")
-        self.pub_anchor = rospy.Publisher(anchor_node_topic, Path, queue_size=10)
-        self.pub_relative = rospy.Publisher(relative_node_topic, Path, queue_size=10)
-        self.pub_degenerate = rospy.Publisher('/graph_client/degenerate_anchors', Path, queue_size=10)
+    def __init__(self, config):
+        self.config = config
+        self.comms = Comms()
 
-        self.good_path_msg = None
-        self.bad_path_msg = None
         self.degenerate_path_msg = None
         self.degenerate_indices = []
         self.previous_relatives = {}
@@ -31,8 +26,6 @@ class CommandPost(object):
         Logger.LogInfo("CommandPost: Initialized command post center.")
 
     def reset_msgs(self):
-        self.good_path_msg = Path()
-        self.bad_path_msg = Path()
         self.degenerate_path_msg = Path()
         self.small_constraint_counter = 0
         self.mid_constraint_counter = 0
@@ -54,7 +47,7 @@ class CommandPost(object):
             if relative_constraint is None:
                 continue # no-op
             self.previous_relatives[i] = labels.labels[i]
-            self.pub_relative.publish(relative_constraint)
+            self.comms.publish(relative_constraint, Path, self.config.relative_node_topic)
             self.add_to_constraint_counter(small_relative_counter, mid_relative_counter, large_relative_counter)
             self.history = labels.history
             time.sleep(0.001)
@@ -95,8 +88,9 @@ class CommandPost(object):
             if not i in self.degenerate_indices:
                 self.degenerate_indices.append(i)
 
-        self.degenerate_path_msg.header.stamp = rospy.Time.now()
-        self.pub_anchor.publish(self.degenerate_path_msg)
+        # Publish the anchor nodes.
+        self.degenerate_path_msg.header.stamp = self.comms.time_now()
+        self.comms.publish(self.degenerate_path_msg, Path, self.config.anchor_node_topic)
         self.anchor_constraint_counter = self.anchor_constraint_counter + n_constraints
 
     def update_degenerate_anchors(self, all_opt_nodes):

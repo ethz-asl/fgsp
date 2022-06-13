@@ -128,7 +128,6 @@ class ClientConfig(BaseConfig):
         self.anchor_node_topic = "/graph_client/anchor_nodes"
         self.relative_node_topic = "/graph_client/relative_nodes"
         self.intra_constraint_topic = "/graph_client/intra_constraints"
-        self.verification_service_topic = "/graph_monitor/verification"
 
         # input and output
         self.client_update_topic = "/graph_client/latest_graph"
@@ -174,7 +173,6 @@ class ClientConfig(BaseConfig):
         self.anchor_node_topic = self.try_get_param("~anchor_node_topic", self.anchor_node_topic)
         self.relative_node_topic = self.try_get_param("~relative_node_topic", self.relative_node_topic)
         self.intra_constraint_topic = self.try_get_param("~intra_constraints", self.intra_constraint_topic)
-        self.verification_service_topic = self.try_get_param("~verification_service", self.verification_service_topic)
 
         # input and output
         self.client_update_topic = self.try_get_param("~client_update_topic", self.client_update_topic)

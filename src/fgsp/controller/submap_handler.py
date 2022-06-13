@@ -1,7 +1,6 @@
 import math
 import os
 
-import rospy
 import sensor_msgs.point_cloud2 as pc2
 from geometry_msgs.msg import Pose, PoseWithCovariance
 import numpy as np
@@ -9,6 +8,7 @@ from scipy import spatial
 from scipy.spatial.transform import Rotation
 
 from fgsp.common.utils import Utils
+from fgsp.common.comms import Comms
 from fgsp.common.logger import Logger
 
 from maplab_msgs.msg import SubmapConstraint
@@ -30,8 +30,8 @@ FIELDS_XYZI = [
 class SubmapHandler(object):
     def __init__(self, config):
         self.config = config
+        self.comms = Comms()
 
-        self.map_pub = rospy.Publisher(config.accumulated_map_topic, PointCloud2, queue_size=10)
         self.submap_seq = 0
         self.previous_submap_neighbors = {}
         Logger.LogInfo("SubmapHandler: Initialized.")
@@ -41,7 +41,7 @@ class SubmapHandler(object):
             return
         n_submaps = len(submaps)
         header = Header()
-        header.stamp = rospy.Time.now()
+        header.stamp = self.comms.time_now()
         header.frame_id = 'darpa'
         map_points = np.zeros((1,3))
 
@@ -59,7 +59,7 @@ class SubmapHandler(object):
         if n_points > 1:
             map_points = map_points[1:,:]
             map_pointcloud_ros = pc2.create_cloud(header, FIELDS_XYZ, map_points)
-            self.map_pub.publish(map_pointcloud_ros)
+            self.comms.publish(map_pointcloud_ros, PointCloud2, self.config.accumulated_map_topic)
             Logger.LogInfo(f'SubmapHandler: Published map with {n_points} points.')
 
     def compute_constraints(self, submaps):
@@ -123,7 +123,7 @@ class SubmapHandler(object):
         for i in range(0, n_submaps):
             submap_msg = self.evaluate_neighbors_for(submaps, candidates, i, submap_msg)
 
-        submap_msg.header.stamp = rospy.Time.now()
+        submap_msg.header.stamp = self.comms.time_now()
         submap_msg.header.seq = self.submap_seq
         self.submap_seq += 1
         return submap_msg

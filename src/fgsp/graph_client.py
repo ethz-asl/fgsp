@@ -64,7 +64,7 @@ class GraphClient(Node):
         self.synchronizer = SignalSynchronizer(self.config)
         self.eval = WaveletEvaluator()
         self.robot_eval = WaveletEvaluator()
-        self.commander = CommandPost()
+        self.commander = CommandPost(self.config)
 
         # self.classifier = SimpleClassifier()
         self.classifier = TopClassifier(20)

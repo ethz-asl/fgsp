@@ -1,10 +1,12 @@
 #! /usr/bin/env python3
 
-import rospy
 import copy
 import time
 from maplab_msgs.msg import *
 from multiprocessing import Lock
+
+import rclpy
+from rclpy.node import Node
 
 from graph.global_graph import GlobalGraph
 from controller.signal_handler import SignalHandler
@@ -13,8 +15,9 @@ from common.submap_model import SubmapModel
 from common.config import MonitorConfig
 from common.plotter import Plotter
 
-class GraphMonitor(object):
+class GraphMonitor(Node):
     def __init__(self):
+        super().__init__('graph_monitor')
         self.is_initialized = False
 
         Plotter.PlotMonitorBanner()
@@ -27,13 +30,13 @@ class GraphMonitor(object):
         self.mutex.acquire()
         # Publishers and subscribers.
         if self.config.enable_submap_constraints:
-            rospy.Subscriber(self.config.opt_pc_topic, Submap, self.submap_callback)
-            self.submap_pub = rospy.Publisher(self.config.submap_topic, SubmapConstraint, queue_size=10)
+            self.submap_sub = self.create_subscription(Submap, self.config.opt_pc_topic, self.submap_callback)
+            self.submap_pub = self.create_publisher(SubmapConstraint, self.config.submap_topic, 10) 
         if self.config.enable_graph_building:
-            rospy.Subscriber(self.config.in_graph_topic, Graph, self.graph_callback)
-            rospy.Subscriber(self.config.in_traj_opt_topic, Trajectory, self.traj_opt_callback)
-            self.pub_graph = rospy.Publisher(self.config.out_graph_topic, Graph, queue_size=10)
-            self.pub_traj = rospy.Publisher(self.config.out_traj_opt_topic, Trajectory, queue_size=10)
+            self.graph_sub = self.create_subscription(Graph, self.config.in_graph_topic, self.graph_callback)
+            self.traj_sub = self.create_subscription(Trajectory, self.config.in_traj_topic, self.traj_opt_callback)
+            self.graph_pub = self.create_publisher(Graph, self.config.out_graph_topic, 10)
+            self.traj_pub = self.create_publisher(Trajectory, self.config.out_traj_topic, 10)
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(self.config, reduced=self.config.reduce_global_graph)
@@ -177,9 +180,12 @@ class GraphMonitor(object):
     def key_in_optimized_keys(self, key):
        return any(key in k for k in self.optimized_keys)
 
+def main(args=None):
+    rclpy.init(args=args)
+    monitor = GraphMonitor()
+    rclpy.spin(monitor)
+    monitor.destroy_node()
+    rclpy.shutdown()
+
 if __name__ == '__main__':
-    rospy.init_node('graph_monitor')
-    node = GraphMonitor()
-    while not rospy.is_shutdown():
-        node.update()
-        node.config.rate.sleep()
+    main()

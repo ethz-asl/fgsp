@@ -17,6 +17,9 @@ class Comms(object):
         publisher = self.node.create_publisher(type, topic, 10)
         publisher.publish(msg)
 
+    def time_now(self):
+        return self.node.get_clock.now()
+
 
 if __name__ == '__main__':
     from std_msgs.msg import String

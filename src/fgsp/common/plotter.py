@@ -46,7 +46,7 @@ class Plotter(object):
     @staticmethod
     def PrintMonitorConfig(config):
         print('{color} --- General Configuration -------------------------------------------------- {end}'.format(color=font.BLUE, end=font.END))
-        print('{bold} Update rate:{end} {val}hz'.format(bold=font.BOLD, end=font.END, val = 1e9/config.rate.sleep_dur.to_nsec()))
+        print('{bold} Update rate:{end} {val}hz'.format(bold=font.BOLD, end=font.END, val = 1/config.rate))
         print('{bold} Compute submap-to-submap constraints:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_submap_constraints))
         print('{bold} Reduce optimized graph using Kron:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.reduce_global_graph))
         print('{bold} Minimal node count in optimized graph:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.min_node_count))
@@ -73,7 +73,7 @@ class Plotter(object):
     @staticmethod
     def PrintClientConfig(config):
         print('{color} --- General Configuration -------------------------------------------------- {end}'.format(color=font.BLUE, end=font.END))
-        print('{bold} Update rate:{end} {val}hz'.format(bold=font.BOLD, end=font.END, val = 1e9/config.rate.sleep_dur.to_nsec()))
+        print('{bold} Update rate:{end} {val}hz'.format(bold=font.BOLD, end=font.END, val = 1/config.rate))
         print('{bold} Dataroot:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.dataroot))
         print('{bold} Robot name:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.robot_name))
         print('{bold} Enable submap constraints:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.enable_submap_constraints))
@@ -108,7 +108,6 @@ class Plotter(object):
         print('{bold} Anchor node topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.anchor_node_topic))
         print('{bold} Relative node topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.relative_node_topic))
         print('{bold} Intra constraints topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.intra_constraint_topic))
-        print('{bold} Verifcation service topic:{end} {val}'.format(bold=font.BOLD, end=font.END, val = config.verification_service_topic))
         print('\n')
 
     @staticmethod

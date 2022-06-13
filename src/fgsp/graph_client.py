@@ -31,13 +31,13 @@ class GraphClient(Node):
         self.last_update_seq = -1
         self.config = ClientConfig(self)
         self.config.init_from_config()
-#         Plotter.PlotClientBanner()
-#         Plotter.PrintClientConfig(self.config)
-#         Plotter.PrintSeparator()
+        Plotter.PlotClientBanner()
+        Plotter.PrintClientConfig(self.config)
+        Plotter.PrintSeparator()
 
-#         self.mutex = Lock()
-#         self.constraint_mutex = Lock()
-#         self.mutex.acquire()
+        self.mutex = Lock()
+        self.constraint_mutex = Lock()
+        self.mutex.acquire()
 
 #         # Subscriber and publisher
 #         rospy.Subscriber(self.config.opt_graph_topic, Graph, self.global_graph_callback)
@@ -72,21 +72,21 @@ class GraphClient(Node):
 #         self.optimized_keys = []
 #         self.keys = []
 
-#         self.create_data_export_folder()
-#         self.mutex.release()
-#         self.is_initialized = True
+        self.create_data_export_folder()
+        self.mutex.release()
+        self.is_initialized = True
 
 
-#     def create_data_export_folder(self):
-#         if not self.config.enable_signal_recording and not self.config.enable_trajectory_recording:
-#             return
-#         cur_ts = Utils.ros_time_to_ns(rospy.Time.now())
-#         export_folder = self.config.dataroot + '/data/' + self.config.robot_name + '_%d'%np.float32(cur_ts)
-#         Logger.LogWarn(f'GraphClient: Setting up dataroot folder to {export_folder}')
-#         if not os.path.exists(export_folder):
-#             os.mkdir(export_folder)
-#             os.mkdir(export_folder + '/data')
-#         self.config.dataroot = export_folder
+    def create_data_export_folder(self):
+        if not self.config.enable_signal_recording and not self.config.enable_trajectory_recording:
+            return
+        cur_ts = Utils.ros_time_to_ns(rospy.Time.now())
+        export_folder = self.config.dataroot + '/data/' + self.config.robot_name + '_%d'%np.float32(cur_ts)
+        Logger.LogWarn(f'GraphClient: Setting up dataroot folder to {export_folder}')
+        if not os.path.exists(export_folder):
+            os.mkdir(export_folder)
+            os.mkdir(export_folder + '/data')
+        self.config.dataroot = export_folder
 
 #     def global_graph_callback(self, msg):
 #         Logger.LogInfo(f'GraphClient: Received graph message from monitor {msg.header.frame_id}.')

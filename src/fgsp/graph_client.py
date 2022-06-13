@@ -5,7 +5,7 @@ import rclpy
 from rclpy.node import Node
 import numpy as np
 from nav_msgs.msg import Path
-from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
+from maplab_msgs.msg import Graph, Trajectory, SubmapConstraint
 from multiprocessing import Lock
 
 

@@ -2,18 +2,19 @@
 
 import copy
 import time
-from maplab_msgs.msg import *
+from maplab_msgs.msg import Graph, Trajectory, Submap, SubmapConstraint
 from multiprocessing import Lock
 
 import rclpy
 from rclpy.node import Node
 
-from graph.global_graph import GlobalGraph
-from controller.signal_handler import SignalHandler
-from controller.submap_handler import SubmapHandler
-from common.submap_model import SubmapModel
-from common.config import MonitorConfig
-from common.plotter import Plotter
+from src.fgsp.graph.global_graph import GlobalGraph
+from src.fgsp.controller.signal_handler import SignalHandler
+from src.fgsp.controller.submap_handler import SubmapHandler
+from src.fgsp.common.submap_model import SubmapModel
+from src.fgsp.common.config import MonitorConfig
+from src.fgsp.common.plotter import Plotter
+from src.fgsp.common.logger import Logger
 
 class GraphMonitor(Node):
     def __init__(self):
@@ -21,7 +22,7 @@ class GraphMonitor(Node):
         self.is_initialized = False
 
         Plotter.PlotMonitorBanner()
-        self.config = MonitorConfig()
+        self.config = MonitorConfig(self)
         self.config.init_from_config()
         Plotter.PrintMonitorConfig(self.config)
         Plotter.PrintSeparator()
@@ -30,13 +31,13 @@ class GraphMonitor(Node):
         self.mutex.acquire()
         # Publishers and subscribers.
         if self.config.enable_submap_constraints:
-            self.submap_sub = self.create_subscription(Submap, self.config.opt_pc_topic, self.submap_callback)
+            self.submap_sub = self.create_subscription(Submap, self.config.opt_pc_topic, self.submap_callback, 10)
             self.submap_pub = self.create_publisher(SubmapConstraint, self.config.submap_topic, 10) 
         if self.config.enable_graph_building:
-            self.graph_sub = self.create_subscription(Graph, self.config.in_graph_topic, self.graph_callback)
-            self.traj_sub = self.create_subscription(Trajectory, self.config.in_traj_topic, self.traj_opt_callback)
+            self.graph_sub = self.create_subscription(Graph, self.config.in_graph_topic, self.graph_callback, 10)
+            self.traj_sub = self.create_subscription(Trajectory, self.config.in_traj_opt_topic, self.traj_opt_callback, 10)
             self.graph_pub = self.create_publisher(Graph, self.config.out_graph_topic, 10)
-            self.traj_pub = self.create_publisher(Trajectory, self.config.out_traj_topic, 10)
+            self.traj_pub = self.create_publisher(Trajectory, self.config.out_traj_opt_topic, 10)
 
         # Handlers and evaluators.
         self.graph = GlobalGraph(self.config, reduced=self.config.reduce_global_graph)
@@ -50,6 +51,7 @@ class GraphMonitor(Node):
         self.is_initialized = True
         self.latest_opt_traj_msg = None
         self.mutex.release()
+        self.timer = self.create_timer(1 / self.config.rate, self.update)
 
     def graph_callback(self, msg):
         if self.is_initialized is False:

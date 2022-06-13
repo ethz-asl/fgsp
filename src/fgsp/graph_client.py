@@ -40,37 +40,33 @@ class GraphClient(Node):
         self.mutex.acquire()
 
 #         # Subscriber and publisher
-#         rospy.Subscriber(self.config.opt_graph_topic, Graph, self.global_graph_callback)
-#         rospy.Subscriber(self.config.opt_traj_topic, Trajectory, self.traj_opt_callback)
-#         rospy.Subscriber(self.config.est_traj_topic, Trajectory, self.traj_callback)
-#         rospy.Subscriber(self.config.est_traj_path_topic, Path, self.traj_path_callback)
-#         if self.config.enable_submap_constraints:
-#             rospy.Subscriber(self.config.submap_constraint_topic, SubmapConstraint, self.submap_constraint_callback)
-#             self.constraint_handler = ConstraintHandler()
+        self.graph_sub = self.create_subscription(Graph, self.config.opt_graph_topic, self.global_graph_callback, 10)
+        self.opt_traj_sub = self.create_subscription(Trajectory, self.config.opt_traj_topic, self.traj_opt_callback, 10)
+        self.est_traj_sub = self.create_subscription(Trajectory, self.config.est_traj_topic, self.traj_callback, 10)
+        self.est_traj_path_sub = self.create_subscription(Path, self.config.est_traj_path_topic, self.traj_path_callback, 10)
 
-#         self.intra_constraint_pub = rospy.Publisher(self.config.intra_constraint_topic, Path, queue_size=20)
+        if self.config.enable_submap_constraints:
+            self.submap_sub = self.create_subscription(SubmapConstraint, self.config.submap_constraint_topic, self.submap_constraint_callback, 10)
+            self.constraint_handler = ConstraintHandler()
 
-#         if self.config.enable_client_update:
-#             rospy.Subscriber(self.config.client_update_topic, Graph, self.client_update_callback)
-#             self.client_update_pub = rospy.Publisher(self.config.client_update_topic, Graph, queue_size=20)
+        self.intra_constraint_pub = self.create_publisher(Path, self.config.intra_constraint_topic, 20)
 
 #         # Handlers and evaluators.
-#         self.global_graph = GlobalGraph(self.config, reduced=False)
-#         self.robot_graph = GlobalGraph(self.config, reduced=False)
-#         self.latest_traj_msg = None
-#         self.signal = SignalHandler(self.config)
-#         self.optimized_signal = SignalHandler(self.config)
-#         self.synchronizer = SignalSynchronizer(self.config)
-#         self.eval = WaveletEvaluator()
-#         self.robot_eval = WaveletEvaluator()
-#         self.commander = CommandPost(self.config)
+        self.global_graph = GlobalGraph(self.config, reduced=False)
+        self.robot_graph = GlobalGraph(self.config, reduced=False)
+        self.latest_traj_msg = None
+        self.signal = SignalHandler(self.config)
+        self.optimized_signal = SignalHandler(self.config)
+        self.synchronizer = SignalSynchronizer(self.config)
+        self.eval = WaveletEvaluator()
+        self.robot_eval = WaveletEvaluator()
+        self.commander = CommandPost(self.config)
 
-#         # self.classifier = SimpleClassifier()
-#         self.classifier = TopClassifier(20)
+        self.classifier = TopClassifier(20)
 
-#         # Key management to keep track of the received messages.
-#         self.optimized_keys = []
-#         self.keys = []
+        # Key management to keep track of the received messages.
+        self.optimized_keys = []
+        self.keys = []
 
         self.create_data_export_folder()
         self.mutex.release()
@@ -80,7 +76,7 @@ class GraphClient(Node):
     def create_data_export_folder(self):
         if not self.config.enable_signal_recording and not self.config.enable_trajectory_recording:
             return
-        cur_ts = Utils.ros_time_to_ns(rospy.Time.now())
+        cur_ts = Utils.ros_time_to_ns(self.get_clock.now())
         export_folder = self.config.dataroot + '/data/' + self.config.robot_name + '_%d'%np.float32(cur_ts)
         Logger.LogWarn(f'GraphClient: Setting up dataroot folder to {export_folder}')
         if not os.path.exists(export_folder):
@@ -88,83 +84,68 @@ class GraphClient(Node):
             os.mkdir(export_folder + '/data')
         self.config.dataroot = export_folder
 
-#     def global_graph_callback(self, msg):
-#         Logger.LogInfo(f'GraphClient: Received graph message from monitor {msg.header.frame_id}.')
-#         if not (self.is_initialized and(self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
-#             return
-#         self.mutex.acquire()
+    def global_graph_callback(self, msg):
+        Logger.LogInfo(f'GraphClient: Received graph message from monitor {msg.header.frame_id}.')
+        if not (self.is_initialized and(self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
+            return
+        self.mutex.acquire()
 
-#         # We only trigger the graph building if the msg contains new information.
-#         if self.global_graph.msg_contains_updates(msg) and self.config.client_mode == 'multiscale':
-#             self.global_graph.build(msg)
-#             self.record_signal_for_key(np.array([0]), 'opt')
-#             self.eval.compute_wavelets(self.global_graph.G)
+        # We only trigger the graph building if the msg contains new information.
+        if self.global_graph.msg_contains_updates(msg) and self.config.client_mode == 'multiscale':
+            self.global_graph.build(msg)
+            self.record_signal_for_key(np.array([0]), 'opt')
+            self.eval.compute_wavelets(self.global_graph.G)
 
-#         self.mutex.release()
+        self.mutex.release()
 
-#     def client_update_callback(self, graph_msg):
-#         if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
-#             return
-#         # Theoretically this does exactly the same as the graph_callback, but
-#         # lets separate it for now to be a bit more flexible.
-#         Logger.LogInfo('GraphClient: Received client update.')
-#         client_seq = graph_msg.header.seq
-#         self.mutex.acquire()
-#         graph_seq = self.global_graph.graph_seq
-#         if self.global_graph.msg_contains_updates(graph_msg) and self.config.client_mode == 'multiscale':
-#             self.global_graph.build(graph_msg)
-#             self.eval.compute_wavelets(self.global_graph.G)
+    def traj_opt_callback(self, msg):
+        if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
+            return
 
-#         self.mutex.release()
+        keys = self.optimized_signal.convert_signal(msg)
+        Logger.LogInfo(f'GraphClient: Received opt trajectory message from {keys}.')
 
-#     def traj_opt_callback(self, msg):
-#         if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
-#             return
+        for key in keys:
+            if self.key_in_optimized_keys(key):
+                continue
+            self.optimized_keys.append(key)
 
-#         keys = self.optimized_signal.convert_signal(msg)
-#         Logger.LogInfo(f'GraphClient: Received opt trajectory message from {keys}.')
+    def traj_callback(self, msg):
+        if self.is_initialized is False:
+            return
 
-#         for key in keys:
-#             if self.key_in_optimized_keys(key):
-#                 continue
-#             self.optimized_keys.append(key)
+        key = self.signal.convert_signal(msg)
+        if self.key_in_keys(key):
+            return
+        self.keys.append(key)
 
-#     def traj_callback(self, msg):
-#         if self.is_initialized is False:
-#             return
+    def traj_path_callback(self, msg):
+        if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
+            return
+        self.latest_traj_msg = msg
 
-#         key = self.signal.convert_signal(msg)
-#         if self.key_in_keys(key):
-#             return
-#         self.keys.append(key)
+    def process_latest_robot_data(self):
+        if self.latest_traj_msg == None:
+            return False
 
-#     def traj_path_callback(self, msg):
-#         if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
-#             return
-#         self.latest_traj_msg = msg
+        key = self.signal.convert_signal_from_path(self.latest_traj_msg, self.config.robot_name)
+        if not key:
+            Logger.LogError('GraphClient: Unable to convert msg to signal.')
+            return False
 
-#     def process_latest_robot_data(self):
-#         if self.latest_traj_msg == None:
-#             return False
+        if self.key_in_keys(key):
+            return True
+        self.keys.append(key)
+        return True
 
-#         key = self.signal.convert_signal_from_path(self.latest_traj_msg, self.config.robot_name)
-#         if not key:
-#             Logger.LogError('GraphClient: Unable to convert msg to signal.')
-#             return False
-
-#         if self.key_in_keys(key):
-#             return True
-#         self.keys.append(key)
-#         return True
-
-#     def submap_constraint_callback(self, msg):
-#         if not (self.is_initialized and self.config.enable_submap_constraints):
-#             Logger.LogInfo('GraphClient: Received submap constraint message before being initialized.')
-#             return
-#         Logger.LogInfo('GraphClient: Received submap constraint message.')
-#         self.constraint_mutex.acquire()
-#         self.constraint_handler.add_constraints(msg)
-#         self.constraint_mutex.release()
+    def submap_constraint_callback(self, msg):
+        if not (self.is_initialized and self.config.enable_submap_constraints):
+            Logger.LogInfo('GraphClient: Received submap constraint message before being initialized.')
+            return
+        Logger.LogInfo('GraphClient: Received submap constraint message.')
+        self.constraint_mutex.acquire()
+        self.constraint_handler.add_constraints(msg)
+        self.constraint_mutex.release()
 
 #     def update(self):
 #         self.mutex.acquire()

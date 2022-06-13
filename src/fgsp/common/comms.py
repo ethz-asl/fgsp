@@ -8,7 +8,6 @@ class Comms(object):
 
     def __new__(self):
         if self._instance is None:
-            print(f'Creating the object')
             self._instance = super(Comms, self).__new__(self)
             self._instance.node = Node('fgsp_comms')
         return self._instance

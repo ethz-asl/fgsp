@@ -6,7 +6,7 @@ package_name = 'fgsp'
 setup(
     name=package_name,
     version='2.0.0',
-    packages=[package_name, 'fgsp.foo'],
+    packages=[package_name, f'{package_name}.foo'],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),

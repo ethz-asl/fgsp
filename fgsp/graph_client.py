@@ -8,8 +8,8 @@ from nav_msgs.msg import Path
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode, SubmapConstraint
 from multiprocessing import Lock
 
-from .test import Test
-from .foo.test2 import Test2
+from fgsp.test import Test
+from fgsp.foo.test2 import Test2
 # from graph.wavelet_evaluator import WaveletEvaluator
 # from graph.global_graph import GlobalGraph
 # from controller.signal_handler import SignalHandler

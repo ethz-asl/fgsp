@@ -51,37 +51,37 @@ class MonitorConfig(BaseConfig):
 
     def init_from_config(self):
         # general config
-        self.rate = self.try_get_param("~update_rate", self.rate)
-        self.enable_submap_constraints = self.try_get_param("~enable_submap_constraints", self.enable_submap_constraints)
-        self.enable_graph_building = self.try_get_param("~enable_graph_building", self.enable_graph_building)
-        self.min_node_count = self.try_get_param("~min_node_count", self.min_node_count)
-        self.submap_min_count = self.try_get_param("~submap_min_count", self.submap_min_count)
-        self.send_separate_traj_msgs = self.try_get_param("~send_separate_traj_msgs", self.send_separate_traj_msgs)
+        self.rate = self.try_get_param("update_rate", self.rate)
+        self.enable_submap_constraints = self.try_get_param("enable_submap_constraints", self.enable_submap_constraints)
+        self.enable_graph_building = self.try_get_param("enable_graph_building", self.enable_graph_building)
+        self.min_node_count = self.try_get_param("min_node_count", self.min_node_count)
+        self.submap_min_count = self.try_get_param("submap_min_count", self.submap_min_count)
+        self.send_separate_traj_msgs = self.try_get_param("send_separate_traj_msgs", self.send_separate_traj_msgs)
 
         # Reduction settings.
-        self.reduce_global_graph = self.try_get_param("~reduce_global_graph", self.reduce_global_graph)
-        self.reduction_method = self.try_get_param("~reduction_method", self.reduction_method)
-        self.reduce_to_n_percent = self.try_get_param("~reduce_to_n_percent", self.reduce_to_n_percent)
+        self.reduce_global_graph = self.try_get_param("reduce_global_graph", self.reduce_global_graph)
+        self.reduction_method = self.try_get_param("reduction_method", self.reduction_method)
+        self.reduce_to_n_percent = self.try_get_param("reduce_to_n_percent", self.reduce_to_n_percent)
 
         # submap constraints
-        self.pivot_distance = self.try_get_param("~submap_constraint_pivot_distance", self.pivot_distance)
-        self.min_pivot_distance = self.try_get_param("~submap_constraint_min_distance", self.min_pivot_distance)
-        self.n_nearest_neighbors = self.try_get_param("~submap_constraint_knn", self.n_nearest_neighbors)
-        self.p_norm = self.try_get_param("~submap_constraint_p_norm", self.p_norm)
-        self.enable_submap_map_publishing = self.try_get_param("~enable_submap_map_publishing", self.enable_submap_map_publishing)
-        self.compute_poses_in_LiDAR = self.try_get_param("~submap_constraint_export_lidar_poses", self.compute_poses_in_LiDAR)
+        self.pivot_distance = self.try_get_param("submap_constraint_pivot_distance", self.pivot_distance)
+        self.min_pivot_distance = self.try_get_param("submap_constraint_min_distance", self.min_pivot_distance)
+        self.n_nearest_neighbors = self.try_get_param("submap_constraint_knn", self.n_nearest_neighbors)
+        self.p_norm = self.try_get_param("submap_constraint_p_norm", self.p_norm)
+        self.enable_submap_map_publishing = self.try_get_param("enable_submap_map_publishing", self.enable_submap_map_publishing)
+        self.compute_poses_in_LiDAR = self.try_get_param("submap_constraint_export_lidar_poses", self.compute_poses_in_LiDAR)
 
         # input
-        self.in_graph_topic = self.try_get_param("~in_graph_topic", self.in_graph_topic)
-        self.in_traj_opt_topic = self.try_get_param("~in_traj_opt_topic", self.in_traj_opt_topic)
-        self.verification_service_topic = self.try_get_param("~verification_service", self.verification_service_topic)
-        self.opt_pc_topic = self.try_get_param("~opt_pc_topic", self.opt_pc_topic)
+        self.in_graph_topic = self.try_get_param("in_graph_topic", self.in_graph_topic)
+        self.in_traj_opt_topic = self.try_get_param("in_traj_opt_topic", self.in_traj_opt_topic)
+        self.verification_service_topic = self.try_get_param("verification_service", self.verification_service_topic)
+        self.opt_pc_topic = self.try_get_param("opt_pc_topic", self.opt_pc_topic)
 
         # output
-        self.out_graph_topic = self.try_get_param("~out_graph_topic", self.out_graph_topic)
-        self.out_traj_opt_topic = self.try_get_param("~out_traj_opt_topic", self.out_traj_opt_topic)
-        self.submap_topic = self.try_get_param("~submap_constraint_topic", self.submap_topic)
-        self.accumulated_map_topic = self.try_get_param("~accumulated_map_topic", self.accumulated_map_topic)
+        self.out_graph_topic = self.try_get_param("out_graph_topic", self.out_graph_topic)
+        self.out_traj_opt_topic = self.try_get_param("out_traj_opt_topic", self.out_traj_opt_topic)
+        self.submap_topic = self.try_get_param("submap_constraint_topic", self.submap_topic)
+        self.accumulated_map_topic = self.try_get_param("accumulated_map_topic", self.accumulated_map_topic)
 
 
 class ClientConfig(BaseConfig):
@@ -134,48 +134,48 @@ class ClientConfig(BaseConfig):
 
     def init_from_config(self):
         # general config
-        self.rate = self.try_get_param("~update_rate", self.rate)
-        self.dataroot = self.try_get_param("~dataroot", self.dataroot)
-        self.robot_name = self.try_get_param("~robot_name", self.robot_name)
-        self.enable_client_update = self.try_get_param("~enable_client_update", self.enable_client_update)
-        self.enable_submap_constraints = self.try_get_param("~enable_submap_constraints", self.enable_submap_constraints)
-        self.enable_anchor_constraints = self.try_get_param("~enable_anchor_constraints", self.enable_anchor_constraints)
-        self.enable_relative_constraints = self.try_get_param("~enable_relative_constraints", self.enable_relative_constraints)
-        self.enable_signal_recording = self.try_get_param("~enable_signal_recording", self.enable_signal_recording)
-        self.enable_trajectory_recording = self.try_get_param("~enable_trajectory_recording", self.enable_trajectory_recording)
-        self.signal_export_path = self.try_get_param("~signal_export_path", self.signal_export_path)
-        self.graph_coords_export_path = self.try_get_param("~graph_coords_export_path", self.graph_coords_export_path)
-        self.graph_adj_export_path = self.try_get_param("~graph_adj_export_path", self.graph_adj_export_path)
-        self.trajectory_export_path = self.try_get_param("~trajectory_export_path", self.trajectory_export_path)
+        self.rate = self.try_get_param("update_rate", self.rate)
+        self.dataroot = self.try_get_param("dataroot", self.dataroot)
+        self.robot_name = self.try_get_param("robot_name", self.robot_name)
+        self.enable_client_update = self.try_get_param("enable_client_update", self.enable_client_update)
+        self.enable_submap_constraints = self.try_get_param("enable_submap_constraints", self.enable_submap_constraints)
+        self.enable_anchor_constraints = self.try_get_param("enable_anchor_constraints", self.enable_anchor_constraints)
+        self.enable_relative_constraints = self.try_get_param("enable_relative_constraints", self.enable_relative_constraints)
+        self.enable_signal_recording = self.try_get_param("enable_signal_recording", self.enable_signal_recording)
+        self.enable_trajectory_recording = self.try_get_param("enable_trajectory_recording", self.enable_trajectory_recording)
+        self.signal_export_path = self.try_get_param("signal_export_path", self.signal_export_path)
+        self.graph_coords_export_path = self.try_get_param("graph_coords_export_path", self.graph_coords_export_path)
+        self.graph_adj_export_path = self.try_get_param("graph_adj_export_path", self.graph_adj_export_path)
+        self.trajectory_export_path = self.try_get_param("trajectory_export_path", self.trajectory_export_path)
         self.trajectory_raw_export_path = self.try_get_param("~trajectory_raw_export_path", self.trajectory_raw_export_path)
-        self.degenerate_window = self.try_get_param("~degenerate_window", self.degenerate_window)
-        self.synchronization_max_diff_s = self.try_get_param("~synchronization_max_diff_s", self.synchronization_max_diff_s)
+        self.degenerate_window = self.try_get_param("degenerate_window", self.degenerate_window)
+        self.synchronization_max_diff_s = self.try_get_param("synchronization_max_diff_s", self.synchronization_max_diff_s)
 
         # constraint construction
-        self.client_mode = self.try_get_param("~client_mode", self.client_mode)
-        self.classifier = self.try_get_param("~classifier", self.classifier)
-        self.top_classifier_select_n = self.try_get_param("~top_classifier_select_n", self.top_classifier_select_n)
+        self.client_mode = self.try_get_param("client_mode", self.client_mode)
+        self.classifier = self.try_get_param("classifier", self.classifier)
+        self.top_classifier_select_n = self.try_get_param("top_classifier_select_n", self.top_classifier_select_n)
 
         # Graph construction
-        self.include_rotational_weight = self.try_get_param("~include_rotational_weight", self.include_rotational_weight)
-        self.include_temporal_decay_weight = self.try_get_param("~include_temporal_decay_weight", self.include_temporal_decay_weight)
-        self.use_se3_computation = self.try_get_param("~use_se3_computation", self.use_se3_computation)
-        self.use_so3_computation = self.try_get_param("~use_so3_computation", self.use_so3_computation)
+        self.include_rotational_weight = self.try_get_param("include_rotational_weight", self.include_rotational_weight)
+        self.include_temporal_decay_weight = self.try_get_param("include_temporal_decay_weight", self.include_temporal_decay_weight)
+        self.use_se3_computation = self.try_get_param("use_se3_computation", self.use_se3_computation)
+        self.use_so3_computation = self.try_get_param("use_so3_computation", self.use_so3_computation)
 
         # input
-        self.opt_graph_topic = self.try_get_param("~opt_graph_topic", self.opt_graph_topic)
-        self.opt_traj_topic = self.try_get_param("~opt_traj_topic", self.opt_traj_topic)
-        self.est_traj_topic = self.try_get_param("~est_traj_topic", self.est_traj_topic)
-        self.est_traj_path_topic = self.try_get_param("~est_traj_path_topic", self.est_traj_path_topic)
-        self.submap_constraint_topic = self.try_get_param("~opt_submap_constraint_topic", self.submap_constraint_topic)
+        self.opt_graph_topic = self.try_get_param("opt_graph_topic", self.opt_graph_topic)
+        self.opt_traj_topic = self.try_get_param("opt_traj_topic", self.opt_traj_topic)
+        self.est_traj_topic = self.try_get_param("est_traj_topic", self.est_traj_topic)
+        self.est_traj_path_topic = self.try_get_param("est_traj_path_topic", self.est_traj_path_topic)
+        self.submap_constraint_topic = self.try_get_param("opt_submap_constraint_topic", self.submap_constraint_topic)
 
         # output
-        self.anchor_node_topic = self.try_get_param("~anchor_node_topic", self.anchor_node_topic)
-        self.relative_node_topic = self.try_get_param("~relative_node_topic", self.relative_node_topic)
-        self.intra_constraint_topic = self.try_get_param("~intra_constraints", self.intra_constraint_topic)
+        self.anchor_node_topic = self.try_get_param("anchor_node_topic", self.anchor_node_topic)
+        self.relative_node_topic = self.try_get_param("relative_node_topic", self.relative_node_topic)
+        self.intra_constraint_topic = self.try_get_param("intra_constraints", self.intra_constraint_topic)
 
         # input and output
-        self.client_update_topic = self.try_get_param("~client_update_topic", self.client_update_topic)
+        self.client_update_topic = self.try_get_param("client_update_topic", self.client_update_topic)
 
 class DebugConfig(BaseConfig):
     def __init__(self):

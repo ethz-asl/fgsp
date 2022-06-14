@@ -27,6 +27,7 @@ setup(
         'console_scripts': [
             'graph_monitor = src.fgsp.graph_monitor:main',
             'graph_client = src.fgsp.graph_client:main',
+            'traj_publisher = src.fgsp.traj_publisher:main',
         ],
     },
 )

@@ -134,3 +134,6 @@ dmypy.json
 # ROS2
 install/
 log/
+
+# VS Code
+.vscode/

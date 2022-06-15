@@ -13,10 +13,10 @@ from src.fgsp.common.logger import Logger
 
 
 
-class TrajPublisher(Node):
+class ServerSimulation(Node):
     def __init__(self):
         super().__init__('FGSP_TrajPublisher')
-        Logger.LogInfo('TrajPublisher: Initializing...')
+        Logger.LogInfo('ServerSimulation: Initializing...')
         self.traj_file = self.get_traj_file()
 
     def get_traj_file(self):
@@ -25,20 +25,18 @@ class TrajPublisher(Node):
         return self.read_trajectory_file(self.get_parameter(traj_key).value)
 
     def read_trajectory_file(self, filename):
-        Logger.LogInfo(f'TrajPublisher: Reading file {filename}.')
+        Logger.LogInfo(f'ServerSimulation: Reading file {filename}.')
         if exists(filename):
             return file_interface.read_tum_trajectory_file(filename)
         else:
-            print(f'File does not exist!')
+            Logger.LogError(f'ServerSimulation: File does not exist!')
             return None
-
-
 
 def main(args=None):
     rclpy.init(args=args)
-    traj_publisher = TrajPublisher()
-    rclpy.spin(traj_publisher)
-    traj_publisher.destroy_node()
+    server = ServerSimulation()
+    rclpy.spin(server)
+    server.destroy_node()
     rclpy.shutdown()
 
 

@@ -11,16 +11,16 @@ def generate_launch_description():
     config = os.path.join(
         get_package_share_directory('fgsp'),
         'config',
-        'monitor_config.yaml'
+        'simulation_config.yaml'
     )
 
-    monitor_node = Node(
+    simulation_node = Node(
         package="fgsp",
-        executable="graph_monitor",
+        executable="simulation",
         output={'full': 'screen'},
         emulate_tty=True,
         parameters=[config]
     )
-    ld.add_action(monitor_node)
+    ld.add_action(simulation_node)
 
     return ld

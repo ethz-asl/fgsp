@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import numpy as np
 
+
 class SignalNode(object):
     def __init__(self):
         self.ts = None
@@ -11,7 +12,7 @@ class SignalNode(object):
         self.residual = None
         self.degenerate = None
 
-    def init(self, ts, id, robot_name, position, orientation, residual = 0, degenerate = False):
+    def init(self, ts, id, robot_name, position, orientation, residual=0, degenerate=False):
         self.ts = ts
         self.id = id
         self.robot_name = robot_name

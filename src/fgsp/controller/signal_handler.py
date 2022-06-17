@@ -1,18 +1,22 @@
 #! /usr/bin/env python3
 
+from natsort import ns
 import numpy as np
 from liegroups import SE3
+from rsa import sign
 from scipy.spatial.transform import Rotation
 from pygsp import graphs, filters, reduction
 from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
+from builtin_interfaces.msg import Time
 
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
 from src.fgsp.common.comms import Comms
 from src.fgsp.common.signal_node import SignalNode
 from src.fgsp.common.visualizer import Visualizer
+
 
 class SignalHandler(object):
     def __init__(self, config):
@@ -38,16 +42,19 @@ class SignalHandler(object):
                 path_msg.poses.append(node.pose)
             path_msg.header.stamp = self.comms.time_now()
             path_msg.header.frame_id = 'darpa'
-            self.comms.publish(path_msg, Path, f'/graph_monitor/{key}/monitor_path')
+            self.comms.publish(
+                path_msg, Path, f'/graph_monitor/{key}/monitor_path')
 
     def convert_signal(self, signal_msg):
         grouped_signals = self.group_robots(signal_msg.nodes)
         self.publish_grouped_robots(grouped_signals)
-        Logger.LogInfo(f'SignalHandler: Grouped signals are {grouped_signals.keys()}')
+        Logger.LogInfo(
+            f'SignalHandler: Grouped signals are {grouped_signals.keys()}')
 
         for key, nodes in grouped_signals.items():
             n_nodes = len(nodes)
-            Logger.LogWarn(f'SignalHandler: For {key} we have {n_nodes} nodes.')
+            Logger.LogWarn(
+                f'SignalHandler: For {key} we have {n_nodes} nodes.')
             if (n_nodes <= 0):
                 continue
 
@@ -68,6 +75,19 @@ class SignalHandler(object):
         signals = [None] * n_poses
         for i in range(0, n_poses):
             signals[i] = self.convert_path_node(path_msg.poses[i], key)
+
+        self.signals[key] = signals
+        return key
+
+    def convert_signal_from_poses(self, poses, robot_name):
+        n_poses = len(poses)
+        if (n_poses <= 0):
+            return ""
+
+        key = robot_name
+        signals = [None] * n_poses
+        for i in range(0, n_poses):
+            signals[i] = self.convert_pose(poses[i, :], key)
 
         self.signals[key] = signals
         return key
@@ -111,12 +131,14 @@ class SignalHandler(object):
         return indices
 
     def convert_trajectory_node(self, node_msg):
-        id = node_msg.id;
+        id = node_msg.id
         robot_name = node_msg.robot_name
         pose_msg = node_msg.pose
         ts = pose_msg.header.stamp
-        position = np.array([pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
-        orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
+        position = np.array(
+            [pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
+        orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x,
+                               pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
         residual = node_msg.signal
 
         signal = SignalNode()
@@ -125,42 +147,63 @@ class SignalHandler(object):
 
     def convert_path_node(self, pose_msg, robot_name):
         ts = pose_msg.header.stamp
-        position = np.array([pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
-        orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
+        position = np.array(
+            [pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
+        orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x,
+                               pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
         degenerate = pose_msg.header.frame_id.lower() == 'degenerate'
 
         signal = SignalNode()
         signal.init_onboard(ts, robot_name, position, orientation, degenerate)
         return signal
 
+    def convert_pose(self, pose, robot_name):
+        id = int(pose[0])
+
+        sec = int(pose[1] // 1)
+        nsec = int((pose[1] - sec) * 1e9)
+        ts = Time()
+        ts.sec = sec
+        ts.nanosec = nsec
+
+        position = pose[2:5]
+        orientation = pose[5:9]
+        degenerate = False
+
+        signal = SignalNode()
+        signal.init(ts, id, robot_name, position, orientation, 0.0, degenerate)
+        return signal
+
     def compute_signal_from_key(self, key):
         nodes = self.signals[key]
         traj = self.compute_trajectory(nodes)
-        traj_origin = traj[0,1:4]
+        traj_origin = traj[0, 1:4]
 
-        pos_signal = (traj[:,1:4] - traj_origin).squeeze()
+        pos_signal = (traj[:, 1:4] - traj_origin).squeeze()
 
         x = np.linalg.norm(pos_signal, ord=2, axis=1)
         return x
 
     def compute_r3_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
-        traj_origin = traj[0,1:4]
+        traj_origin = traj[0, 1:4]
 
-        pos_signal = (traj[:,1:4] - traj_origin).squeeze()
+        pos_signal = (traj[:, 1:4] - traj_origin).squeeze()
 
         return np.linalg.norm(pos_signal, ord=2, axis=1)
 
     def compute_so3_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
-        wxyz = traj[0,4:8]
-        traj_origin = Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm()
+        wxyz = traj[0, 4:8]
+        traj_origin = Rotation.from_quat(
+            [wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm()
 
         n_nodes = len(nodes)
         x_rot = [0] * n_nodes
         for i in range(0, n_nodes):
-            wxyz = traj[i,4:8]
-            rot_diff = np.matmul(traj_origin, Rotation.from_quat([wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm().transpose())
+            wxyz = traj[i, 4:8]
+            rot_diff = np.matmul(traj_origin, Rotation.from_quat(
+                [wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm().transpose())
             x_rot[i] = np.trace(rot_diff)
         return np.array(x_rot)
 
@@ -174,35 +217,38 @@ class SignalHandler(object):
 
     def compute_se3_signal(self, nodes):
         traj = self.compute_trajectory(nodes)
-        T_G_origin = Utils.convert_pos_quat_to_transformation(traj[0,1:4], traj[0,4:8])
+        T_G_origin = Utils.convert_pos_quat_to_transformation(
+            traj[0, 1:4], traj[0, 4:8])
         pose_origin = SE3.from_matrix(T_G_origin)
 
         n_nodes = len(nodes)
         x_se3 = [0] * n_nodes
         for i in range(0, n_nodes):
-            T_G = Utils.convert_pos_quat_to_transformation(traj[i,1:4], traj[i,4:8])
+            T_G = Utils.convert_pos_quat_to_transformation(
+                traj[i, 1:4], traj[i, 4:8])
             pose_cur = SE3.from_matrix(T_G)
             x_se3[i] = self.compute_se3_distance(pose_origin, pose_cur)
         return np.array(x_se3)
 
     def compute_se3_distance(self, pose_lhs, pose_rhs):
         Xi_12 = (pose_lhs.inv().dot(pose_rhs)).log()
-        W = np.eye(4,4)
-        W[0,0] = 10
-        W[1,1] = 10
-        W[2,2] = 1.5
-        W[3,3] = 1.5
+        W = np.eye(4, 4)
+        W[0, 0] = 10
+        W[1, 1] = 10
+        W[2, 2] = 1.5
+        W[3, 3] = 1.5
 
-        inner = np.trace(np.matmul(np.matmul(SE3.wedge(Xi_12),W),SE3.wedge(Xi_12).transpose()))
+        inner = np.trace(
+            np.matmul(np.matmul(SE3.wedge(Xi_12), W), SE3.wedge(Xi_12).transpose()))
         return np.sqrt(inner)
 
     def compute_trajectory(self, nodes):
         n_nodes = len(nodes)
         trajectory = np.zeros((n_nodes, 8))
         for i in range(n_nodes):
-            trajectory[i,0] = Utils.ros_time_to_ns(nodes[i].ts)
-            trajectory[i,1:4] = nodes[i].position
-            trajectory[i,4:8] = nodes[i].orientation
+            trajectory[i, 0] = Utils.ros_time_to_ns(nodes[i].ts)
+            trajectory[i, 1:4] = nodes[i].position
+            trajectory[i, 4:8] = nodes[i].orientation
 
         return trajectory
 
@@ -214,7 +260,7 @@ class SignalHandler(object):
 
         for i in range(n_nodes):
             node_msg = TrajectoryNode()
-            node_msg.id = nodes[i].id;
+            node_msg.id = nodes[i].id
             node_msg.robot_name = nodes[i].robot_name
 
             pose_msg = PoseStamped()

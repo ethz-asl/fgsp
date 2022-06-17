@@ -10,8 +10,10 @@ import numpy as np
 
 from rosbags.serde import serialize_cdr
 from rosbags.rosbag2 import Writer as Rosbag2Writer
+from rosbags.typesys import get_types_from_msg, register_types
 
 from src.fgsp.common.logger import Logger
+from src.fgsp.controller.signal_handler import SignalHandler
 
 
 class Simulation(Node):
@@ -30,7 +32,8 @@ class Simulation(Node):
         print(
             f'Simulation: Robot trajectory: {self.robot_traj.get_infos()}')
 
-        self.write_odometry(self.robot_traj)
+        # self.write_odometry(self.robot_traj)
+        self.write_server_trajectory(self.server_traj)
 
     def get_traj_file(self, traj_key):
         print(f'declaring param {traj_key}')
@@ -88,6 +91,53 @@ class Simulation(Node):
         ros2_bag_out.close()
 
         Logger.LogInfo('Simulation: Writing odometry to bag file done.')
+
+    def create_submap_ids(self, n_poses):
+        submap_ids = []
+        k = 0
+        for i in range(n_poses):
+            submap_ids.append(k)
+            if i % 20 == 0:
+                k = k + 1
+        return np.array(submap_ids)
+
+    def convert_traj_to_signal(self, traj):
+        handler = SignalHandler(None)
+        submap_ids = self.create_submap_ids(len(traj.timestamps))
+        poses = np.column_stack(
+            [submap_ids, traj.timestamps, traj.positions_xyz, traj.orientations_quat_wxyz])
+        handler.convert_signal_from_poses(poses, 'foo')
+        return handler.to_signal_msg('foo')
+
+    def write_server_trajectory(self, server_traj):
+        TRAJECTORY_MSG = """
+        std_msgs/Header header
+        maplab_msgs/TrajectoryNode[] nodes
+        """
+        TRAJECTORY_NODE_MSG = """
+        string robot_name
+        int64 id
+        geometry_msgs/Pose pose
+        float32 signal
+        """
+
+        register_types(get_types_from_msg(
+            TRAJECTORY_NODE_MSG, 'maplab_msgs/msg/TrajectoryNode'))
+        register_types(get_types_from_msg(
+            TRAJECTORY_MSG, 'maplab_msgs/msg/Trajectory'))
+
+        from rosbags.typesys.types import maplab_msgs__msg__TrajectoryNode as TrajectoryNode  # type: ignore  # noqa
+        from rosbags.typesys.types import maplab_msgs__msg__Trajectory as Trajectory  # type: ignore  # noqa
+
+        print(f'timestamp shape {server_traj.timestamps.shape}')
+        print(f'positions shape {server_traj.positions_xyz.shape}')
+
+        trajectory_msg = self.convert_traj_to_signal(server_traj)
+
+        # bag_file = '/tmp/server_traj.bag'
+        # ros2_bag_out = Rosbag2Writer(bag_file)
+        # ros2_bag_out.open()
+        # ros2_bag_out.close()
 
 
 def main(args=None):

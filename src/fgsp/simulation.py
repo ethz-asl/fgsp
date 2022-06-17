@@ -63,8 +63,7 @@ class Simulation(Node):
             return None
 
     def write_odometry(self, robot_traj):
-        bag_file = '/tmp/odometry.bag'
-        ros2_bag_out = Rosbag2Writer(bag_file)
+        ros2_bag_out = Rosbag2Writer(self.odom_bag_file)
         ros2_bag_out.open()
 
         from rosbags.typesys.types import (
@@ -83,7 +82,8 @@ class Simulation(Node):
         topic = '/odometry'
         connection = ros2_bag_out.add_connection(topic, msg_type)
 
-        Logger.LogDebug(f'Writing odometry to bag file to: {bag_file}')
+        Logger.LogDebug(
+            f'Writing odometry to bag file to: {self.odom_bag_file}')
         for stamp, xyz, quat in zip(robot_traj.timestamps, robot_traj.positions_xyz,
                                     robot_traj.orientations_quat_wxyz):
             sec = int(stamp // 1)

@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 from os.path import exists
+from re import I
 
 import rclpy
 from rclpy.node import Node
@@ -92,23 +93,6 @@ class Simulation(Node):
 
         Logger.LogInfo('Simulation: Writing odometry to bag file done.')
 
-    def create_submap_ids(self, n_poses):
-        submap_ids = []
-        k = 0
-        for i in range(n_poses):
-            submap_ids.append(k)
-            if i % 20 == 0:
-                k = k + 1
-        return np.array(submap_ids)
-
-    def convert_traj_to_signal(self, traj):
-        handler = SignalHandler(None)
-        submap_ids = self.create_submap_ids(len(traj.timestamps))
-        poses = np.column_stack(
-            [submap_ids, traj.timestamps, traj.positions_xyz, traj.orientations_quat_wxyz])
-        handler.convert_signal_from_poses(poses, 'foo')
-        return handler.to_signal_msg('foo')
-
     def write_server_trajectory(self, server_traj):
         TRAJECTORY_MSG = """
         std_msgs/Header header
@@ -117,7 +101,7 @@ class Simulation(Node):
         TRAJECTORY_NODE_MSG = """
         string robot_name
         int64 id
-        geometry_msgs/Pose pose
+        geometry_msgs/PoseStamped pose
         float32 signal
         """
 
@@ -126,18 +110,62 @@ class Simulation(Node):
         register_types(get_types_from_msg(
             TRAJECTORY_MSG, 'maplab_msgs/msg/Trajectory'))
 
-        from rosbags.typesys.types import maplab_msgs__msg__TrajectoryNode as TrajectoryNode  # type: ignore  # noqa
-        from rosbags.typesys.types import maplab_msgs__msg__Trajectory as Trajectory  # type: ignore  # noqa
+        from rosbags.typesys.types import (maplab_msgs__msg__TrajectoryNode as TrajectoryNode,
+                                           maplab_msgs__msg__Trajectory as Trajectory,
+                                           geometry_msgs__msg__Pose as Pose,
+                                           geometry_msgs__msg__PoseStamped as PoseStamped,
+                                           geometry_msgs__msg__Point as Position,
+                                           geometry_msgs__msg__Quaternion as Quaternion,
+                                           std_msgs__msg__Header as Header,
+                                           builtin_interfaces__msg__Time as Time)
 
         print(f'timestamp shape {server_traj.timestamps.shape}')
         print(f'positions shape {server_traj.positions_xyz.shape}')
 
-        trajectory_msg = self.convert_traj_to_signal(server_traj)
+        bag_file = '/tmp/server_traj.bag'
+        ros2_bag_out = Rosbag2Writer(bag_file)
+        ros2_bag_out.open()
 
-        # bag_file = '/tmp/server_traj.bag'
-        # ros2_bag_out = Rosbag2Writer(bag_file)
-        # ros2_bag_out.open()
-        # ros2_bag_out.close()
+        msg_type = Trajectory.__msgtype__
+        topic = '/graph_monitor/sparse_graph/trajectory'
+        connection = ros2_bag_out.add_connection(topic, msg_type)
+
+        Logger.LogDebug(
+            f'Writing server trajectory to bag file to: {bag_file}')
+        submap_ids = self.create_submap_ids(len(server_traj.timestamps))
+        i = 0
+        k = 0
+        update_every_n_poses = 20
+        nodes = []
+        for stamp, xyz, quat in zip(server_traj.timestamps, server_traj.positions_xyz,
+                                    server_traj.orientations_quat_wxyz):
+            sec = int(stamp // 1)
+            nanosec = int((stamp - sec) * 1e9)
+            time = Time(sec, nanosec)
+            header = Header(time, "map")
+
+            position = Position(x=xyz[0], y=xyz[1], z=xyz[2])
+            quaternion = Quaternion(w=quat[0], x=quat[1], y=quat[2], z=quat[3])
+            pose = Pose(position, quaternion)
+            pose_stamped = PoseStamped(header, pose)
+
+            node = TrajectoryNode("foo", k, pose, 0.0)
+            nodes.append(nodes)
+
+            if i % update_every_n_poses == 0:
+                k = k + 1
+                traj_msg = Trajectory(header, nodes)
+                serialized_msg = serialize_cdr(traj_msg, msg_type)
+                ros2_bag_out.write(connection, int(
+                    stamp * 1e9), serialized_msg)
+                nodes = []
+
+            i = i + 1
+        Logger.LogInfo(f'Wrote topic: {topic}')
+        ros2_bag_out.close()
+
+        Logger.LogInfo(
+            'Simulation: Writing server trajectory to bag file done.')
 
 
 def main(args=None):

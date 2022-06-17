@@ -129,7 +129,7 @@ class ClientConfig(BaseConfig):
         self.trajectory_export_path = "/data/{key}_{src}_trajectory.npy"
         self.trajectory_raw_export_path = "/data/{key}_{src}_raw_trajectory.npy"
         self.degenerate_window = 10
-        self.synchronization_max_diff_s = 1
+        self.synchronization_max_diff_s = 1.0
 
         # constraint construction
         self.client_mode = 'multiscale'

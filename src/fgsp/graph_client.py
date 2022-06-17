@@ -22,9 +22,10 @@ from src.fgsp.common.logger import Logger
 from src.fgsp.classifier.top_classifier import TopClassifier
 from src.fgsp.classifier.classification_result import ClassificationResult
 
+
 class GraphClient(Node):
     def __init__(self):
-        super().__init__('FGSP_GraphClient')
+        super().__init__('graph_client')
 
         self.is_initialized = False
         self.is_updating = False
@@ -40,16 +41,22 @@ class GraphClient(Node):
         self.mutex.acquire()
 
 #         # Subscriber and publisher
-        self.graph_sub = self.create_subscription(Graph, self.config.opt_graph_topic, self.global_graph_callback, 10)
-        self.opt_traj_sub = self.create_subscription(Trajectory, self.config.opt_traj_topic, self.traj_opt_callback, 10)
-        self.est_traj_sub = self.create_subscription(Trajectory, self.config.est_traj_topic, self.traj_callback, 10)
-        self.est_traj_path_sub = self.create_subscription(Path, self.config.est_traj_path_topic, self.traj_path_callback, 10)
+        self.graph_sub = self.create_subscription(
+            Graph, self.config.opt_graph_topic, self.global_graph_callback, 10)
+        self.opt_traj_sub = self.create_subscription(
+            Trajectory, self.config.opt_traj_topic, self.traj_opt_callback, 10)
+        self.est_traj_sub = self.create_subscription(
+            Trajectory, self.config.est_traj_topic, self.traj_callback, 10)
+        self.est_traj_path_sub = self.create_subscription(
+            Path, self.config.est_traj_path_topic, self.traj_path_callback, 10)
 
         if self.config.enable_submap_constraints:
-            self.submap_sub = self.create_subscription(SubmapConstraint, self.config.submap_constraint_topic, self.submap_constraint_callback, 10)
+            self.submap_sub = self.create_subscription(
+                SubmapConstraint, self.config.submap_constraint_topic, self.submap_constraint_callback, 10)
             self.constraint_handler = ConstraintHandler()
 
-        self.intra_constraint_pub = self.create_publisher(Path, self.config.intra_constraint_topic, 20)
+        self.intra_constraint_pub = self.create_publisher(
+            Path, self.config.intra_constraint_topic, 20)
 
 #         # Handlers and evaluators.
         self.global_graph = GlobalGraph(self.config, reduced=False)
@@ -74,21 +81,23 @@ class GraphClient(Node):
 
         self.timer = self.create_timer(1 / self.config.rate, self.update)
 
-
     def create_data_export_folder(self):
         if not self.config.enable_signal_recording and not self.config.enable_trajectory_recording:
             return
         cur_ts = Utils.ros_time_to_ns(self.get_clock.now())
-        export_folder = self.config.dataroot + '/data/' + self.config.robot_name + '_%d'%np.float32(cur_ts)
-        Logger.LogWarn(f'GraphClient: Setting up dataroot folder to {export_folder}')
+        export_folder = self.config.dataroot + '/data/' + \
+            self.config.robot_name + '_%d' % np.float32(cur_ts)
+        Logger.LogWarn(
+            f'GraphClient: Setting up dataroot folder to {export_folder}')
         if not os.path.exists(export_folder):
             os.mkdir(export_folder)
             os.mkdir(export_folder + '/data')
         self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
-        Logger.LogInfo(f'GraphClient: Received graph message from monitor {msg.header.frame_id}.')
-        if not (self.is_initialized and(self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
+        Logger.LogInfo(
+            f'GraphClient: Received graph message from monitor {msg.header.frame_id}.')
+        if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
         self.mutex.acquire()
 
@@ -105,7 +114,8 @@ class GraphClient(Node):
             return
 
         keys = self.optimized_signal.convert_signal(msg)
-        Logger.LogInfo(f'GraphClient: Received opt trajectory message from {keys}.')
+        Logger.LogInfo(
+            f'GraphClient: Received opt trajectory message from {keys}.')
 
         for key in keys:
             if self.key_in_optimized_keys(key):
@@ -130,7 +140,8 @@ class GraphClient(Node):
         if self.latest_traj_msg == None:
             return False
 
-        key = self.signal.convert_signal_from_path(self.latest_traj_msg, self.config.robot_name)
+        key = self.signal.convert_signal_from_path(
+            self.latest_traj_msg, self.config.robot_name)
         if not key:
             Logger.LogError('GraphClient: Unable to convert msg to signal.')
             return False
@@ -142,7 +153,8 @@ class GraphClient(Node):
 
     def submap_constraint_callback(self, msg):
         if not (self.is_initialized and self.config.enable_submap_constraints):
-            Logger.LogInfo('GraphClient: Received submap constraint message before being initialized.')
+            Logger.LogInfo(
+                'GraphClient: Received submap constraint message before being initialized.')
             return
         Logger.LogInfo('GraphClient: Received submap constraint message.')
         self.constraint_mutex.acquire()
@@ -172,9 +184,12 @@ class GraphClient(Node):
 
         n_constraints = self.commander.get_total_amount_of_constraints()
         if n_constraints > 0:
-            Logger.LogInfo(f'GraphClient: Updating completed (sent {n_constraints} constraints)')
-            Logger.LogInfo(f'GraphClient: In detail relatives: {self.commander.small_constraint_counter} / {self.commander.mid_constraint_counter} / {self.commander.large_constraint_counter}')
-            Logger.LogInfo(f'GraphClient: In detail anchors: {self.commander.anchor_constraint_counter}')
+            Logger.LogInfo(
+                f'GraphClient: Updating completed (sent {n_constraints} constraints)')
+            Logger.LogInfo(
+                f'GraphClient: In detail relatives: {self.commander.small_constraint_counter} / {self.commander.mid_constraint_counter} / {self.commander.large_constraint_counter}')
+            Logger.LogInfo(
+                f'GraphClient: In detail anchors: {self.commander.anchor_constraint_counter}')
         self.mutex.acquire()
         self.is_updating = False
         self.last_update_seq = self.global_graph.graph_seq
@@ -187,7 +202,8 @@ class GraphClient(Node):
         self.record_signal_for_key(x_opt, 'opt')
 
     def record_raw_est_trajectory(self, traj):
-        filename = self.config.dataroot + self.config.trajectory_raw_export_path.format(src='est')
+        filename = self.config.dataroot + \
+            self.config.trajectory_raw_export_path.format(src='est')
         np.save(filename, traj)
 
     def record_synchronized_trajectories(self, traj_est, traj_opt):
@@ -197,18 +213,25 @@ class GraphClient(Node):
         self.record_traj_for_key(traj_opt, 'opt')
 
     def record_signal_for_key(self, x, src):
-        signal_file = self.config.dataroot + self.config.signal_export_path.format(src=src)
+        signal_file = self.config.dataroot + \
+            self.config.signal_export_path.format(src=src)
         np.save(signal_file, x)
-        graph_coords_file = self.config.dataroot + self.config.graph_coords_export_path.format(src=src)
-        graph_adj_file = self.config.dataroot + self.config.graph_adj_export_path.format(src=src)
+        graph_coords_file = self.config.dataroot + \
+            self.config.graph_coords_export_path.format(src=src)
+        graph_adj_file = self.config.dataroot + \
+            self.config.graph_adj_export_path.format(src=src)
         if src == 'opt':
-            self.global_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
+            self.global_graph.write_graph_to_disk(
+                graph_coords_file, graph_adj_file)
         elif src == 'est':
-            self.robot_graph.write_graph_to_disk(graph_coords_file, graph_adj_file)
-        Logger.LogWarn(f'GraphClient: for {src} we have {x.shape} and {self.robot_graph.coords.shape}')
+            self.robot_graph.write_graph_to_disk(
+                graph_coords_file, graph_adj_file)
+        Logger.LogWarn(
+            f'GraphClient: for {src} we have {x.shape} and {self.robot_graph.coords.shape}')
 
     def record_traj_for_key(self, traj, src):
-        filename = self.config.dataroot + self.config.trajectory_export_path.format(src=src)
+        filename = self.config.dataroot + \
+            self.config.trajectory_export_path.format(src=src)
         np.save(filename, traj)
 
     def record_features(self, features):
@@ -228,7 +251,8 @@ class GraphClient(Node):
         if self.key_in_optimized_keys(self.config.robot_name):
             self.compare_stored_signals(self.config.robot_name)
         else:
-            Logger.LogWarn(f'GraphClient: Found no optimized version of {self.config.robot_name} for comparison.')
+            Logger.LogWarn(
+                f'GraphClient: Found no optimized version of {self.config.robot_name} for comparison.')
         self.mutex.release()
 
     def check_for_submap_constraints(self, labels, all_opt_nodes):
@@ -258,12 +282,13 @@ class GraphClient(Node):
         all_opt_nodes = self.optimized_signal.get_all_nodes(key)
         n_opt_nodes = len(all_opt_nodes)
 
-
         # Compute the features and publish the results.
         # This evaluates per node the scale of the difference
         # and creates a relative constraint accordingly.
-        self.record_raw_est_trajectory(self.signal.compute_trajectory(all_est_nodes))
-        all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(all_opt_nodes, all_est_nodes)
+        self.record_raw_est_trajectory(
+            self.signal.compute_trajectory(all_est_nodes))
+        all_opt_nodes, all_est_nodes = self.reduce_and_synchronize(
+            all_opt_nodes, all_est_nodes)
         if all_opt_nodes is None or all_est_nodes is None:
             Logger.LogError('GraphClient: Synchronization failed.')
             return False
@@ -282,7 +307,8 @@ class GraphClient(Node):
         return True
 
     def reduce_and_synchronize(self, all_opt_nodes, all_est_nodes):
-        (all_opt_nodes, all_est_nodes, opt_idx, est_idx) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
+        (all_opt_nodes, all_est_nodes, opt_idx,
+         est_idx) = self.synchronizer.synchronize(all_opt_nodes, all_est_nodes)
         n_nodes = len(all_est_nodes)
         assert(n_nodes == len(all_opt_nodes))
         assert(len(est_idx) == len(opt_idx))
@@ -292,8 +318,10 @@ class GraphClient(Node):
 
         # Reduce the robot graph and compute the wavelet basis functions.
         positions = np.array([np.array(x.position) for x in all_est_nodes])
-        orientations = np.array([np.array(x.orientation) for x in all_est_nodes])
-        timestamps = np.array([np.array(Utils.ros_time_to_ns(x.ts)) for x in all_est_nodes])
+        orientations = np.array([np.array(x.orientation)
+                                for x in all_est_nodes])
+        timestamps = np.array(
+            [np.array(Utils.ros_time_to_ns(x.ts)) for x in all_est_nodes])
         poses = np.column_stack([positions, orientations, timestamps])
 
         self.robot_graph.build_from_poses(poses)
@@ -302,8 +330,10 @@ class GraphClient(Node):
         # TODO(lbern): fix this temporary test
         # Due to the reduction we rebuild here.
         positions = np.array([np.array(x.position) for x in all_opt_nodes])
-        orientations = np.array([np.array(x.orientation) for x in all_opt_nodes])
-        timestamps = np.array([np.array(Utils.ros_time_to_ns(x.ts)) for x in all_opt_nodes])
+        orientations = np.array([np.array(x.orientation)
+                                for x in all_opt_nodes])
+        timestamps = np.array(
+            [np.array(Utils.ros_time_to_ns(x.ts)) for x in all_opt_nodes])
         global_poses = np.column_stack([positions, orientations, timestamps])
         self.global_graph.build_from_poses(global_poses)
 
@@ -323,14 +353,18 @@ class GraphClient(Node):
                 continue
             pivot = self.config.degenerate_window // 2
             begin_send = max(i - pivot, 0)
-            end_send = min(i + (self.config.degenerate_window - pivot), n_nodes)
-            Logger.LogInfo(f'GraphClient: Sending degenerate anchros from {begin_send} to {end_send}')
+            end_send = min(
+                i + (self.config.degenerate_window - pivot), n_nodes)
+            Logger.LogInfo(
+                f'GraphClient: Sending degenerate anchros from {begin_send} to {end_send}')
             self.commander.send_anchors(all_opt_nodes, begin_send, end_send)
 
     def update_degenerate_anchors(self):
-        all_opt_nodes = self.optimized_signal.get_all_nodes(self.config.robot_name)
+        all_opt_nodes = self.optimized_signal.get_all_nodes(
+            self.config.robot_name)
         if len(all_opt_nodes) == 0:
-            Logger.LogError(f'[GraphClient] Robot {self.config.robot_name} does not have any optimized nodes yet.')
+            Logger.LogError(
+                f'[GraphClient] Robot {self.config.robot_name} does not have any optimized nodes yet.')
             return
         self.commander.update_degenerate_anchors(all_opt_nodes)
 
@@ -344,7 +378,8 @@ class GraphClient(Node):
         elif self.config.client_mode == 'absolute':
             return self.perform_absolute(key, all_opt_nodes, all_est_nodes)
         else:
-            Logger.LogError(f'GraphClient: Unknown mode specified {self.config.client_mode}')
+            Logger.LogError(
+                f'GraphClient: Unknown mode specified {self.config.client_mode}')
             return None
 
     def perform_multiscale_evaluation(self, key, all_opt_nodes, all_est_nodes):
@@ -353,13 +388,15 @@ class GraphClient(Node):
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
 
         self.record_all_signals(x_est, x_opt)
-        self.record_synchronized_trajectories(self.signal.compute_trajectory(all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
+        self.record_synchronized_trajectories(self.signal.compute_trajectory(
+            all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
 
         psi = self.eval.get_wavelets()
         robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
-            Logger.LogWarn(f'GraphClient We have a size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}. Trying to fix it.')
+            Logger.LogWarn(
+                f'GraphClient We have a size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}. Trying to fix it.')
 
             positions = np.array([np.array(x.position) for x in all_opt_nodes])
             self.global_graph.build_from_poses(positions)
@@ -368,7 +405,8 @@ class GraphClient(Node):
             n_dim = psi.shape[0]
 
         if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
-            Logger.LogWarn(f'GraphClient: Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
+            Logger.LogWarn(
+                f'GraphClient: Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
             return None
 
         # Compute all the wavelet coefficients.
@@ -378,13 +416,14 @@ class GraphClient(Node):
         features = self.eval.compute_features(W_opt, W_est)
         self.record_features(features)
 
-        labels =  self.classifier.classify(features)
+        labels = self.classifier.classify(features)
         return ClassificationResult(key, all_opt_nodes, features, labels)
 
     def perform_euclidean_evaluation(self, key, all_opt_nodes, all_est_nodes):
         est_traj = self.optimized_signal.compute_trajectory(all_opt_nodes)
         opt_traj = self.signal.compute_trajectory(all_est_nodes)
-        euclidean_dist = np.linalg.norm(est_traj[:,1:4] - opt_traj[:,1:4], axis=1)
+        euclidean_dist = np.linalg.norm(
+            est_traj[:, 1:4] - opt_traj[:, 1:4], axis=1)
         n_nodes = est_traj.shape[0]
         labels = [[0]] * n_nodes
         for i in range(0, n_nodes):
@@ -412,10 +451,11 @@ class GraphClient(Node):
         self.commander.evaluate_labels_per_node(labels)
 
     def key_in_optimized_keys(self, key):
-       return any(key in k for k in self.optimized_keys)
+        return any(key in k for k in self.optimized_keys)
 
     def key_in_keys(self, key):
-       return any(key in k for k in self.keys)
+        return any(key in k for k in self.keys)
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -423,6 +463,7 @@ def main(args=None):
     rclpy.spin(monitor)
     monitor.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

@@ -22,7 +22,7 @@ class Visualizer(object):
         self.robot_colors = self.generate_robot_colors()
         self.resetConstraintVisualization()
 
-    def create_line_marker(self, frame_id = 'darpa'):
+    def create_line_marker(self, frame_id='darpa'):
         line_marker = Marker()
         line_marker.header.frame_id = frame_id
         line_marker.ns = "Line"
@@ -32,7 +32,7 @@ class Visualizer(object):
         line_marker.scale.x = 0.05
         return line_marker
 
-    def create_sphere_marker(self, frame_id = 'darpa'):
+    def create_sphere_marker(self, frame_id='darpa'):
         sphere = Marker()
         sphere.header.frame_id = frame_id
         sphere.action = Marker.ADD
@@ -104,13 +104,15 @@ class Visualizer(object):
         self.adjacency.markers.append(line_marker)
 
     def visualize_coords(self):
-        self.comms.publish(self.spheres, MarkerArray, '/graph_monitor/graph/coords')
+        self.comms.publish(self.spheres, MarkerArray,
+                           '/graph_monitor/graph/coords')
 
     def visualize_adjacency(self):
-        self.comms.publish(self.adjacency, MarkerArray, '/graph_monitor/graph/adjacency')
+        self.comms.publish(self.adjacency, MarkerArray,
+                           '/graph_monitor/graph/adjacency')
 
     def visualize_signals(self, topic):
         self.comms.publish(self.signals, MarkerArray, topic)
 
     def time_now(self):
-        return self.comms.node.get_clock.now()
+        return self.comms.node.get_clock().now()

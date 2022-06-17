@@ -28,18 +28,31 @@ class Simulation(Node):
             Logger.LogError('Simulation: Trajectory files not found!')
             return
 
-        print(
+        self.odom_topic = self.get_param('odom_topic', '/odometry')
+        self.monitor_topic = self.get_param('monitor_topic', '/monitor')
+        self.odom_bag_file = self.get_param(
+            'odom_bag_file', '/tmp/odometry.bag')
+        self.monitor_bag_file = self.get_param(
+            'monitor_bag_file', '/tmp/monitor.bag')
+
+        Logger.LogInfo(
+            f'Simulation: Writing odometry to bag file to: {self.odom_bag_file}')
+        Logger.LogInfo(
+            f'Simulation: Writing monitor to bag file to: {self.monitor_bag_file}')
+        Logger.LogDebug(
             f'Simulation: Server trajectory: {self.server_traj.get_infos()}')
-        print(
+        Logger.LogDebug(
             f'Simulation: Robot trajectory: {self.robot_traj.get_infos()}')
 
-        # self.write_odometry(self.robot_traj)
+        self.write_odometry(self.robot_traj)
         self.write_server_trajectory(self.server_traj)
 
+    def get_param(self, key, default):
+        self.declare_parameter(key, default)
+        return self.get_parameter(key).value
+
     def get_traj_file(self, traj_key):
-        print(f'declaring param {traj_key}')
-        self.declare_parameter(traj_key, 'foo')
-        return self.read_trajectory_file(self.get_parameter(traj_key).value)
+        return self.read_trajectory_file(self.get_param(traj_key, ''))
 
     def read_trajectory_file(self, filename):
         Logger.LogInfo(f'Simulation: Reading file {filename}.')
@@ -119,20 +132,14 @@ class Simulation(Node):
                                            std_msgs__msg__Header as Header,
                                            builtin_interfaces__msg__Time as Time)
 
-        print(f'timestamp shape {server_traj.timestamps.shape}')
-        print(f'positions shape {server_traj.positions_xyz.shape}')
-
-        bag_file = '/tmp/server_traj.bag'
-        ros2_bag_out = Rosbag2Writer(bag_file)
+        ros2_bag_out = Rosbag2Writer(self.monitor_bag_file)
         ros2_bag_out.open()
 
         msg_type = Trajectory.__msgtype__
-        topic = '/graph_monitor/sparse_graph/trajectory'
-        connection = ros2_bag_out.add_connection(topic, msg_type)
+        connection = ros2_bag_out.add_connection(self.monitor_topic, msg_type)
 
         Logger.LogDebug(
-            f'Writing server trajectory to bag file to: {bag_file}')
-        submap_ids = self.create_submap_ids(len(server_traj.timestamps))
+            f'Writing server trajectory to bag file to: {self.monitor_bag_file}')
         i = 0
         k = 0
         update_every_n_poses = 20
@@ -149,8 +156,8 @@ class Simulation(Node):
             pose = Pose(position, quaternion)
             pose_stamped = PoseStamped(header, pose)
 
-            node = TrajectoryNode("foo", k, pose, 0.0)
-            nodes.append(nodes)
+            node = TrajectoryNode("foo", k, pose_stamped, 0.0)
+            nodes.append(node)
 
             if i % update_every_n_poses == 0:
                 k = k + 1
@@ -161,7 +168,8 @@ class Simulation(Node):
                 nodes = []
 
             i = i + 1
-        Logger.LogInfo(f'Wrote topic: {topic}')
+        Logger.LogInfo(
+            f'Wrote monitor topic {self.monitor_topic} to the bag.')
         ros2_bag_out.close()
 
         Logger.LogInfo(

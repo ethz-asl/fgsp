@@ -2,3 +2,10 @@ simulation:
   ros__parameters:
     server_file: "/home/berlukas/Documents/workspace/darpa/src/trajectory_eval/Trajectories/1_cerberus/3_m3rm/m3rm_tum.csv"
     robot_file: "/home/berlukas/Documents/workspace/darpa/src/trajectory_eval/Trajectories/1_cerberus/2_compslam_post/compslam_post_tum.csv"
+    robot_name: "cerberus"
+
+    odom_topic: "/odometry"
+    monitor_topic: "/graph_monitor/sparse_graph/trajectory"
+
+    odom_bag_file: "/tmp/odometry.bag"
+    monitor_bag_file: "/tmp/monitor.bag"

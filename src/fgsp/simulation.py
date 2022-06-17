@@ -30,22 +30,23 @@ class Simulation(Node):
 
         self.odom_topic = self.get_param('odom_topic', '/odometry')
         self.monitor_topic = self.get_param('monitor_topic', '/monitor')
-        self.odom_bag_file = self.get_param(
-            'odom_bag_file', '/tmp/odometry.bag')
-        self.monitor_bag_file = self.get_param(
-            'monitor_bag_file', '/tmp/monitor.bag')
+        self.out_bag_file = self.get_param(
+            'out_bag_file', '/tmp/odom_and_monitor.bag')
 
         Logger.LogInfo(
-            f'Simulation: Writing odometry to bag file to: {self.odom_bag_file}')
-        Logger.LogInfo(
-            f'Simulation: Writing monitor to bag file to: {self.monitor_bag_file}')
+            f'Simulation: Writing bag file to: {self.out_bag_file}')
         Logger.LogDebug(
             f'Simulation: Server trajectory: {self.server_traj.get_infos()}')
         Logger.LogDebug(
             f'Simulation: Robot trajectory: {self.robot_traj.get_infos()}')
 
-        self.write_odometry(self.robot_traj)
-        self.write_server_trajectory(self.server_traj)
+        ros2_bag_out = Rosbag2Writer(self.out_bag_file)
+        ros2_bag_out.open()
+
+        self.write_odometry(self.robot_traj, ros2_bag_out)
+        self.write_server_trajectory(self.server_traj, ros2_bag_out)
+
+        ros2_bag_out.close()
 
     def get_param(self, key, default):
         self.declare_parameter(key, default)
@@ -62,9 +63,7 @@ class Simulation(Node):
             Logger.LogError(f'Simulation: File does not exist!')
             return None
 
-    def write_odometry(self, robot_traj):
-        ros2_bag_out = Rosbag2Writer(self.odom_bag_file)
-        ros2_bag_out.open()
+    def write_odometry(self, robot_traj, ros2_bag_out):
 
         from rosbags.typesys.types import (
             nav_msgs__msg__Odometry as Odometry,
@@ -102,11 +101,10 @@ class Simulation(Node):
             serialized_msg = serialize_cdr(odom, msg_type)
             ros2_bag_out.write(connection, int(stamp * 1e9), serialized_msg)
         Logger.LogInfo(f'Wrote topic: {topic}')
-        ros2_bag_out.close()
 
         Logger.LogInfo('Simulation: Writing odometry to bag file done.')
 
-    def write_server_trajectory(self, server_traj):
+    def write_server_trajectory(self, server_traj, ros2_bag_out):
         TRAJECTORY_MSG = """
         std_msgs/Header header
         maplab_msgs/TrajectoryNode[] nodes
@@ -131,9 +129,6 @@ class Simulation(Node):
                                            geometry_msgs__msg__Quaternion as Quaternion,
                                            std_msgs__msg__Header as Header,
                                            builtin_interfaces__msg__Time as Time)
-
-        ros2_bag_out = Rosbag2Writer(self.monitor_bag_file)
-        ros2_bag_out.open()
 
         msg_type = Trajectory.__msgtype__
         connection = ros2_bag_out.add_connection(self.monitor_topic, msg_type)
@@ -170,7 +165,6 @@ class Simulation(Node):
             i = i + 1
         Logger.LogInfo(
             f'Wrote monitor topic {self.monitor_topic} to the bag.')
-        ros2_bag_out.close()
 
         Logger.LogInfo(
             'Simulation: Writing server trajectory to bag file done.')

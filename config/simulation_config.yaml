@@ -7,5 +7,4 @@ simulation:
     odom_topic: "/odometry"
     monitor_topic: "/graph_monitor/sparse_graph/trajectory"
 
-    odom_bag_file: "/tmp/odometry.bag"
-    monitor_bag_file: "/tmp/monitor.bag"
+    out_bag_file: "/tmp/odom_and_monitor.bag"

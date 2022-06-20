@@ -9,6 +9,7 @@ from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
 from src.fgsp.common.transform_history import TransformHistory
 
+
 class ClassificationResult(object):
     def __init__(self, robot_name, opt_nodes, features, labels):
         self.robot_name = robot_name
@@ -24,10 +25,10 @@ class ClassificationResult(object):
         n_nodes = len(labels)
         for i in range(0, n_nodes):
             if labels[i] is None:
-               labels[i] = []
+                labels[i] = []
         return labels
 
-    def partition_nodes(self, method = 'nth'):
+    def partition_nodes(self, method='nth'):
         if method == 'nth':
             return self.take_every_nth_node()
         else:
@@ -47,7 +48,7 @@ class ClassificationResult(object):
         partitioned_nodes = []
         partitions = np.arange(prev, self.n_nodes, n_steps)
         for cur in partitions:
-            pivot =  (cur + prev) // 2
+            pivot = (cur + prev) // 2
             # pivot =  (cur - prev) // 2
             partitioned_nodes.append(pivot)
             prev = cur
@@ -72,13 +73,16 @@ class ClassificationResult(object):
             transform_history = TransformHistory()
 
         if 1 in local_labels:
-            relative_constraint, transform_history, n_added = self.construct_small_area_constraint(idx, relative_constraint, transform_history)
+            relative_constraint, transform_history, n_added = self.construct_small_area_constraint(
+                idx, relative_constraint, transform_history)
             small_relative_counter = n_added
         if 2 in local_labels:
-            relative_constraint, transform_history, n_added = self.construct_mid_area_constraint(idx, relative_constraint, transform_history)
+            relative_constraint, transform_history, n_added = self.construct_mid_area_constraint(
+                idx, relative_constraint, transform_history)
             mid_relative_counter = n_added
         if 3 in local_labels:
-            relative_constraint, transform_history, n_added = self.construct_large_area_constraint(idx, relative_constraint, transform_history)
+            relative_constraint, transform_history, n_added = self.construct_large_area_constraint(
+                idx, relative_constraint, transform_history)
             large_relative_counter = n_added
 
         if len(relative_constraint.poses) == 0:
@@ -94,54 +98,62 @@ class ClassificationResult(object):
 
         target_idx = cur_submap_idx - 1
         if target_idx >= 0:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[target_idx])
+            T_a_b = self.compute_relative_distance(
+                cur_opt, self.opt_nodes[target_idx])
             if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(self.opt_nodes[target_idx], T_a_b)
+                pose_msg = self.create_pose_msg(
+                    self.opt_nodes[target_idx], T_a_b)
                 relative_constraint.poses.append(pose_msg)
                 history.add_record(target_idx, T_a_b)
                 counter = counter + 1
         target_idx = cur_submap_idx - 2
         if target_idx >= 0:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[target_idx])
+            T_a_b = self.compute_relative_distance(
+                cur_opt, self.opt_nodes[target_idx])
             if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(self.opt_nodes[target_idx], T_a_b)
+                pose_msg = self.create_pose_msg(
+                    self.opt_nodes[target_idx], T_a_b)
                 relative_constraint.poses.append(pose_msg)
                 history.add_record(target_idx, T_a_b)
                 counter = counter + 1
 
         target_idx = cur_submap_idx + 1
         if target_idx < self.n_nodes:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[target_idx])
+            T_a_b = self.compute_relative_distance(
+                cur_opt, self.opt_nodes[target_idx])
             if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(self.opt_nodes[target_idx], T_a_b)
+                pose_msg = self.create_pose_msg(
+                    self.opt_nodes[target_idx], T_a_b)
                 relative_constraint.poses.append(pose_msg)
                 history.add_record(target_idx, T_a_b)
                 counter = counter + 1
         target_idx = cur_submap_idx + 2
         if target_idx < self.n_nodes:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[target_idx])
+            T_a_b = self.compute_relative_distance(
+                cur_opt, self.opt_nodes[target_idx])
             if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(self.opt_nodes[target_idx], T_a_b)
+                pose_msg = self.create_pose_msg(
+                    self.opt_nodes[target_idx], T_a_b)
                 relative_constraint.poses.append(pose_msg)
                 history.add_record(target_idx, T_a_b)
                 counter = counter + 1
 
         if idx != 0:
             target_idx = 1
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[target_idx])
+            T_a_b = self.compute_relative_distance(
+                cur_opt, self.opt_nodes[target_idx])
             if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(self.opt_nodes[target_idx], T_a_b)
+                pose_msg = self.create_pose_msg(
+                    self.opt_nodes[target_idx], T_a_b)
                 relative_constraint.poses.append(pose_msg)
                 history.add_record(target_idx, T_a_b)
                 counter = counter + 1
 
-
-
         return relative_constraint, history, counter
 
-
     def lookup_closest_submap(self, cur_opt):
-        ts_diff = np.absolute(self.ts_partitions - Utils.ros_time_to_ns(cur_opt.ts))
+        ts_diff = np.absolute(self.ts_partitions -
+                              Utils.ros_time_to_ns(cur_opt.ts))
         ts_min = np.amin(ts_diff)
 
         # Retrieve the index in opt_nodes.
@@ -152,14 +164,16 @@ class ClassificationResult(object):
         cur_opt = self.opt_nodes[idx]
         counter = 0
         if idx - 5 >= 0:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 5])
+            T_a_b = self.compute_relative_distance(
+                cur_opt, self.opt_nodes[idx - 5])
             if history.has_different_transform(idx - 5, T_a_b):
                 pose_msg = self.create_pose_msg(self.opt_nodes[idx - 5], T_a_b)
                 relative_constraint.poses.append(pose_msg)
                 history.add_record(idx - 5, T_a_b)
                 counter = counter + 1
         if idx + 5 < self.n_nodes:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 5])
+            T_a_b = self.compute_relative_distance(
+                cur_opt, self.opt_nodes[idx + 5])
             if history.has_different_transform(idx + 5, T_a_b):
                 pose_msg = self.create_pose_msg(self.opt_nodes[idx + 5], T_a_b)
                 relative_constraint.poses.append(pose_msg)
@@ -173,7 +187,8 @@ class ClassificationResult(object):
         cur_opt = self.opt_nodes[idx]
         counter = 0
         if idx - 1 >= 0:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 1])
+            T_a_b = self.compute_relative_distance(
+                cur_opt, self.opt_nodes[idx - 1])
             if history.has_different_transform(idx - 1, T_a_b):
                 pose_msg = self.create_pose_msg(self.opt_nodes[idx - 1], T_a_b)
                 relative_constraint.poses.append(pose_msg)
@@ -187,7 +202,8 @@ class ClassificationResult(object):
         #         history.add_record(idx - 2, T_a_b)
         #         counter = counter + 1
         if idx + 1 < self.n_nodes:
-            T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 1])
+            T_a_b = self.compute_relative_distance(
+                cur_opt, self.opt_nodes[idx + 1])
             if history.has_different_transform(idx + 1, T_a_b):
                 pose_msg = self.create_pose_msg(self.opt_nodes[idx + 1], T_a_b)
                 relative_constraint.poses.append(pose_msg)
@@ -204,7 +220,7 @@ class ClassificationResult(object):
 
     def create_pose_msg_from_node(self, cur_opt):
         pose_msg = PoseStamped()
-        pose_msg.header.stamp = cur_opt.ts
+        pose_msg.header.stamp = cur_opt.ts.to_msg()
         pose_msg.pose.position.x = cur_opt.position[0]
         pose_msg.pose.position.y = cur_opt.position[1]
         pose_msg.pose.position.z = cur_opt.position[2]
@@ -224,7 +240,7 @@ class ClassificationResult(object):
         t_a_b, q_a_b = self.convert_transform(T_a_b)
 
         pose_msg = PoseStamped()
-        pose_msg.header.stamp = opt_node_to.ts
+        pose_msg.header.stamp = opt_node_to.ts.to_msg()
         pose_msg.pose.position.x = t_a_b[0]
         pose_msg.pose.position.y = t_a_b[1]
         pose_msg.pose.position.z = t_a_b[2]
@@ -235,10 +251,10 @@ class ClassificationResult(object):
         return pose_msg
 
     def convert_transform(self, T_a_b):
-        pos =  T_a_b[0:3, 3]
-        R = T_a_b[0:3,0:3]
+        pos = T_a_b[0:3, 3]
+        R = T_a_b[0:3, 0:3]
         # return pos, Rotation.from_matrix(R).as_quat() # x, y, z, w
-        return pos, Rotation.from_dcm(R).as_quat() # x, y, z, w
+        return pos, Rotation.from_dcm(R).as_quat()  # x, y, z, w
 
     def create_transformation_from_node(self, node):
         pose_msg = self.create_pose_msg_from_node(node)

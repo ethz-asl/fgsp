@@ -28,6 +28,7 @@ class GraphClient(Node):
         super().__init__('graph_client')
 
         self.is_initialized = False
+        self.initialize_logging = True
         self.is_updating = False
         self.last_update_seq = -1
         self.config = ClientConfig(self)
@@ -75,7 +76,6 @@ class GraphClient(Node):
         self.optimized_keys = []
         self.keys = []
 
-        self.create_data_export_folder()
         self.mutex.release()
         self.is_initialized = True
 
@@ -84,7 +84,7 @@ class GraphClient(Node):
     def create_data_export_folder(self):
         if not self.config.enable_signal_recording and not self.config.enable_trajectory_recording:
             return
-        cur_ts = Utils.ros_time_to_ns(self.get_clock.now())
+        cur_ts = Utils.ros_time_to_ns(self.get_clock().now())
         export_folder = self.config.dataroot + '/data/' + \
             self.config.robot_name + '_%d' % np.float32(cur_ts)
         Logger.LogWarn(
@@ -92,7 +92,7 @@ class GraphClient(Node):
         if not os.path.exists(export_folder):
             os.mkdir(export_folder)
             os.mkdir(export_folder + '/data')
-        self.config.dataroot = export_folder
+            self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
         Logger.LogInfo(
@@ -110,6 +110,7 @@ class GraphClient(Node):
         self.mutex.release()
 
     def traj_opt_callback(self, msg):
+        print('received traj opt msg')
         if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
 
@@ -130,6 +131,8 @@ class GraphClient(Node):
         if self.key_in_keys(key):
             return
         self.keys.append(key)
+        Logger.LogInfo(
+            f'GraphClient: Received est trajectory message from {key}.')
 
     def traj_path_callback(self, msg):
         if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
@@ -162,6 +165,9 @@ class GraphClient(Node):
         self.constraint_mutex.release()
 
     def update(self):
+        if (self.initialize_logging):
+            self.create_data_export_folder()
+            self.initialize_logging = False
         self.mutex.acquire()
         if self.is_updating:
             self.mutex.release()
@@ -460,9 +466,9 @@ class GraphClient(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    monitor = GraphClient()
-    rclpy.spin(monitor)
-    monitor.destroy_node()
+    client = GraphClient()
+    rclpy.spin(client)
+    client.destroy_node()
     rclpy.shutdown()
 
 

@@ -19,7 +19,7 @@ def generate_launch_description():
         executable="graph_monitor",
         output={'full': 'screen'},
         emulate_tty=True,
-        parameters=[config]
+        parameters=[config, {'use_sim_time': True}]
     )
     ld.add_action(monitor_node)
 

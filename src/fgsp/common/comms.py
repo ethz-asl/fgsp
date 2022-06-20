@@ -3,6 +3,7 @@
 import rclpy
 from rclpy.node import Node
 
+
 class Comms(object):
     _instance = None
 
@@ -17,7 +18,7 @@ class Comms(object):
         publisher.publish(msg)
 
     def time_now(self):
-        return self.node.get_clock.now()
+        return self.node.get_clock().now()
 
 
 if __name__ == '__main__':

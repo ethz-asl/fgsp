@@ -27,6 +27,7 @@ FIELDS_XYZI = [
     PointField(name='i', offset=12, datatype=PointField.FLOAT32, count=1),
 ]
 
+
 class SubmapHandler(object):
     def __init__(self, config):
         self.config = config
@@ -41,26 +42,30 @@ class SubmapHandler(object):
             return
         n_submaps = len(submaps)
         header = Header()
-        header.stamp = self.comms.time_now()
+        header.stamp = self.comms.time_now().to_msg()
         header.frame_id = 'darpa'
-        map_points = np.zeros((1,3))
+        map_points = np.zeros((1, 3))
 
         for i in range(0, n_submaps):
             if i not in submaps:
-                Logger.LogError(f'SubmapHandler: Submap with key {i} not found.')
+                Logger.LogError(
+                    f'SubmapHandler: Submap with key {i} not found.')
                 continue
             T_G_L = submaps[i].get_pivot_pose_LiDAR()
             submap = submaps[i].compute_dense_map()
             submap_points = Utils.transform_pointcloud(submap, T_G_L)
             map_points = np.append(map_points, submap_points, axis=0)
 
-        map_points = Utils.downsample_pointcloud(map_points, voxel_size = 0.4)
+        map_points = Utils.downsample_pointcloud(map_points, voxel_size=0.4)
         n_points = map_points.shape[0]
         if n_points > 1:
-            map_points = map_points[1:,:]
-            map_pointcloud_ros = pc2.create_cloud(header, FIELDS_XYZ, map_points)
-            self.comms.publish(map_pointcloud_ros, PointCloud2, self.config.accumulated_map_topic)
-            Logger.LogInfo(f'SubmapHandler: Published map with {n_points} points.')
+            map_points = map_points[1:, :]
+            map_pointcloud_ros = pc2.create_cloud(
+                header, FIELDS_XYZ, map_points)
+            self.comms.publish(map_pointcloud_ros, PointCloud2,
+                               self.config.accumulated_map_topic)
+            Logger.LogInfo(
+                f'SubmapHandler: Published map with {n_points} points.')
 
     def compute_constraints(self, submaps):
         candidates = self.find_close_submaps(submaps)
@@ -73,13 +78,15 @@ class SubmapHandler(object):
         n_submaps = len(submaps)
         candidates = np.zeros((n_submaps, n_submaps))
         if n_submaps <= 1:
-            Logger.LogError('SubmapHandler: Not enough submaps to find candidates.')
+            Logger.LogError(
+                'SubmapHandler: Not enough submaps to find candidates.')
             return candidates
         submap_positions = self.get_all_positions(submaps)
         tree = spatial.KDTree(submap_positions)
 
         for i in range(0, n_submaps):
-            nn_dists, nn_indices = self.lookup_closest_submap(submap_positions, tree, i)
+            nn_dists, nn_indices = self.lookup_closest_submap(
+                submap_positions, tree, i)
             if len(nn_indices) == 0 or len(nn_dists) == 0:
                 continue
             for nn_i in nn_indices:
@@ -98,7 +105,8 @@ class SubmapHandler(object):
             distance_upper_bound=self.config.pivot_distance)
 
         # Remove self and fix output.
-        nn_dists, nn_indices = Utils.fix_nn_output(n_neighbors, idx, nn_dists, nn_indices)
+        nn_dists, nn_indices = Utils.fix_nn_output(
+            n_neighbors, idx, nn_dists, nn_indices)
         mask = nn_dists >= self.config.min_pivot_distance
 
         return nn_dists[mask], nn_indices[mask]
@@ -111,7 +119,8 @@ class SubmapHandler(object):
         # for i in range(0, n_submaps):
         i = 0
         for key in submaps:
-            positions[i, 0:3] = np.transpose(submaps[key].get_pivot_pose_IMU()[0:3, 3])
+            positions[i, 0:3] = np.transpose(
+                submaps[key].get_pivot_pose_IMU()[0:3, 3])
             i += 1
         return positions
 
@@ -121,15 +130,16 @@ class SubmapHandler(object):
             return
         submap_msg = SubmapConstraint()
         for i in range(0, n_submaps):
-            submap_msg = self.evaluate_neighbors_for(submaps, candidates, i, submap_msg)
+            submap_msg = self.evaluate_neighbors_for(
+                submaps, candidates, i, submap_msg)
 
-        submap_msg.header.stamp = self.comms.time_now()
+        submap_msg.header.stamp = self.comms.time_now().to_msg()
         submap_msg.header.seq = self.submap_seq
         self.submap_seq += 1
         return submap_msg
 
     def evaluate_neighbors_for(self, submaps, candidates, i, submap_msg):
-        neighbors = candidates[i,:]
+        neighbors = candidates[i, :]
         nnz = np.count_nonzero(neighbors)
         if nnz == 0:
             return submap_msg
@@ -156,7 +166,7 @@ class SubmapHandler(object):
 
                 # Create a submap constraint message
                 submap_msg = self.create_and_append_submap_constraint_msg(
-                                candidate_a, candidate_b, T_L_a_L_b, submap_msg)
+                    candidate_a, candidate_b, T_L_a_L_b, submap_msg)
                 self.verify_submap_message(submap_msg)
 
                 # Bookkeeping
@@ -188,9 +198,9 @@ class SubmapHandler(object):
         submap_msg.timestamp_to.append(candidate_b.get_pivot_timestamp_ros())
         submap_msg.robot_name_to.append(candidate_b.robot_name)
 
-        t = T_L_a_L_b[0:3,3]
+        t = T_L_a_L_b[0:3, 3]
         # q = Rotation.from_matrix(T_L_a_L_b[0:3,0:3]).as_quat() # x, y, z, w
-        q = Rotation.from_dcm(T_L_a_L_b[0:3,0:3]).as_quat() # x, y, z, w
+        q = Rotation.from_dcm(T_L_a_L_b[0:3, 0:3]).as_quat()  # x, y, z, w
 
         pose_cov_msg = PoseWithCovariance()
         pose_msg = Pose()
@@ -225,6 +235,7 @@ class SubmapHandler(object):
         assert(n_id_from == n_robot_name_to)
         assert(n_id_from == n_robot_name_from)
         assert(n_id_from == n_poses)
+
 
 if __name__ == "__main__":
     submap_handler = SubmapHandler()

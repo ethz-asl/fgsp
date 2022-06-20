@@ -8,6 +8,7 @@ from src.fgsp.common.lc_model import LcModel
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
 
+
 class RobotConstraints(object):
     def __init__(self):
         self.submap_constraints = {}
@@ -32,16 +33,19 @@ class RobotConstraints(object):
 
     def construct_path_msgs(self):
         path_msgs = []
-        Logger.LogInfo(f'RobotConstraints: Constructing path message for {len(self.submap_constraints)} different submaps.')
+        Logger.LogInfo(
+            f'RobotConstraints: Constructing path message for {len(self.submap_constraints)} different submaps.')
         for ts_ns_from in self.submap_constraints:
             loop_closures = list(self.submap_constraints[ts_ns_from])
-            path_msg = self.construct_path_msg_for_submap(ts_ns_from, loop_closures)
+            path_msg = self.construct_path_msg_for_submap(
+                ts_ns_from, loop_closures)
             path_msgs.append(path_msg)
         return path_msgs
 
     def construct_path_msgs_using_ts(self, timestamps):
         path_msgs = []
-        Logger.LogInfo(f'RobotConstraints: Constructing path message for {len(self.submap_constraints)} different submaps.')
+        Logger.LogInfo(
+            f'RobotConstraints: Constructing path message for {len(self.submap_constraints)} different submaps.')
         for ts_from_ns in self.submap_constraints:
             if not self.should_publish_map(ts_from_ns, timestamps):
                 continue
@@ -50,7 +54,8 @@ class RobotConstraints(object):
 
             Logger.LogWarn('RobotConstraints: Found a valid timestamp!!!')
             loop_closures = list(self.submap_constraints[ts_from_ns])
-            path_msg = self.construct_path_msg_for_submap(ts_from_ns, loop_closures)
+            path_msg = self.construct_path_msg_for_submap(
+                ts_from_ns, loop_closures)
             path_msgs.append(path_msg)
         return path_msgs
 
@@ -67,14 +72,14 @@ class RobotConstraints(object):
 
     def construct_path_msg_for_submap(self, ts_ns_from, loop_closures):
         path_msg = Path()
-        path_msg.header.stamp = Utils.ts_ns_to_ros_time(ts_ns_from)
+        path_msg.header.stamp = Utils.ts_ns_to_ros_time(ts_ns_from).to_msg()
 
         for lc in loop_closures:
             t_a_b = lc.get_translation()
             q_a_b = lc.get_rotation_quat()
 
             pose_msg = PoseStamped()
-            pose_msg.header.stamp = lc.ts_to
+            pose_msg.header.stamp = lc.ts_to.to_msg()
             pose_msg.pose.position.x = t_a_b[0]
             pose_msg.pose.position.y = t_a_b[1]
             pose_msg.pose.position.z = t_a_b[2]

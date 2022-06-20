@@ -69,7 +69,7 @@ class Visualizer(object):
         self.signals = MarkerArray()
 
     def create_sphere(self, sphere, point):
-        sphere.header.stamp = self.time_now()
+        sphere.header.stamp = self.time_now().to_msg()
         sphere.pose.position.x = point[0]
         sphere.pose.position.y = point[1]
         sphere.pose.position.z = point[2]
@@ -94,7 +94,7 @@ class Visualizer(object):
 
         self.line_marker.id += 1
         line_marker = copy.deepcopy(self.line_marker)
-        line_marker.header.stamp = self.time_now()
+        line_marker.header.stamp = self.time_now().to_msg()
         line_marker.color = self.get_color(0.1, 0.8, 0.1)
 
         line_marker.points[:] = []

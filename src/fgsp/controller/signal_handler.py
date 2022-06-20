@@ -40,7 +40,7 @@ class SignalHandler(object):
             path_msg = Path()
             for node in nodes:
                 path_msg.poses.append(node.pose)
-            path_msg.header.stamp = self.comms.time_now()
+            path_msg.header.stamp = self.comms.time_now().to_msg()
             path_msg.header.frame_id = 'darpa'
             self.comms.publish(
                 path_msg, Path, f'/graph_monitor/{key}/monitor_path')

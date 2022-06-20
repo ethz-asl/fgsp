@@ -39,7 +39,7 @@ class ClassificationResult(object):
         ts = []
         for node_idx in nodes:
             node = self.opt_nodes[node_idx]
-            ts.append(Utils.ros_time_to_ns(node.ts))
+            ts.append(Utils.ros_time_msg_to_ns(node.ts))
         return np.array(ts)
 
     def take_every_nth_node(self):
@@ -153,7 +153,7 @@ class ClassificationResult(object):
 
     def lookup_closest_submap(self, cur_opt):
         ts_diff = np.absolute(self.ts_partitions -
-                              Utils.ros_time_to_ns(cur_opt.ts))
+                              Utils.ros_time_msg_to_ns(cur_opt.ts))
         ts_min = np.amin(ts_diff)
 
         # Retrieve the index in opt_nodes.

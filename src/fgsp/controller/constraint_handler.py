@@ -7,6 +7,7 @@ from src.fgsp.common.robot_constraints import RobotConstraints
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
 
+
 class ConstraintHandler(object):
     def __init__(self):
         self.intra_contraints = {}
@@ -16,8 +17,9 @@ class ConstraintHandler(object):
         if not self.verify_constraint_msg(constraint_msg):
             Logger.LogError('Submap constraint verfication failed.')
             return False
-        n_constraints  = len(constraint_msg.id_from)
-        Logger.LogInfo(f'ConstraintHandler: Submap constraint message is verified. Processing {n_constraints} constraints')
+        n_constraints = len(constraint_msg.id_from)
+        Logger.LogInfo(
+            f'ConstraintHandler: Submap constraint message is verified. Processing {n_constraints} constraints')
 
         # Received new message, reinitialize the constraints.
         # Each message contains all currently used constraints.
@@ -45,7 +47,8 @@ class ConstraintHandler(object):
             Logger.LogError(f'ConstraintHandler: We have a ID mismatch.')
             return False
         if n_id_from != n_ts_from:
-            Logger.LogError(f'ConstraintHandler: We have a TS (from) mismatch.')
+            Logger.LogError(
+                f'ConstraintHandler: We have a TS (from) mismatch.')
             return False
         if n_id_from != n_ts_to:
             Logger.LogError(f'ConstraintHandler: We have a TS (to) mismatch.')
@@ -80,12 +83,13 @@ class ConstraintHandler(object):
         for i in range(n_labels):
             if not 3 in labels.labels[i]:
                 continue
-            timestamps.append(Utils.ros_time_to_ns(all_opt_nodes[i].ts))
+            timestamps.append(Utils.ros_time_msg_to_ns(all_opt_nodes[i].ts))
         return np.array(timestamps)
 
     def create_msg_for_intra_constraints(self, robot_name, labels, all_opt_nodes):
         if robot_name not in self.intra_contraints:
-            Logger.LogError(f'ConstraintHandler: Robot {robot_name} does not have intra mission constraints.')
+            Logger.LogError(
+                f'ConstraintHandler: Robot {robot_name} does not have intra mission constraints.')
             return []
         timestamps = self.filter_large_constraints(labels, all_opt_nodes)
         if timestamps.shape[0] > 0:

@@ -5,11 +5,11 @@ import numpy as np
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
 
+
 class SignalSynchronizer(object):
 
     def __init__(self, config):
         self.config = config
-
 
     def synchronize(self, optimized, estimated):
         ts_opt = self.extract_timestamps(optimized)
@@ -22,17 +22,19 @@ class SignalSynchronizer(object):
         opt_idx = []
 
         if min_size != opt_size:
-            Logger.LogError(f'SignalSynchronizer: min size is {min_size} and opt is {opt_size}.')
+            Logger.LogError(
+                f'SignalSynchronizer: min size is {min_size} and opt is {opt_size}.')
 
         for i in range(0, min_size):
-            cur_ts = ts_opt[i,0]
+            cur_ts = ts_opt[i, 0]
 
             # TODO(lbern): Check for a max difference.
             ts_diff = np.absolute(ts_est - cur_ts)
             ts_min = np.amin(ts_diff)
             diff_s = Utils.ts_ns_to_seconds(ts_min)
             if diff_s > self.config.synchronization_max_diff_s:
-                Logger.LogWarn(f'SignalSynchronizer: closest TS is {diff_s} away.')
+                Logger.LogWarn(
+                    f'SignalSynchronizer: closest TS is {diff_s} away.')
                 continue
             cur_min_index = np.where(ts_diff == ts_min)[0]
             est_idx.append(cur_min_index[0])
@@ -47,6 +49,6 @@ class SignalSynchronizer(object):
         n_nodes = len(signals)
         ts = np.zeros((n_nodes, 1))
         for i in range(0, n_nodes):
-            ts[i] = Utils.ros_time_to_ns(signals[i].ts)
+            ts[i] = Utils.ros_time_msg_to_ns(signals[i].ts)
 
         return ts

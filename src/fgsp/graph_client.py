@@ -110,7 +110,6 @@ class GraphClient(Node):
         self.mutex.release()
 
     def traj_opt_callback(self, msg):
-        print('received traj opt msg')
         if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
             return
 
@@ -211,6 +210,7 @@ class GraphClient(Node):
     def record_raw_est_trajectory(self, traj):
         filename = self.config.dataroot + \
             self.config.trajectory_raw_export_path.format(src='est')
+
         np.save(filename, traj)
 
     def record_synchronized_trajectories(self, traj_est, traj_opt):
@@ -249,18 +249,13 @@ class GraphClient(Node):
         if not self.config.enable_relative_constraints:
             return
         Logger.LogInfo('GraphClient: Comparing estimations.')
-        self.mutex.acquire()
-        if self.global_graph.is_built is False and self.config.client_mode == 'multiscale':
-            Logger.LogError('GraphClient: Graph is not built yet.')
-            self.mutex.release()
-            return
+
         # Check whether we have an optimized version of it.
         if self.key_in_optimized_keys(self.config.robot_name):
             self.compare_stored_signals(self.config.robot_name)
         else:
             Logger.LogWarn(
                 f'GraphClient: Found no optimized version of {self.config.robot_name} for comparison.')
-        self.mutex.release()
 
     def check_for_submap_constraints(self, labels, all_opt_nodes):
         if not self.config.enable_submap_constraints:
@@ -328,7 +323,7 @@ class GraphClient(Node):
         orientations = np.array([np.array(x.orientation)
                                 for x in all_est_nodes])
         timestamps = np.array(
-            [np.array(Utils.ros_time_to_ns(x.ts)) for x in all_est_nodes])
+            [np.array(Utils.ros_time_msg_to_ns(x.ts)) for x in all_est_nodes])
         poses = np.column_stack([positions, orientations, timestamps])
 
         self.robot_graph.build_from_poses(poses)
@@ -340,7 +335,7 @@ class GraphClient(Node):
         orientations = np.array([np.array(x.orientation)
                                 for x in all_opt_nodes])
         timestamps = np.array(
-            [np.array(Utils.ros_time_to_ns(x.ts)) for x in all_opt_nodes])
+            [np.array(Utils.ros_time_msg_to_ns(x.ts)) for x in all_opt_nodes])
         global_poses = np.column_stack([positions, orientations, timestamps])
         self.global_graph.build_from_poses(global_poses)
 

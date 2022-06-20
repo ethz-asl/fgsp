@@ -6,24 +6,29 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 from sensor_msgs_py import point_cloud2 as pc2
 
+
 class Utils(object):
 
     @staticmethod
     def ros_time_to_ns(time):
+        return time.nanoseconds
+
+    @staticmethod
+    def ros_time_msg_to_ns(time):
         k_s_to_ns = 1e9
-        return time.secs * k_s_to_ns + time.nsecs
+        return time.sec * k_s_to_ns + time.nanosec
 
     @staticmethod
     def ts_ns_to_ros_time(ts_ns):
-      k_ns_per_s = 1e9;
-      ros_timestamp_sec = ts_ns / k_ns_per_s;
-      ros_timestamp_nsec = ts_ns - (ros_timestamp_sec * k_ns_per_s);
-      return rclpy.time.Time(seconds=ros_timestamp_sec, nanoseconds=ros_timestamp_nsec)
+        k_ns_per_s = 1e9
+        ros_timestamp_sec = ts_ns / k_ns_per_s
+        ros_timestamp_nsec = ts_ns - (ros_timestamp_sec * k_ns_per_s)
+        return rclpy.time.Time(seconds=ros_timestamp_sec, nanoseconds=ros_timestamp_nsec)
 
     @staticmethod
     def ts_ns_to_seconds(ts_ns):
-      k_ns_per_s = 1e9;
-      return ts_ns / k_ns_per_s;
+        k_ns_per_s = 1e9
+        return ts_ns / k_ns_per_s
 
     @staticmethod
     def convert_pointcloud2_msg_to_array(cloud_msg):
@@ -34,19 +39,21 @@ class Utils(object):
 
     @staticmethod
     def convert_pose_stamped_msg_to_array(pose_msg):
-       position = np.array([pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
-       orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
-       return position, orientation
+        position = np.array(
+            [pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z])
+        orientation = np.array([pose_msg.pose.orientation.w, pose_msg.pose.orientation.x,
+                               pose_msg.pose.orientation.y, pose_msg.pose.orientation.z])
+        return position, orientation
 
     @staticmethod
     def convert_quat_to_rotation(quat):
-        R = Rotation.from_quat(np.array([quat[1],quat[2],quat[3],quat[0]]))
+        R = Rotation.from_quat(np.array([quat[1], quat[2], quat[3], quat[0]]))
         return R.as_dcm()
 
     @staticmethod
     def convert_pos_quat_to_transformation(pos, quat):
         # takes xyzw as input
-        R = Rotation.from_quat(np.array([quat[1],quat[2],quat[3],quat[0]]))
+        R = Rotation.from_quat(np.array([quat[1], quat[2], quat[3], quat[0]]))
         T = np.empty((4, 4))
         T[0:3, 0:3] = R.as_dcm()
         T[0:3, 3] = pos
@@ -63,7 +70,7 @@ class Utils(object):
 
     @staticmethod
     def transform_pointcloud(cloud, T):
-        return (np.dot(cloud, T[0:3,0:3].T) + T[0:3, 3].T)
+        return (np.dot(cloud, T[0:3, 0:3].T) + T[0:3, 3].T)
 
     @staticmethod
     def downsample_pointcloud(cloud, voxel_size=0.15):

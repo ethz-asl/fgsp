@@ -14,6 +14,7 @@ from src.fgsp.common.visualizer import Visualizer
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
 
+
 class GlobalGraph(object):
     def __init__(self, config, reduced=False):
         self.config = config
@@ -47,11 +48,13 @@ class GlobalGraph(object):
     def build(self, graph_msg):
         start_time = time.time()
         self.coords = self.read_coordinates(graph_msg)
-        Logger.LogDebug(f'GlobalGraph: Building with coords {self.coords.shape}.')
+        Logger.LogDebug(
+            f'GlobalGraph: Building with coords {self.coords.shape}.')
         self.adj = self.read_adjacency(graph_msg)
         Logger.LogDebug(f'GlobalGraph: Building with adj: {self.adj.shape}.')
         self.submap_ind = self.read_submap_indices(graph_msg)
-        Logger.LogDebug(f'GlobalGraph: Building with ind: {len(self.submap_ind)}.')
+        Logger.LogDebug(
+            f'GlobalGraph: Building with ind: {len(self.submap_ind)}.')
 
         if not self.build_graph():
             self.G = None
@@ -64,23 +67,27 @@ class GlobalGraph(object):
             self.graph_seq = graph_msg.header.seq
         self.is_built = True
         execution_time = (time.time() - start_time)
-        Logger.LogInfo(f'GlobalGraph: Building complete ({execution_time} sec)')
+        Logger.LogInfo(
+            f'GlobalGraph: Building complete ({execution_time} sec)')
         self.latest_graph_msg = graph_msg
 
     def build_graph(self):
         if len(self.adj.tolist()) == 0:
-            Logger.LogInfo('GlobalGraph: Path adjacency matrix is empty. Aborting graph building.')
+            Logger.LogInfo(
+                'GlobalGraph: Path adjacency matrix is empty. Aborting graph building.')
             return False
         self.G = graphs.Graph(self.adj)
 
         if self.G.N != self.coords.shape[0]:
-            Logger.LogError(f'GlobalGraph: Path graph size is {self.G.N} but coords are {self.coords.shape}')
+            Logger.LogError(
+                f'GlobalGraph: Path graph size is {self.G.N} but coords are {self.coords.shape}')
             return False
         if self.G.N <= 1:
-            Logger.LogDebug('GlobalGraph: Path graph vertex count is less than 2.')
+            Logger.LogDebug(
+                'GlobalGraph: Path graph vertex count is less than 2.')
             return False
 
-        self.G.set_coordinates(self.coords[:,[0,1]])
+        self.G.set_coordinates(self.coords[:, [0, 1]])
         self.G.compute_fourier_basis()
 
         if (self.is_reduced):
@@ -104,8 +111,9 @@ class GlobalGraph(object):
             Logger.LogError('GlobalGraph: Received empty path message.')
             return
         poses = self.read_coordinates_from_poses(poses)
-        self.coords = poses[:,0:3]
-        Logger.LogDebug(f'GlobalGraph: Building with coords {self.coords.shape}.')
+        self.coords = poses[:, 0:3]
+        Logger.LogDebug(
+            f'GlobalGraph: Building with coords {self.coords.shape}.')
         self.adj = self.create_adjacency_from_poses(poses)
         Logger.LogDebug(f'GlobalGraph: Building with adj: {self.adj.shape}.')
 
@@ -116,7 +124,8 @@ class GlobalGraph(object):
             Logger.LogError('GlobalGraph: Received empty path message.')
             return
         self.coords = poses
-        Logger.LogDebug(f'GlobalGraph Building with coords {self.coords.shape}.')
+        Logger.LogDebug(
+            f'GlobalGraph Building with coords {self.coords.shape}.')
         self.adj = self.create_adjacency_from_poses(self.coords)
         Logger.LogDebug(f'GlobalGraph: Building with adj: {self.adj.shape}.')
         self.build_graph()
@@ -125,10 +134,10 @@ class GlobalGraph(object):
         n_coords_to_check = len(prev_coords)
         skip_indices = []
         for i in range(0, n_coords_to_check):
-            diff = np.linalg.norm(prev_coords[i,:] - next_coords[i,:])
+            diff = np.linalg.norm(prev_coords[i, :] - next_coords[i, :])
             if diff < 0.5:
                 continue
-            next_coords = np.delete(next_coords,i,0)
+            next_coords = np.delete(next_coords, i, 0)
             skip_indices.append(i)
 
         return next_coords, skip_indices
@@ -138,11 +147,11 @@ class GlobalGraph(object):
 
     def read_coordinates(self, graph_msg):
         n_coords = len(graph_msg.coords)
-        coords = np.zeros((n_coords,3))
+        coords = np.zeros((n_coords, 3))
         for i in range(n_coords):
-            coords[i,0] = graph_msg.coords[i].x
-            coords[i,1] = graph_msg.coords[i].y
-            coords[i,2] = graph_msg.coords[i].z
+            coords[i, 0] = graph_msg.coords[i].x
+            coords[i, 1] = graph_msg.coords[i].y
+            coords[i, 2] = graph_msg.coords[i].z
 
         return coords
 
@@ -150,14 +159,14 @@ class GlobalGraph(object):
         n_coords = len(poses)
         coords = np.zeros((n_coords, 8))
         for i in range(0, n_coords):
-            coords[i,0] = poses[i].pose.position.x
-            coords[i,1] = poses[i].pose.position.y
-            coords[i,2] = poses[i].pose.position.z
-            coords[i,3] = poses[i].pose.orientation.x
-            coords[i,4] = poses[i].pose.orientation.y
-            coords[i,5] = poses[i].pose.orientation.z
-            coords[i,6] = poses[i].pose.orientation.w
-            coords[i,7] = Utils.ros_time_to_ns(poses[i].pose.header.stamp)
+            coords[i, 0] = poses[i].pose.position.x
+            coords[i, 1] = poses[i].pose.position.y
+            coords[i, 2] = poses[i].pose.position.z
+            coords[i, 3] = poses[i].pose.orientation.x
+            coords[i, 4] = poses[i].pose.orientation.y
+            coords[i, 5] = poses[i].pose.orientation.z
+            coords[i, 6] = poses[i].pose.orientation.w
+            coords[i, 7] = Utils.ros_time_msg_to_ns(poses[i].pose.header.stamp)
         return coords
 
     def read_adjacency(self, graph_msg):
@@ -165,31 +174,35 @@ class GlobalGraph(object):
         adj = np.zeros((n_coords, n_coords))
         for i in range(n_coords):
             for j in range(n_coords):
-                adj[i,j] = graph_msg.adjacency_matrix[j + i * n_coords]
+                adj[i, j] = graph_msg.adjacency_matrix[j + i * n_coords]
 
         return adj
 
     def create_adjacency_from_poses(self, poses):
         n_coords = poses.shape[0]
         adj = np.zeros((n_coords, n_coords))
-        tree = spatial.KDTree(poses[:,0:3])
+        tree = spatial.KDTree(poses[:, 0:3])
         max_pos_dist = 6.0
         # n_nearest_neighbors = min(20, n_coords)
         for i in range(n_coords):
             # nn_dists, nn_indices = tree.query(coords[i,:], p = 2, k = n_nearest_neighbors)
             # nn_indices = [nn_indices] if n_nearest_neighbors == 1 else nn_indices
-            nn_indices = tree.query_ball_point(poses[i,0:3], r = max_pos_dist, p = 2)
+            nn_indices = tree.query_ball_point(
+                poses[i, 0:3], r=max_pos_dist, p=2)
 
             # print(f'Found the following indices: {nn_indices} / {n_coords}')
             for nn_i in nn_indices:
                 if nn_i == i:
                     continue
                 if self.config.use_se3_computation:
-                    adj[i, nn_i] = self.compute_se3_weights(poses[i,:], poses[nn_i,:])
+                    adj[i, nn_i] = self.compute_se3_weights(
+                        poses[i, :], poses[nn_i, :])
                 elif self.config.use_so3_computation:
-                    adj[i, nn_i] = self.compute_so3_weights(poses[i,:], poses[nn_i,:])
+                    adj[i, nn_i] = self.compute_so3_weights(
+                        poses[i, :], poses[nn_i, :])
                 else:
-                    adj[i, nn_i] = self.compute_simple_weights(poses[i,:], poses[nn_i,:])
+                    adj[i, nn_i] = self.compute_simple_weights(
+                        poses[i, :], poses[nn_i, :])
 
         adj[adj < 0] = 0
         assert np.all(adj >= 0)
@@ -208,19 +221,22 @@ class GlobalGraph(object):
         return w_t * (w_d + w_r)
 
     def compute_se3_weights(self, poses_lhs, poses_rhs):
-        T_G_lhs = Utils.convert_pos_quat_to_transformation(poses_lhs[0:3], poses_lhs[3:7])
-        T_G_rhs = Utils.convert_pos_quat_to_transformation(poses_rhs[0:3], poses_rhs[3:7])
+        T_G_lhs = Utils.convert_pos_quat_to_transformation(
+            poses_lhs[0:3], poses_lhs[3:7])
+        T_G_rhs = Utils.convert_pos_quat_to_transformation(
+            poses_rhs[0:3], poses_rhs[3:7])
 
         pose1 = SE3.from_matrix(T_G_lhs)
         pose2 = SE3.from_matrix(T_G_rhs)
 
         Xi_12 = (pose1.inv().dot(pose2)).log()
-        W = np.eye(4,4)
-        W[0,0] = 10
-        W[1,1] = 10
-        W[2,2] = 1
-        W[3,3] = 3
-        inner = np.trace(np.matmul(np.matmul(SE3.wedge(Xi_12),W),SE3.wedge(Xi_12).transpose()))
+        W = np.eye(4, 4)
+        W[0, 0] = 10
+        W[1, 1] = 10
+        W[2, 2] = 1
+        W[3, 3] = 3
+        inner = np.trace(
+            np.matmul(np.matmul(SE3.wedge(Xi_12), W), SE3.wedge(Xi_12).transpose()))
 
         # Equal weighting for rotation and translation.
         # inner = np.matmul(Xi_12.transpose(),Xi_12)
@@ -247,16 +263,19 @@ class GlobalGraph(object):
         # angle_lhs = np.linalg.norm(Rotation.from_quat(coords_lhs[3:]).as_rotvec())
         # angle_rhs = np.linalg.norm(Rotation.from_quat(coords_rhs[3:]).as_rotvec())
         # angle = angle_lhs - angle_rhs
-        T_G_lhs = Utils.convert_pos_quat_to_transformation(coords_lhs[0:3], coords_lhs[3:7])
-        T_G_rhs = Utils.convert_pos_quat_to_transformation(coords_rhs[0:3], coords_rhs[3:7])
+        T_G_lhs = Utils.convert_pos_quat_to_transformation(
+            coords_lhs[0:3], coords_lhs[3:7])
+        T_G_rhs = Utils.convert_pos_quat_to_transformation(
+            coords_rhs[0:3], coords_rhs[3:7])
         T_lhs_rhs = np.matmul(np.linalg.inv(T_G_lhs), T_G_rhs)
-        rotation = eigenpy.AngleAxis(T_lhs_rhs[0:3,0:3]).angle
+        rotation = eigenpy.AngleAxis(T_lhs_rhs[0:3, 0:3]).angle
 
         eps = 0.001
         return 0.5 * (1 + np.cos(rotation)) + eps
 
     def compute_temporal_decay(self, timestmap_lhs, timestamp_rhs):
-        ts_diff_s = Utils.ts_ns_to_seconds(np.absolute(timestmap_lhs - timestamp_rhs))
+        ts_diff_s = Utils.ts_ns_to_seconds(
+            np.absolute(timestmap_lhs - timestamp_rhs))
         alpha = 1.5
         beta = 1000
         return alpha * np.exp(-ts_diff_s / beta)
@@ -274,18 +293,21 @@ class GlobalGraph(object):
         elif self.config.reduction_method == 'largest_ev':
             take_n = int(round(self.config.reduce_to_n_percent * self.G.N))
             if take_n >= self.G.N:
-                Logger.LogWarn('GlobalGraph: Requested reduction amount is equal or greater than the graph size.')
+                Logger.LogWarn(
+                    'GlobalGraph: Requested reduction amount is equal or greater than the graph size.')
                 print(take_n)
                 print(self.G.N)
                 return
             self.reduced_ind = self.reduce_largest_ev(take_n)
         else:
-            Logger.LogError(f'GlobalGraph: Unknown graph reduction method: {self.config.reduction_method}. Aborting reduction.')
+            Logger.LogError(
+                f'GlobalGraph: Unknown graph reduction method: {self.config.reduction_method}. Aborting reduction.')
             return
         self.reduce_graph_using_indices(self.reduced_ind)
 
     def reduce_graph_using_indices(self, reduced_ind):
-        Logger.LogInfo(f'GlobalGraph: Reducing graph using {len(reduced_ind)}/{self.G.N} indices.')
+        Logger.LogInfo(
+            f'GlobalGraph: Reducing graph using {len(reduced_ind)}/{self.G.N} indices.')
         self.coords = self.coords[reduced_ind]
         self.G = reduction.kron_reduction(self.G, reduced_ind)
         self.adj = self.G.W.toarray()
@@ -306,7 +328,7 @@ class GlobalGraph(object):
         idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
         indices = []
         for i in range(0, take_n):
-            if (self.G.U[i,idx_fourier] >= 0):
+            if (self.G.U[i, idx_fourier] >= 0):
                 indices.append(i)
         return indices
 
@@ -315,7 +337,7 @@ class GlobalGraph(object):
         idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
         indices = []
         for i in range(0, take_n):
-            if (self.G.U[i,idx_fourier] < 0):
+            if (self.G.U[i, idx_fourier] < 0):
                 indices.append(i)
         return indices
 
@@ -327,7 +349,8 @@ class GlobalGraph(object):
             idx = np.argmax(ev)
             idx_vertex, idx_fourier = np.unravel_index(idx, self.G.U.shape)
             if ev[idx_vertex, idx_fourier] == -1:
-                Logger.LogWarn(f'GlobalGraph: Warning Could not reduce to requested number of nodes: {len(indices)}/{take_n}.')
+                Logger.LogWarn(
+                    f'GlobalGraph: Warning Could not reduce to requested number of nodes: {len(indices)}/{take_n}.')
                 return indices
             ev[idx_vertex, :] = -1
             indices.append(idx_vertex)
@@ -344,11 +367,11 @@ class GlobalGraph(object):
         graph_msg.adjacency_matrix = [0] * (n_coords*n_coords)
         for i in range(0, n_coords):
             graph_msg.coords[i] = Point()
-            graph_msg.coords[i].x = self.coords[i,0]
-            graph_msg.coords[i].y = self.coords[i,1]
-            graph_msg.coords[i].z = self.coords[i,2]
+            graph_msg.coords[i].x = self.coords[i, 0]
+            graph_msg.coords[i].y = self.coords[i, 1]
+            graph_msg.coords[i].z = self.coords[i, 2]
             for j in range(0, n_coords):
-                graph_msg.adjacency_matrix[j + i * n_coords] = self.adj[i,j]
+                graph_msg.adjacency_matrix[j + i * n_coords] = self.adj[i, j]
 
         graph_msg.submap_indices = self.submap_ind
         graph_msg.reduced_indices = self.reduced_ind
@@ -366,12 +389,13 @@ class GlobalGraph(object):
 
         n_coords = self.G.N
         if n_coords > self.coords.shape[0] or n_coords > self.adj.shape[0]:
-            Logger.LogError(f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}.')
+            Logger.LogError(
+                f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}.')
             return
 
         # First publish the coordinates of the global graph.
         for i in range(0, n_coords):
-            viz.add_graph_coordinate(self.coords[i,:])
+            viz.add_graph_coordinate(self.coords[i, :])
         viz.visualize_coords()
 
         # Next publish the adjacency matrix of the global graph.
@@ -381,9 +405,9 @@ class GlobalGraph(object):
                     continue
                 if i >= self.adj.shape[0] or j >= self.adj.shape[1]:
                     continue
-                if self.adj[i,j] <= 0.0:
+                if self.adj[i, j] <= 0.0:
                     continue
 
-                viz.add_graph_adjacency(self.coords[i,:], self.coords[j,:])
+                viz.add_graph_adjacency(self.coords[i, :], self.coords[j, :])
         viz.visualize_adjacency()
         Logger.LogInfo('GlobalGraph: Visualized global graph.')

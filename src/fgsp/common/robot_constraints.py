@@ -16,8 +16,8 @@ class RobotConstraints(object):
 
     def add_submap_constraints(self, ts_from, ts_to, T_a_b):
         lc = LcModel(ts_from, ts_to, T_a_b)
-        ts_from_ns = Utils.ros_time_to_ns(ts_from)
-        ts_to_ns = Utils.ros_time_to_ns(ts_to)
+        ts_from_ns = Utils.ros_time_msg_to_ns(ts_from)
+        ts_to_ns = Utils.ros_time_msg_to_ns(ts_to)
         if ts_from_ns == ts_to_ns:
             print('Timestamp from and to are identical.')
             return

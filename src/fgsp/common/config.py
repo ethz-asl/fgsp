@@ -183,7 +183,7 @@ class ClientConfig(BaseConfig):
         self.trajectory_export_path = self.try_get_param(
             "trajectory_export_path", self.trajectory_export_path)
         self.trajectory_raw_export_path = self.try_get_param(
-            "~trajectory_raw_export_path", self.trajectory_raw_export_path)
+            "trajectory_raw_export_path", self.trajectory_raw_export_path)
         self.degenerate_window = self.try_get_param(
             "degenerate_window", self.degenerate_window)
         self.synchronization_max_diff_s = self.try_get_param(

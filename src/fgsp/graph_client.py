@@ -177,6 +177,7 @@ class GraphClient(Node):
             self.mutex.acquire()
             self.is_updating = False
             self.mutex.release()
+            Logger.LogWarn('GraphClient: No new data received.')
             return
 
         self.compare_estimations()

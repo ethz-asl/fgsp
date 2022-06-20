@@ -32,6 +32,9 @@ class Simulation(Node):
         self.monitor_topic = self.get_param('monitor_topic', '/monitor')
         self.out_bag_file = self.get_param(
             'out_bag_file', '/tmp/odom_and_monitor.bag')
+        self.robot_name = self.get_param('robot_name', 'robot')
+        self.map_frame = self.get_param('map_frame', 'map')
+        self.child_frame = self.get_param('child_frame', 'base')
 
         Logger.LogInfo(
             f'Simulation: Writing bag file to: {self.out_bag_file}')
@@ -78,17 +81,16 @@ class Simulation(Node):
             builtin_interfaces__msg__Time as Time)
 
         msg_type = Odometry.__msgtype__
-        topic = '/odometry'
-        connection = ros2_bag_out.add_connection(topic, msg_type)
+        connection = ros2_bag_out.add_connection(self.odom_topic, msg_type)
 
         Logger.LogDebug(
-            f'Writing odometry to bag file to: {self.odom_bag_file}')
+            f'Writing odometry to bag file to: {self.out_bag_file}')
         for stamp, xyz, quat in zip(robot_traj.timestamps, robot_traj.positions_xyz,
                                     robot_traj.orientations_quat_wxyz):
             sec = int(stamp // 1)
             nanosec = int((stamp - sec) * 1e9)
             time = Time(sec, nanosec)
-            header = Header(time, "map")
+            header = Header(time, self.map_frame)
             position = Position(x=xyz[0], y=xyz[1], z=xyz[2])
             quaternion = Quaternion(w=quat[0], x=quat[1], y=quat[2], z=quat[3])
             pose = Pose(position, quaternion)
@@ -96,11 +98,12 @@ class Simulation(Node):
             vec = Vector3(0.0, 0.0, 0.0)
             twist = Twist(vec, vec)
             twist_with_cov = TwistWithCovariance(twist, np.array([0.0] * 36))
-            odom = Odometry(header, "base", pose_with_cov, twist_with_cov)
+            odom = Odometry(header, self.child_frame,
+                            pose_with_cov, twist_with_cov)
 
             serialized_msg = serialize_cdr(odom, msg_type)
             ros2_bag_out.write(connection, int(stamp * 1e9), serialized_msg)
-        Logger.LogInfo(f'Wrote topic: {topic}')
+        Logger.LogInfo(f'Wrote topic: {self.odom_topic}')
 
         Logger.LogInfo('Simulation: Writing odometry to bag file done.')
 
@@ -134,7 +137,7 @@ class Simulation(Node):
         connection = ros2_bag_out.add_connection(self.monitor_topic, msg_type)
 
         Logger.LogDebug(
-            f'Writing server trajectory to bag file to: {self.monitor_bag_file}')
+            f'Writing server trajectory to bag file to: {self.out_bag_file}')
         i = 0
         k = 0
         update_every_n_poses = 20
@@ -144,14 +147,14 @@ class Simulation(Node):
             sec = int(stamp // 1)
             nanosec = int((stamp - sec) * 1e9)
             time = Time(sec, nanosec)
-            header = Header(time, "map")
+            header = Header(time, self.map_frame)
 
             position = Position(x=xyz[0], y=xyz[1], z=xyz[2])
             quaternion = Quaternion(w=quat[0], x=quat[1], y=quat[2], z=quat[3])
             pose = Pose(position, quaternion)
             pose_stamped = PoseStamped(header, pose)
 
-            node = TrajectoryNode("foo", k, pose_stamped, 0.0)
+            node = TrajectoryNode(self.robot_name, k, pose_stamped, 0.0)
             nodes.append(node)
 
             if i % update_every_n_poses == 0:

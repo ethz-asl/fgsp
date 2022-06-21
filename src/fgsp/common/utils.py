@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import rclpy
-import math
 import numpy as np
 from scipy.spatial.transform import Rotation
 from sensor_msgs_py import point_cloud2 as pc2

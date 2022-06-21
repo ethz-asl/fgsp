@@ -26,29 +26,48 @@ def process_poses(poses, tree, w_func, i):
     max_pos_dist = 6.0
     nn_indices = tree.query_ball_point(
         poses[i, 0:3], r=max_pos_dist, p=2)
-    # return [i]
-    return nn_indices
 
-    # return nn_indices, [w_func(poses[i, :], poses[nn_i, :]) for nn_i in nn_indices]
-
-    # for nn_i in nn_indices:
-    #     if nn_i == i:
-    #         continue
-    #     if self.config.use_se3_computation:
-    #          self.compute_se3_weights(
-    #             poses[i, :], poses[nn_i, :])
-    #     elif self.config.use_so3_computation:
-    #         adj[i, nn_i] = self.compute_so3_weights(
-    #             poses[i, :], poses[nn_i, :])
-    #     else:
-    #         adj[i, nn_i] = self.compute_simple_weights(
-    #             poses[i, :], poses[nn_i, :])
+    return nn_indices, [w_func(poses[i, :], poses[nn_i, :]) for nn_i in nn_indices]
 
 
-def compute_distance_weight(coords_lhs, coords_rhs):
+def compute_distance_weights(coords_lhs, coords_rhs):
     sigma = 1.0
     normalization = 2.0*(sigma**2)
     dist = spatial.distance.euclidean(coords_lhs, coords_rhs)
+    return np.exp(-dist/normalization)
+
+
+def compute_so3_weights(pose_lhs, pose_rhs):
+    R_lhs = Utils.convert_quat_to_rotation(pose_lhs[3:7])
+    R_rhs = Utils.convert_quat_to_rotation(pose_rhs[3:7])
+    rot_diff = np.matmul(R_lhs, R_rhs.transpose())
+    return np.trace(rot_diff)
+
+
+def compute_se3_weights(poses_lhs, poses_rhs):
+    T_G_lhs = Utils.convert_pos_quat_to_transformation(
+        poses_lhs[0:3], poses_lhs[3:7])
+    T_G_rhs = Utils.convert_pos_quat_to_transformation(
+        poses_rhs[0:3], poses_rhs[3:7])
+
+    pose1 = SE3.from_matrix(T_G_lhs)
+    pose2 = SE3.from_matrix(T_G_rhs)
+
+    Xi_12 = (pose1.inv().dot(pose2)).log()
+    W = np.eye(4, 4)
+    W[0, 0] = 10
+    W[1, 1] = 10
+    W[2, 2] = 1
+    W[3, 3] = 3
+    inner = np.trace(
+        np.matmul(np.matmul(SE3.wedge(Xi_12), W), SE3.wedge(Xi_12).transpose()))
+
+    # Equal weighting for rotation and translation.
+    # inner = np.matmul(Xi_12.transpose(),Xi_12)
+
+    dist = np.sqrt(inner)
+    sigma = 1.0
+    normalization = 2.0*(sigma**2)
     return np.exp(-dist/normalization)
 
 
@@ -219,88 +238,27 @@ class GlobalGraph(object):
         n_coords = poses.shape[0]
         adj = np.zeros((n_coords, n_coords))
         tree = spatial.KDTree(poses[:, 0:3])
-        # max_pos_dist = 6.0
 
         indices = np.arange(0, n_coords)
-        func = partial(process_poses, poses, tree, compute_distance_weight)
+
+        if self.config.use_se3_computation:
+            func = partial(process_poses, poses, tree, compute_se3_weights)
+        elif self.config.use_so3_computation:
+            func = partial(process_poses, poses, tree, compute_so3_weights)
+        else:
+            func = partial(process_poses, poses, tree,
+                           compute_distance_weights)
 
         n_cores = multiprocessing.cpu_count()
         with Pool(n_cores) as p:
-            for idx, nn_indices in zip(indices, p.map(func, indices)):
-                for nn_i in nn_indices:
-                    adj[idx, nn_i] = 0
-
-                # for nn_i, w in zip(nn_indices, weights):
-                    # adj[idx, nn_i] = w
-
-                # for i in range(n_coords,):
-                #     nn_indices = tree.query_ball_point(
-                #         poses[i, 0:3], r=max_pos_dist, p=2)
-
-                #     for nn_i in nn_indices:
-                #         if nn_i == i:
-                #             continue
-                #         if self.config.use_se3_computation:
-                #             adj[i, nn_i] = self.compute_se3_weights(
-                #                 poses[i, :], poses[nn_i, :])
-                #         elif self.config.use_so3_computation:
-                #             adj[i, nn_i] = self.compute_so3_weights(
-                #                 poses[i, :], poses[nn_i, :])
-                #         else:
-                #             adj[i, nn_i] = self.compute_simple_weights(
-                #                 poses[i, :], poses[nn_i, :])
+            for idx, (nn_indices, weights) in zip(indices, p.map(func, indices)):
+                for nn_i, w in zip(nn_indices, weights):
+                    adj[idx, nn_i] = w
 
         adj[adj < 0] = 0
         assert np.all(adj >= 0)
         print(adj)
         return adj
-
-    def compute_se3_weights(self, poses_lhs, poses_rhs):
-        T_G_lhs = Utils.convert_pos_quat_to_transformation(
-            poses_lhs[0:3], poses_lhs[3:7])
-        T_G_rhs = Utils.convert_pos_quat_to_transformation(
-            poses_rhs[0:3], poses_rhs[3:7])
-
-        pose1 = SE3.from_matrix(T_G_lhs)
-        pose2 = SE3.from_matrix(T_G_rhs)
-
-        Xi_12 = (pose1.inv().dot(pose2)).log()
-        W = np.eye(4, 4)
-        W[0, 0] = 10
-        W[1, 1] = 10
-        W[2, 2] = 1
-        W[3, 3] = 3
-        inner = np.trace(
-            np.matmul(np.matmul(SE3.wedge(Xi_12), W), SE3.wedge(Xi_12).transpose()))
-
-        # Equal weighting for rotation and translation.
-        # inner = np.matmul(Xi_12.transpose(),Xi_12)
-
-        dist = np.sqrt(inner)
-        sigma = 1.0
-        normalization = 2.0*(sigma**2)
-        return np.exp(-dist/normalization)
-
-    def compute_so3_weights(self, pose_lhs, pose_rhs):
-        R_lhs = Utils.convert_quat_to_rotation(pose_lhs[3:7])
-        R_rhs = Utils.convert_quat_to_rotation(pose_rhs[3:7])
-        rot_diff = np.matmul(R_lhs, R_rhs.transpose())
-        return np.trace(rot_diff)
-
-    def compute_rotation_weight(self, coords_lhs, coords_rhs):
-        import eigenpy
-        # angle_lhs = np.linalg.norm(Rotation.from_quat(coords_lhs[3:]).as_rotvec())
-        # angle_rhs = np.linalg.norm(Rotation.from_quat(coords_rhs[3:]).as_rotvec())
-        # angle = angle_lhs - angle_rhs
-        T_G_lhs = Utils.convert_pos_quat_to_transformation(
-            coords_lhs[0:3], coords_lhs[3:7])
-        T_G_rhs = Utils.convert_pos_quat_to_transformation(
-            coords_rhs[0:3], coords_rhs[3:7])
-        T_lhs_rhs = np.matmul(np.linalg.inv(T_G_lhs), T_G_rhs)
-        rotation = eigenpy.AngleAxis(T_lhs_rhs[0:3, 0:3]).angle
-
-        eps = 0.001
-        return 0.5 * (1 + np.cos(rotation)) + eps
 
     def compute_temporal_decay(self, timestmap_lhs, timestamp_rhs):
         ts_diff_s = Utils.ts_ns_to_seconds(

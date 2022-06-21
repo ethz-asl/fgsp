@@ -4,17 +4,17 @@ import numpy as np
 
 from src.fgsp.common.logger import Logger
 
+
 class SimpleClassifier(object):
 
     def classify(self, data):
         n_nodes = data.shape[0]
         labels = []
         for i in range(0, n_nodes):
-            low_mean = data[i,0]
-            mid_mean = data[i,1]
-            high_mean = data[i,2]
+            low_mean = data[i, 0]
+            mid_mean = data[i, 1]
+            high_mean = data[i, 2]
             dists = np.array([low_mean, mid_mean, high_mean])
-            max_dist_idx = np.argmax(dists)
 
             np.set_printoptions(suppress=True)
             local_labels = []
@@ -62,6 +62,7 @@ class SimpleClassifier(object):
 
             # if len(local_labels) > 0:
             Logger.LogDebug(f'WaveletEvaluator: dists are {dists}')
-            Logger.LogDebug(f'WaveletEvaluator: Local labels are {local_labels}')
+            Logger.LogDebug(
+                f'WaveletEvaluator: Local labels are {local_labels}')
             labels.append(local_labels)
         return labels

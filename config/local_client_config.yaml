@@ -20,13 +20,13 @@ graph_client:
     client_mode: "multiscale"
 
     # Graph configuration.
-    use_se3_computation: True
+    use_se3_computation: False
     use_so3_computation: False
     include_rotational_weight: False
     include_temporal_decay_weight: False
 
     # Div
-    dataroot: "/home/berlukas/Documents/workspace/darpa/src/darpa_subt_mapping/fgsp"
+    dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"
     robot_name: "cerberus"
     update_rate: 0.05
     enable_client_update: False
@@ -41,4 +41,5 @@ graph_client:
     trajectory_export_path: "/data/{src}_trajectory.npy"
     trajectory_raw_export_path: "/data/{src}_raw_trajectory.npy"
     degenerate_window: 20
-    synchronization_max_diff_s: 4.0
+    synchronization_max_diff_s: 0.5
+    verbosity: 3

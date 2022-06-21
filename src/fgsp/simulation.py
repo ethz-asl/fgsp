@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 from os.path import exists
-from re import I
 
 import rclpy
 from rclpy.node import Node
@@ -141,14 +140,20 @@ class Simulation(Node):
             f'Writing server trajectory to bag file to: {self.out_bag_file}')
         i = 0
         k = 0
-        update_every_n_poses = 20
+        update_every_n_poses = 50
         nodes = []
+        last_pos = []
         for stamp, xyz, quat in zip(server_traj.timestamps, server_traj.positions_xyz,
                                     server_traj.orientations_quat_wxyz):
+            if len(last_pos) > 0 and np.linalg.norm(xyz - last_pos) < 0.2:
+                continue
+
+            last_pos = xyz
+
             sec = int(stamp // 1)
             nanosec = int((stamp - sec) * 1e9)
-            time = Time(sec, nanosec)
-            header = Header(time, self.map_frame)
+            ros_time = Time(sec, nanosec)
+            header = Header(ros_time, self.map_frame)
 
             position = Position(x=xyz[0], y=xyz[1], z=xyz[2])
             quaternion = Quaternion(w=quat[0], x=quat[1], y=quat[2], z=quat[3])

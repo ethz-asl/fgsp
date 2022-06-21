@@ -36,12 +36,13 @@ class GraphClient(Node):
         Plotter.PlotClientBanner()
         Plotter.PrintClientConfig(self.config)
         Plotter.PrintSeparator()
+        Logger.Verbosity = self.config.verbosity
 
         self.mutex = Lock()
         self.constraint_mutex = Lock()
         self.mutex.acquire()
 
-#         # Subscriber and publisher
+        # Subscriber and publisher
         self.graph_sub = self.create_subscription(
             Graph, self.config.opt_graph_topic, self.global_graph_callback, 10)
         self.opt_traj_sub = self.create_subscription(
@@ -59,7 +60,7 @@ class GraphClient(Node):
         self.intra_constraint_pub = self.create_publisher(
             Path, self.config.intra_constraint_topic, 20)
 
-#         # Handlers and evaluators.
+        # Handlers and evaluators.
         self.global_graph = GlobalGraph(self.config, reduced=False)
         self.robot_graph = GlobalGraph(self.config, reduced=False)
         self.latest_traj_msg = None
@@ -92,7 +93,7 @@ class GraphClient(Node):
         if not os.path.exists(export_folder):
             os.mkdir(export_folder)
             os.mkdir(export_folder + '/data')
-            self.config.dataroot = export_folder
+        self.config.dataroot = export_folder
 
     def global_graph_callback(self, msg):
         Logger.LogInfo(
@@ -297,10 +298,6 @@ class GraphClient(Node):
             Logger.LogError('GraphClient: Synchronization failed.')
             return False
 
-        ###### CUSTOM DEBUG ########################################################
-        return False
-        ############################################################################
-
         labels = self.compute_all_labels(key, all_opt_nodes, all_est_nodes)
         self.evaluate_and_publish_features(labels)
 
@@ -401,6 +398,12 @@ class GraphClient(Node):
 
         psi = self.eval.get_wavelets()
         robot_psi = self.robot_eval.get_wavelets()
+        print('SERVER PSI')
+        print(psi)
+        print('---------------------------------------------')
+        print('ROBOT PSI')
+        print(robot_psi)
+        print('---------------------------------------------')
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
             Logger.LogWarn(
@@ -417,6 +420,7 @@ class GraphClient(Node):
                 f'GraphClient: Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
             return None
 
+        Logger.LogInfo('Computing features.')
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.
         W_est = self.robot_eval.compute_wavelet_coeffs(x_est)

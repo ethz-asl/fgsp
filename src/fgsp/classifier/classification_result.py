@@ -253,7 +253,6 @@ class ClassificationResult(object):
     def convert_transform(self, T_a_b):
         pos = T_a_b[0:3, 3]
         R = T_a_b[0:3, 0:3]
-        # return pos, Rotation.from_matrix(R).as_quat() # x, y, z, w
         return pos, Rotation.from_matrix(R).as_quat()  # x, y, z, w
 
     def create_transformation_from_node(self, node):

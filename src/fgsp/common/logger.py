@@ -5,31 +5,38 @@ from .font import Font
 
 
 class Logger(object):
+    Verbosity = 1
+
     @staticmethod
     def LogDebug(msg):
-        ts_ns = time.time() * 1e6
-        print(f'{Font.BLUE}[{ts_ns}] {msg} {Font.END}')
+        if Logger.Verbosity > 4:
+            ts_ns = time.time() * 1e6
+            print(f'{Font.BLUE}[{ts_ns}] {msg} {Font.END}')
 
     @staticmethod
     def LogInfo(msg):
-        ts_ns = time.time() * 1e6
-        print(f'[{ts_ns}] {msg}')
+        if Logger.Verbosity > 0:
+            ts_ns = time.time() * 1e6
+            print(f'[{ts_ns}] {msg}')
 
     @staticmethod
     def LogWarn(msg):
-        ts_ns = time.time() * 1e6
-        print(f'{Font.YELLOW}[{ts_ns}] {msg} {Font.END}')
+        if Logger.Verbosity > 1:
+            ts_ns = time.time() * 1e6
+            print(f'{Font.YELLOW}[{ts_ns}] {msg} {Font.END}')
 
     @staticmethod
     def LogError(msg):
-        ts_ns = time.time() * 1e6
-        print(f'{Font.RED}[{ts_ns}] {msg} {Font.END}')
+        if Logger.Verbosity > 2:
+            ts_ns = time.time() * 1e6
+            print(f'{Font.RED}[{ts_ns}] {msg} {Font.END}')
 
     @staticmethod
     def LogFatal(msg):
-        ts_ns = time.time() * 1e6
-        print(f'{Font.RED}{FONT.BOLD} [{ts_ns}] {msg} {Font.END}')
-        exit()
+        if Logger.Verbosity > 3:
+            ts_ns = time.time() * 1e6
+            print(f'{Font.RED}{FONT.BOLD} [{ts_ns}] {msg} {Font.END}')
+            exit()
 
 
 if __name__ == '__main__':

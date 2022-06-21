@@ -253,11 +253,11 @@ class GlobalGraph(object):
         with Pool(n_cores) as p:
             for idx, (nn_indices, weights) in zip(indices, p.map(func, indices)):
                 for nn_i, w in zip(nn_indices, weights):
-                    adj[idx, nn_i] = w
+                    if nn_i != idx:
+                        adj[idx, nn_i] = w
 
         adj[adj < 0] = 0
         assert np.all(adj >= 0)
-        print(adj)
         return adj
 
     def compute_temporal_decay(self, timestmap_lhs, timestamp_rhs):

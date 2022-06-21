@@ -130,6 +130,7 @@ class ClientConfig(BaseConfig):
         self.trajectory_raw_export_path = "/data/{key}_{src}_raw_trajectory.npy"
         self.degenerate_window = 10
         self.synchronization_max_diff_s = 1.0
+        self.verbosity = 1
 
         # constraint construction
         self.client_mode = 'multiscale'
@@ -188,6 +189,7 @@ class ClientConfig(BaseConfig):
             "degenerate_window", self.degenerate_window)
         self.synchronization_max_diff_s = self.try_get_param(
             "synchronization_max_diff_s", self.synchronization_max_diff_s)
+        self.verbosity = self.try_get_param("verbosity", self.verbosity)
 
         # constraint construction
         self.client_mode = self.try_get_param("client_mode", self.client_mode)

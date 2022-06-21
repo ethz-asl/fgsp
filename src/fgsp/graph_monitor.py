@@ -16,6 +16,7 @@ from src.fgsp.common.config import MonitorConfig
 from src.fgsp.common.plotter import Plotter
 from src.fgsp.common.logger import Logger
 
+
 class GraphMonitor(Node):
     def __init__(self):
         super().__init__('graph_monitor')
@@ -31,16 +32,23 @@ class GraphMonitor(Node):
         self.mutex.acquire()
         # Publishers and subscribers.
         if self.config.enable_submap_constraints:
-            self.submap_sub = self.create_subscription(Submap, self.config.opt_pc_topic, self.submap_callback, 10)
-            self.submap_pub = self.create_publisher(SubmapConstraint, self.config.submap_topic, 10) 
+            self.submap_sub = self.create_subscription(
+                Submap, self.config.opt_pc_topic, self.submap_callback, 10)
+            self.submap_pub = self.create_publisher(
+                SubmapConstraint, self.config.submap_topic, 10)
         if self.config.enable_graph_building:
-            self.graph_sub = self.create_subscription(Graph, self.config.in_graph_topic, self.graph_callback, 10)
-            self.traj_sub = self.create_subscription(Trajectory, self.config.in_traj_opt_topic, self.traj_opt_callback, 10)
-            self.graph_pub = self.create_publisher(Graph, self.config.out_graph_topic, 10)
-            self.traj_pub = self.create_publisher(Trajectory, self.config.out_traj_opt_topic, 10)
+            self.graph_sub = self.create_subscription(
+                Graph, self.config.in_graph_topic, self.graph_callback, 10)
+            self.traj_sub = self.create_subscription(
+                Trajectory, self.config.in_traj_opt_topic, self.traj_opt_callback, 10)
+            self.graph_pub = self.create_publisher(
+                Graph, self.config.out_graph_topic, 10)
+            self.traj_pub = self.create_publisher(
+                Trajectory, self.config.out_traj_opt_topic, 10)
 
         # Handlers and evaluators.
-        self.graph = GlobalGraph(self.config, reduced=self.config.reduce_global_graph)
+        self.graph = GlobalGraph(
+            self.config, reduced=self.config.reduce_global_graph)
         self.optimized_signal = SignalHandler(self.config)
         self.submap_handler = SubmapHandler(self.config)
 
@@ -76,7 +84,8 @@ class GraphMonitor(Node):
             msg.nodes = [msg.nodes[i] for i in self.graph.reduced_ind]
 
         if self.graph.has_skipped():
-            msg.nodes = [element for i,element in enumerate(msg.nodes) if i not in self.graph.skip_ind]
+            msg.nodes = [element for i, element in enumerate(
+                msg.nodes) if i not in self.graph.skip_ind]
 
         for key in keys:
             if self.key_in_optimized_keys(key):
@@ -97,7 +106,8 @@ class GraphMonitor(Node):
             self.graph.publish()
             self.optimized_signal.publish()
         except Exception as e:
-            Logger.LogError('GraphMonitor: Unable to publish results to client.')
+            Logger.LogError(
+                'GraphMonitor: Unable to publish results to client.')
 
     def compute_and_publish_graph(self):
         self.mutex.acquire()
@@ -105,11 +115,13 @@ class GraphMonitor(Node):
             Logger.LogWarn('GraphMonitor: Graph is not built yet!')
             self.mutex.release()
             return
-        Logger.LogInfo(f'GraphMonitor: Computing global graph with {self.graph.graph_size()}.')
+        Logger.LogInfo(
+            f'GraphMonitor: Computing global graph with {self.graph.graph_size()}.')
         if self.graph.graph_size() < self.config.min_node_count:
-            Logger.LogWarn(f'GraphMonitor: Not enough nodes ({self.graph.graph_size()} < {self.config.min_node_count}')
+            Logger.LogWarn(
+                f'GraphMonitor: Not enough nodes ({self.graph.graph_size()} < {self.config.min_node_count}')
             self.mutex.release()
-            return;
+            return
         self.mutex.release()
 
         # Publish the graph to the clients.
@@ -155,7 +167,8 @@ class GraphMonitor(Node):
         n_submaps = len(submaps)
         if n_submaps == 0:
             return None
-        Logger.LogWarn(f'GraphMonitor: Computing constraints for {n_submaps} submaps.')
+        Logger.LogWarn(
+            f'GraphMonitor: Computing constraints for {n_submaps} submaps.')
         return self.submap_handler.compute_constraints(submaps)
 
     def publish_graph_and_traj(self):
@@ -167,20 +180,23 @@ class GraphMonitor(Node):
             self.send_separate_traj_msgs()
         elif self.latest_opt_traj_msg is not None:
             self.pub_traj.publish(self.latest_opt_traj_msg)
-            Logger.LogInfo(f'GraphMonitor: Published trajectory for keys {self.optimized_keys}.')
+            Logger.LogInfo(
+                f'GraphMonitor: Published trajectory for keys {self.optimized_keys}.')
 
     def send_separate_traj_msgs(self):
         for key in self.optimized_keys:
             traj_msg = self.optimized_signal.to_signal_msg(key)
             self.pub_traj.publish(traj_msg)
             time.sleep(0.10)
-            Logger.LogInfo(f'GraphMonitor: Published separate trajectory for {key}.')
+            Logger.LogInfo(
+                f'GraphMonitor: Published separate trajectory for {key}.')
 
     def publish_all_submaps(self, submaps):
         self.submap_handler.publish_submaps(submaps)
 
     def key_in_optimized_keys(self, key):
-       return any(key in k for k in self.optimized_keys)
+        return any(key in k for k in self.optimized_keys)
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -188,6 +204,7 @@ def main(args=None):
     rclpy.spin(monitor)
     monitor.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

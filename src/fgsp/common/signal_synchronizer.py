@@ -17,8 +17,6 @@ class SignalSynchronizer(object):
 
         np.set_printoptions(suppress=True,
                             formatter={'float_kind': '{:f}'.format})
-        print(f'ts_opt: is {ts_opt[0:5]}')
-        print(f'ts_est: is {ts_est[0:5]}')
 
         opt_size = ts_opt.shape[0]
         est_size = ts_est.shape[0]
@@ -37,13 +35,11 @@ class SignalSynchronizer(object):
             ts_diff = np.absolute(ts_est - cur_ts)
             ts_min = np.amin(ts_diff)
             diff_s = Utils.ts_ns_to_seconds(ts_min)
-            print(f'TS MIN {ts_min} ns and {diff_s} secs.')
             if diff_s > self.config.synchronization_max_diff_s:
                 Logger.LogWarn(
                     f'SignalSynchronizer: closest TS is {diff_s} seconds away.')
                 continue
 
-            Logger.LogError('FOUND A VALID TS')
             cur_min_index = np.where(ts_diff == ts_min)[0]
             est_idx.append(cur_min_index[0])
             opt_idx.append(i)

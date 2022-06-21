@@ -1,9 +1,14 @@
 #! /usr/bin/env python3
+import multiprocessing
 import time
 import sys
+from functools import partial
+from multiprocessing import Pool
 
 import numpy as np
 from liegroups import SE3
+from psutil import process_iter
+from py import process
 from pygsp import graphs, filters, reduction
 from geometry_msgs.msg import Point
 from maplab_msgs.msg import Graph
@@ -13,6 +18,38 @@ from scipy.spatial.transform import Rotation
 from src.fgsp.common.visualizer import Visualizer
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
+
+
+def process_poses(poses, tree, w_func, i):
+    if len(poses) == 0:
+        return
+    max_pos_dist = 6.0
+    nn_indices = tree.query_ball_point(
+        poses[i, 0:3], r=max_pos_dist, p=2)
+    # return [i]
+    return nn_indices
+
+    # return nn_indices, [w_func(poses[i, :], poses[nn_i, :]) for nn_i in nn_indices]
+
+    # for nn_i in nn_indices:
+    #     if nn_i == i:
+    #         continue
+    #     if self.config.use_se3_computation:
+    #          self.compute_se3_weights(
+    #             poses[i, :], poses[nn_i, :])
+    #     elif self.config.use_so3_computation:
+    #         adj[i, nn_i] = self.compute_so3_weights(
+    #             poses[i, :], poses[nn_i, :])
+    #     else:
+    #         adj[i, nn_i] = self.compute_simple_weights(
+    #             poses[i, :], poses[nn_i, :])
+
+
+def compute_distance_weight(coords_lhs, coords_rhs):
+    sigma = 1.0
+    normalization = 2.0*(sigma**2)
+    dist = spatial.distance.euclidean(coords_lhs, coords_rhs)
+    return np.exp(-dist/normalization)
 
 
 class GlobalGraph(object):
@@ -182,43 +219,41 @@ class GlobalGraph(object):
         n_coords = poses.shape[0]
         adj = np.zeros((n_coords, n_coords))
         tree = spatial.KDTree(poses[:, 0:3])
-        max_pos_dist = 6.0
-        # n_nearest_neighbors = min(20, n_coords)
-        for i in range(n_coords):
-            # nn_dists, nn_indices = tree.query(coords[i,:], p = 2, k = n_nearest_neighbors)
-            # nn_indices = [nn_indices] if n_nearest_neighbors == 1 else nn_indices
-            nn_indices = tree.query_ball_point(
-                poses[i, 0:3], r=max_pos_dist, p=2)
+        # max_pos_dist = 6.0
 
-            # print(f'Found the following indices: {nn_indices} / {n_coords}')
-            for nn_i in nn_indices:
-                if nn_i == i:
-                    continue
-                if self.config.use_se3_computation:
-                    adj[i, nn_i] = self.compute_se3_weights(
-                        poses[i, :], poses[nn_i, :])
-                elif self.config.use_so3_computation:
-                    adj[i, nn_i] = self.compute_so3_weights(
-                        poses[i, :], poses[nn_i, :])
-                else:
-                    adj[i, nn_i] = self.compute_simple_weights(
-                        poses[i, :], poses[nn_i, :])
+        indices = np.arange(0, n_coords)
+        func = partial(process_poses, poses, tree, compute_distance_weight)
+
+        n_cores = multiprocessing.cpu_count()
+        with Pool(n_cores) as p:
+            for idx, nn_indices in zip(indices, p.map(func, indices)):
+                for nn_i in nn_indices:
+                    adj[idx, nn_i] = 0
+
+                # for nn_i, w in zip(nn_indices, weights):
+                    # adj[idx, nn_i] = w
+
+                # for i in range(n_coords,):
+                #     nn_indices = tree.query_ball_point(
+                #         poses[i, 0:3], r=max_pos_dist, p=2)
+
+                #     for nn_i in nn_indices:
+                #         if nn_i == i:
+                #             continue
+                #         if self.config.use_se3_computation:
+                #             adj[i, nn_i] = self.compute_se3_weights(
+                #                 poses[i, :], poses[nn_i, :])
+                #         elif self.config.use_so3_computation:
+                #             adj[i, nn_i] = self.compute_so3_weights(
+                #                 poses[i, :], poses[nn_i, :])
+                #         else:
+                #             adj[i, nn_i] = self.compute_simple_weights(
+                #                 poses[i, :], poses[nn_i, :])
 
         adj[adj < 0] = 0
         assert np.all(adj >= 0)
+        print(adj)
         return adj
-
-    def compute_simple_weights(self, poses_lhs, poses_rhs):
-        w_d = self.compute_distance_weight(poses_lhs[0:3], poses_rhs[0:3])
-        if self.config.include_rotational_weight:
-            w_r = self.compute_rotation_weight(poses_lhs, poses_rhs)
-        else:
-            w_r = 0.0
-        if self.config.include_temporal_decay_weight:
-            w_t = self.compute_temporal_decay(poses_lhs[7], poses_rhs[7])
-        else:
-            w_t = 1.0
-        return w_t * (w_d + w_r)
 
     def compute_se3_weights(self, poses_lhs, poses_rhs):
         T_G_lhs = Utils.convert_pos_quat_to_transformation(
@@ -251,12 +286,6 @@ class GlobalGraph(object):
         R_rhs = Utils.convert_quat_to_rotation(pose_rhs[3:7])
         rot_diff = np.matmul(R_lhs, R_rhs.transpose())
         return np.trace(rot_diff)
-
-    def compute_distance_weight(self, coords_lhs, coords_rhs):
-        sigma = 1.0
-        normalization = 2.0*(sigma**2)
-        dist = spatial.distance.euclidean(coords_lhs, coords_rhs)
-        return np.exp(-dist/normalization)
 
     def compute_rotation_weight(self, coords_lhs, coords_rhs):
         import eigenpy

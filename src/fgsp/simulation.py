@@ -50,6 +50,7 @@ class Simulation(Node):
         self.write_server_trajectory(self.server_traj, ros2_bag_out)
 
         ros2_bag_out.close()
+        Logger.LogInfo('Simulation: Writing bag file done.')
 
     def get_param(self, key, default):
         self.declare_parameter(key, default)
@@ -103,7 +104,7 @@ class Simulation(Node):
 
             serialized_msg = serialize_cdr(odom, msg_type)
             ros2_bag_out.write(connection, int(stamp * 1e9), serialized_msg)
-        Logger.LogInfo(f'Wrote topic: {self.odom_topic}')
+        Logger.LogInfo(f'Simulation: Wrote topic: {self.odom_topic}')
 
         Logger.LogInfo('Simulation: Writing odometry to bag file done.')
 
@@ -157,17 +158,16 @@ class Simulation(Node):
             node = TrajectoryNode(self.robot_name, k, pose_stamped, 0.0)
             nodes.append(node)
 
-            if i % update_every_n_poses == 0:
+            if i > 0 and i % update_every_n_poses == 0:
                 k = k + 1
                 traj_msg = Trajectory(header, nodes)
                 serialized_msg = serialize_cdr(traj_msg, msg_type)
                 ros2_bag_out.write(connection, int(
                     stamp * 1e9), serialized_msg)
-                nodes = []
 
             i = i + 1
         Logger.LogInfo(
-            f'Wrote monitor topic {self.monitor_topic} to the bag.')
+            f'Simulation: Wrote monitor topic {self.monitor_topic} to the bag.')
 
         Logger.LogInfo(
             'Simulation: Writing server trajectory to bag file done.')

@@ -11,27 +11,20 @@ class Utils(object):
 
     @staticmethod
     def ros_time_to_ns(time):
-        print(f'ROS TIME TO NS: {time}')
         return time.nanoseconds
 
     @staticmethod
     def ros_time_msg_to_ns(time):
         k_s_to_ns = 1e9
-        # return time.sec * k_s_to_ns + time.nanosec
-        ttest = time.sec * k_s_to_ns + time.nanosec
-        print(
-            f'Time is {ttest} from {time.sec} secs and {time.nanosec} nanosecs')
-        return ttest
+        return time.sec * k_s_to_ns + time.nanosec
 
     @staticmethod
     def ts_ns_to_ros_time(ts_ns):
         k_ns_per_s = 1e9
         ros_timestamp_sec = ts_ns / k_ns_per_s
         ros_timestamp_nsec = ts_ns - (ros_timestamp_sec * k_ns_per_s)
-        test = rclpy.time.Time(seconds=ros_timestamp_sec,
+        return rclpy.time.Time(seconds=ros_timestamp_sec,
                                nanoseconds=ros_timestamp_nsec)
-        print(f'converted ros time is: {test}')
-        return test
 
     @staticmethod
     def ts_ns_to_seconds(ts_ns):

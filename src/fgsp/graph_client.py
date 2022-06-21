@@ -297,6 +297,10 @@ class GraphClient(Node):
             Logger.LogError('GraphClient: Synchronization failed.')
             return False
 
+        ###### CUSTOM DEBUG ########################################################
+        return False
+        ############################################################################
+
         labels = self.compute_all_labels(key, all_opt_nodes, all_est_nodes)
         self.evaluate_and_publish_features(labels)
 

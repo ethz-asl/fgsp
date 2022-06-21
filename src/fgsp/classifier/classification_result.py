@@ -254,7 +254,7 @@ class ClassificationResult(object):
         pos = T_a_b[0:3, 3]
         R = T_a_b[0:3, 0:3]
         # return pos, Rotation.from_matrix(R).as_quat() # x, y, z, w
-        return pos, Rotation.from_dcm(R).as_quat()  # x, y, z, w
+        return pos, Rotation.from_matrix(R).as_quat()  # x, y, z, w
 
     def create_transformation_from_node(self, node):
         pose_msg = self.create_pose_msg_from_node(node)

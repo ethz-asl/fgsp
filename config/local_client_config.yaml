@@ -20,7 +20,7 @@ graph_client:
     client_mode: "multiscale"
 
     # Graph configuration.
-    use_se3_computation: True
+    use_se3_computation: False
     use_so3_computation: False
     include_rotational_weight: False
     include_temporal_decay_weight: False

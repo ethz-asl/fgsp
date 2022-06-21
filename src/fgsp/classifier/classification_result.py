@@ -220,7 +220,7 @@ class ClassificationResult(object):
 
     def create_pose_msg_from_node(self, cur_opt):
         pose_msg = PoseStamped()
-        pose_msg.header.stamp = cur_opt.ts.to_msg()
+        pose_msg.header.stamp = cur_opt.ts
         pose_msg.pose.position.x = cur_opt.position[0]
         pose_msg.pose.position.y = cur_opt.position[1]
         pose_msg.pose.position.z = cur_opt.position[2]
@@ -240,7 +240,7 @@ class ClassificationResult(object):
         t_a_b, q_a_b = self.convert_transform(T_a_b)
 
         pose_msg = PoseStamped()
-        pose_msg.header.stamp = opt_node_to.ts.to_msg()
+        pose_msg.header.stamp = opt_node_to.ts
         pose_msg.pose.position.x = t_a_b[0]
         pose_msg.pose.position.y = t_a_b[1]
         pose_msg.pose.position.z = t_a_b[2]

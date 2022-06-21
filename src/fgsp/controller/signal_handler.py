@@ -196,14 +196,14 @@ class SignalHandler(object):
         traj = self.compute_trajectory(nodes)
         wxyz = traj[0, 4:8]
         traj_origin = Rotation.from_quat(
-            [wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm()
+            [wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_matrix()
 
         n_nodes = len(nodes)
         x_rot = [0] * n_nodes
         for i in range(0, n_nodes):
             wxyz = traj[i, 4:8]
             rot_diff = np.matmul(traj_origin, Rotation.from_quat(
-                [wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_dcm().transpose())
+                [wxyz[1], wxyz[2], wxyz[3], wxyz[0]]).as_matrix().transpose())
             x_rot[i] = np.trace(rot_diff)
         return np.array(x_rot)
 

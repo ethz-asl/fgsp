@@ -283,6 +283,8 @@ class GraphClient(Node):
         all_est_nodes = self.signal.get_all_nodes(key)
         all_opt_nodes = self.optimized_signal.get_all_nodes(key)
         n_opt_nodes = len(all_opt_nodes)
+        print(
+            f'We have {n_opt_nodes} opt nodes and {len(all_est_nodes)} est nodes.')
 
         # Compute the features and publish the results.
         # This evaluates per node the scale of the difference

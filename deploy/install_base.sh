@@ -4,9 +4,11 @@
 apt update
 apt -y upgrade
 apt -y install software-properties-common \
-  python2.7 \
-  python-pip \
-  python-termcolor \
+  python3 \
+  python3-pip \
+  python3-termcolor \
   git \
   curl \
-  iproute2 
+  iproute2 \
+  gnupg \
+  lsb-release

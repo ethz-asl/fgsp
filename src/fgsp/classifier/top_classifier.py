@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import numpy as np
-from src.fgsp.common.utils import Utils
 
 
 class TopClassifier(object):
@@ -23,10 +22,6 @@ class TopClassifier(object):
             if labels[row_idx] == None:
                 labels[row_idx] = []
             labels[row_idx].append(col_idx + 1)
-
-        print('--- Labels --------------------------------------------------')
-        print(labels)
-        print('-------------------------------------------------------------')
 
         return labels
 

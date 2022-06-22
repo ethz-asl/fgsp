@@ -49,7 +49,6 @@ class ClassificationResult(object):
         partitions = np.arange(prev, self.n_nodes, n_steps)
         for cur in partitions:
             pivot = (cur + prev) // 2
-            # pivot =  (cur - prev) // 2
             partitioned_nodes.append(pivot)
             prev = cur
         return partitioned_nodes

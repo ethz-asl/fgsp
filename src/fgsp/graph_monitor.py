@@ -1,24 +1,29 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 
-import rospy
 import copy
 import time
-from maplab_msgs.msg import *
+from maplab_msgs.msg import Graph, Trajectory, Submap, SubmapConstraint
 from multiprocessing import Lock
 
-from graph.global_graph import GlobalGraph
-from controller.signal_handler import SignalHandler
-from controller.submap_handler import SubmapHandler
-from common.submap_model import SubmapModel
-from common.config import MonitorConfig
-from common.plotter import Plotter
+import rclpy
+from rclpy.node import Node
 
-class GraphMonitor(object):
+from src.fgsp.graph.global_graph import GlobalGraph
+from src.fgsp.controller.signal_handler import SignalHandler
+from src.fgsp.controller.submap_handler import SubmapHandler
+from src.fgsp.common.submap_model import SubmapModel
+from src.fgsp.common.config import MonitorConfig
+from src.fgsp.common.plotter import Plotter
+from src.fgsp.common.logger import Logger
+
+
+class GraphMonitor(Node):
     def __init__(self):
+        super().__init__('graph_monitor')
         self.is_initialized = False
 
         Plotter.PlotMonitorBanner()
-        self.config = MonitorConfig()
+        self.config = MonitorConfig(self)
         self.config.init_from_config()
         Plotter.PrintMonitorConfig(self.config)
         Plotter.PrintSeparator()
@@ -27,16 +32,23 @@ class GraphMonitor(object):
         self.mutex.acquire()
         # Publishers and subscribers.
         if self.config.enable_submap_constraints:
-            rospy.Subscriber(self.config.opt_pc_topic, Submap, self.submap_callback)
-            self.submap_pub = rospy.Publisher(self.config.submap_topic, SubmapConstraint, queue_size=10)
+            self.submap_sub = self.create_subscription(
+                Submap, self.config.opt_pc_topic, self.submap_callback, 10)
+            self.submap_pub = self.create_publisher(
+                SubmapConstraint, self.config.submap_topic, 10)
         if self.config.enable_graph_building:
-            rospy.Subscriber(self.config.in_graph_topic, Graph, self.graph_callback)
-            rospy.Subscriber(self.config.in_traj_opt_topic, Trajectory, self.traj_opt_callback)
-            self.pub_graph = rospy.Publisher(self.config.out_graph_topic, Graph, queue_size=10)
-            self.pub_traj = rospy.Publisher(self.config.out_traj_opt_topic, Trajectory, queue_size=10)
+            self.graph_sub = self.create_subscription(
+                Graph, self.config.in_graph_topic, self.graph_callback, 10)
+            self.traj_sub = self.create_subscription(
+                Trajectory, self.config.in_traj_opt_topic, self.traj_opt_callback, 10)
+            self.graph_pub = self.create_publisher(
+                Graph, self.config.out_graph_topic, 10)
+            self.traj_pub = self.create_publisher(
+                Trajectory, self.config.out_traj_opt_topic, 10)
 
         # Handlers and evaluators.
-        self.graph = GlobalGraph(self.config, reduced=self.config.reduce_global_graph)
+        self.graph = GlobalGraph(
+            self.config, reduced=self.config.reduce_global_graph)
         self.optimized_signal = SignalHandler(self.config)
         self.submap_handler = SubmapHandler(self.config)
 
@@ -47,11 +59,12 @@ class GraphMonitor(object):
         self.is_initialized = True
         self.latest_opt_traj_msg = None
         self.mutex.release()
+        self.timer = self.create_timer(1 / self.config.rate, self.update)
 
     def graph_callback(self, msg):
         if self.is_initialized is False:
             return
-        rospy.loginfo("[GraphMonitor] Received graph message from server.")
+        Logger.LogInfo('GraphMonitor: Received graph message from server.')
         self.mutex.acquire()
 
         # We only trigger the graph building if the msg contains new information.
@@ -68,12 +81,11 @@ class GraphMonitor(object):
 
         # If the graph is reduced, we need to reduce the optimized nodes too.
         if self.graph.is_reduced:
-            # rospy.logwarn('[GraphMonitor] Reducing trajectory with {len(self.graph.reduced_ind)} indices.')
             msg.nodes = [msg.nodes[i] for i in self.graph.reduced_ind]
 
         if self.graph.has_skipped():
-            # rospy.logwarn('[GraphMonitor] Skipping trajectory with {len(self.graph.skip_ind)} indices.')
-            msg.nodes = [element for i,element in enumerate(msg.nodes) if i not in self.graph.skip_ind]
+            msg.nodes = [element for i, element in enumerate(
+                msg.nodes) if i not in self.graph.skip_ind]
 
         for key in keys:
             if self.key_in_optimized_keys(key):
@@ -94,19 +106,22 @@ class GraphMonitor(object):
             self.graph.publish()
             self.optimized_signal.publish()
         except Exception as e:
-            rospy.logerr('[GraphMonitor] Unable to publish results to client.')
+            Logger.LogError(
+                'GraphMonitor: Unable to publish results to client.')
 
     def compute_and_publish_graph(self):
         self.mutex.acquire()
         if self.graph.is_built is False:
-            rospy.logwarn("[GraphMonitor] Graph is not built yet!")
+            Logger.LogWarn('GraphMonitor: Graph is not built yet!')
             self.mutex.release()
             return
-        rospy.loginfo("[GraphMonitor] Computing global graph with {graph_size}.".format(graph_size=self.graph.graph_size()))
+        Logger.LogInfo(
+            f'GraphMonitor: Computing global graph with {self.graph.graph_size()}.')
         if self.graph.graph_size() < self.config.min_node_count:
-            rospy.logwarn("[GraphMonitor] Not enough nodes ({graph_size} < {min_node_count})".format(graph_size=self.graph.graph_size(), min_node_count=self.config.min_node_count))
+            Logger.LogWarn(
+                f'GraphMonitor: Not enough nodes ({self.graph.graph_size()} < {self.config.min_node_count}')
             self.mutex.release()
-            return;
+            return
         self.mutex.release()
 
         # Publish the graph to the clients.
@@ -152,36 +167,44 @@ class GraphMonitor(object):
         n_submaps = len(submaps)
         if n_submaps == 0:
             return None
-        rospy.loginfo("[GraphMonitor] Computing constraints for {n_submaps} submaps.".format(n_submaps=n_submaps))
+        Logger.LogWarn(
+            f'GraphMonitor: Computing constraints for {n_submaps} submaps.')
         return self.submap_handler.compute_constraints(submaps)
 
     def publish_graph_and_traj(self):
         graph_msg = self.graph.to_graph_msg()
         self.pub_graph.publish(graph_msg)
-        rospy.loginfo("[GraphMonitor] Published global graph.")
+        Logger.LogInfo('GraphMonitor: Published global graph.')
 
         if self.config.send_separate_traj_msgs:
             self.send_separate_traj_msgs()
         elif self.latest_opt_traj_msg is not None:
             self.pub_traj.publish(self.latest_opt_traj_msg)
-            rospy.loginfo("[GraphMonitor] Published trajectory for keys {key}.".format(key=self.optimized_keys))
+            Logger.LogInfo(
+                f'GraphMonitor: Published trajectory for keys {self.optimized_keys}.')
 
     def send_separate_traj_msgs(self):
         for key in self.optimized_keys:
             traj_msg = self.optimized_signal.to_signal_msg(key)
             self.pub_traj.publish(traj_msg)
             time.sleep(0.10)
-            rospy.loginfo("[GraphMonitor] Published separate trajectory for {key}.".format(key=key))
+            Logger.LogInfo(
+                f'GraphMonitor: Published separate trajectory for {key}.')
 
     def publish_all_submaps(self, submaps):
         self.submap_handler.publish_submaps(submaps)
 
     def key_in_optimized_keys(self, key):
-       return any(key in k for k in self.optimized_keys)
+        return any(key in k for k in self.optimized_keys)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    monitor = GraphMonitor()
+    rclpy.spin(monitor)
+    monitor.destroy_node()
+    rclpy.shutdown()
+
 
 if __name__ == '__main__':
-    rospy.init_node('graph_monitor')
-    node = GraphMonitor()
-    while not rospy.is_shutdown():
-        node.update()
-        node.config.rate.sleep()
+    main()

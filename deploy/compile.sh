@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-source /opt/ros/melodic/setup.bash
-catkin build fgsp
+source /opt/ros/humble/setup.bash
+colcon build

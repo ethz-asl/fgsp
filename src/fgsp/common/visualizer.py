@@ -1,9 +1,12 @@
-import rospy
+#! /usr/bin/env python3
+
 import copy
 
 from std_msgs.msg import Header, ColorRGBA
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
+
+from src.fgsp.common.comms import Comms
 
 
 class Visualizer(object):
@@ -15,22 +18,21 @@ class Visualizer(object):
         self.sphere_graph_marker = self.create_sphere_marker()
         self.signal_graph_marker = self.create_sphere_marker()
 
-        self.pub_adjacency = rospy.Publisher("/graph_monitor/graph/adjacency", MarkerArray, queue_size=10)
-        self.pub_coords = rospy.Publisher('/graph_monitor/graph/coords', MarkerArray, queue_size=10)
+        self.comms = Comms()
         self.robot_colors = self.generate_robot_colors()
         self.resetConstraintVisualization()
 
-    def create_line_marker(self, frame_id = 'darpa'):
+    def create_line_marker(self, frame_id='darpa'):
         line_marker = Marker()
         line_marker.header.frame_id = frame_id
         line_marker.ns = "Line"
         line_marker.action = Marker().ADD
         line_marker.type = Marker().LINE_STRIP
-        line_marker.lifetime = rospy.Duration(0.0)
+        line_marker.lifetime = 0
         line_marker.scale.x = 0.05
         return line_marker
 
-    def create_sphere_marker(self, frame_id = 'darpa'):
+    def create_sphere_marker(self, frame_id='darpa'):
         sphere = Marker()
         sphere.header.frame_id = frame_id
         sphere.action = Marker.ADD
@@ -67,7 +69,7 @@ class Visualizer(object):
         self.signals = MarkerArray()
 
     def create_sphere(self, sphere, point):
-        sphere.header.stamp = rospy.Time.now()
+        sphere.header.stamp = self.time_now().to_msg()
         sphere.pose.position.x = point[0]
         sphere.pose.position.y = point[1]
         sphere.pose.position.z = point[2]
@@ -92,7 +94,7 @@ class Visualizer(object):
 
         self.line_marker.id += 1
         line_marker = copy.deepcopy(self.line_marker)
-        line_marker.header.stamp = rospy.Time.now()
+        line_marker.header.stamp = self.time_now().to_msg()
         line_marker.color = self.get_color(0.1, 0.8, 0.1)
 
         line_marker.points[:] = []
@@ -102,11 +104,15 @@ class Visualizer(object):
         self.adjacency.markers.append(line_marker)
 
     def visualize_coords(self):
-        self.pub_coords.publish(self.spheres)
+        self.comms.publish(self.spheres, MarkerArray,
+                           '/graph_monitor/graph/coords')
 
     def visualize_adjacency(self):
-        self.pub_adjacency.publish(self.adjacency)
+        self.comms.publish(self.adjacency, MarkerArray,
+                           '/graph_monitor/graph/adjacency')
 
     def visualize_signals(self, topic):
-        pub_signals = rospy.Publisher(topic, MarkerArray, queue_size=10)
-        pub_signals.publish(self.signals)
+        self.comms.publish(self.signals, MarkerArray, topic)
+
+    def time_now(self):
+        return self.comms.node.get_clock().now()

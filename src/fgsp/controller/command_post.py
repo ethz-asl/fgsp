@@ -1,23 +1,20 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 
-import rospy
 import numpy as np
 import time
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 
-class CommandPost(object):
-    def __init__(self):
-        anchor_node_topic = rospy.get_param("~anchor_node_topic")
-        relative_node_topic = rospy.get_param("~relative_node_topic")
-        verification_service = rospy.get_param("~verification_service")
-        self.pub_anchor = rospy.Publisher(anchor_node_topic, Path, queue_size=10)
-        self.pub_relative = rospy.Publisher(relative_node_topic, Path, queue_size=10)
-        self.pub_degenerate = rospy.Publisher('/graph_client/degenerate_anchors', Path, queue_size=10)
+from src.fgsp.common.logger import Logger
+from src.fgsp.common.comms import Comms
 
-        self.good_path_msg = None
-        self.bad_path_msg = None
+
+class CommandPost(object):
+    def __init__(self, config):
+        self.config = config
+        self.comms = Comms()
+
         self.degenerate_path_msg = None
         self.degenerate_indices = []
         self.previous_relatives = {}
@@ -26,11 +23,10 @@ class CommandPost(object):
         self.large_constraint_counter = 0
         self.anchor_constraint_counter = 0
         self.history = None
-        rospy.loginfo("[CommandPost] Initialized command post center.")
+
+        Logger.LogInfo("CommandPost: Initialized command post center.")
 
     def reset_msgs(self):
-        self.good_path_msg = Path()
-        self.bad_path_msg = Path()
         self.degenerate_path_msg = Path()
         self.small_constraint_counter = 0
         self.mid_constraint_counter = 0
@@ -44,16 +40,20 @@ class CommandPost(object):
         for i in range(0, n_nodes):
             history = None
             if i in self.previous_relatives.keys():
-                labels.labels[i] = list(set(labels.labels[i]+self.previous_relatives[i]))
+                labels.labels[i] = list(
+                    set(labels.labels[i]+self.previous_relatives[i]))
                 if i in self.history.keys():
                     history = self.history[i]
 
-            relative_constraint, small_relative_counter, mid_relative_counter, large_relative_counter = labels.check_and_construct_constraint_at(i, history)
+            relative_constraint, small_relative_counter, mid_relative_counter, large_relative_counter = labels.check_and_construct_constraint_at(
+                i, history)
             if relative_constraint is None:
-                continue # no-op
+                continue  # no-op
             self.previous_relatives[i] = labels.labels[i]
-            self.pub_relative.publish(relative_constraint)
-            self.add_to_constraint_counter(small_relative_counter, mid_relative_counter, large_relative_counter)
+            self.comms.publish(relative_constraint, Path,
+                               self.config.relative_node_topic)
+            self.add_to_constraint_counter(
+                small_relative_counter, mid_relative_counter, large_relative_counter)
             self.history = labels.history
             time.sleep(0.001)
 
@@ -78,13 +78,15 @@ class CommandPost(object):
         return pose_msg
 
     def send_anchors(self, all_opt_nodes, begin_send, end_send):
-        rospy.logerr('Sending degenerate anchors for {seq} nodes.'.format(seq=end_send - begin_send))
+        Logger.LogError(
+            f'CommandPost: Sending degenerate anchors for {end_send - begin_send} nodes.')
         indices = np.arange(begin_send, end_send, 1)
         self.send_anchors_based_on_indices(all_opt_nodes, indices)
 
     def send_anchors_based_on_indices(self, opt_nodes, indices):
         n_constraints = len(indices)
-        rospy.logerr('Sending anchors for {n_constraints} nodes.'.format(n_constraints=n_constraints))
+        Logger.LogError(
+            f'CommandPost: Sending anchors for {n_constraints} nodes.')
         for i in indices:
             pose_msg = self.create_pose_msg_from_node(opt_nodes[i])
             self.degenerate_path_msg.poses.append(pose_msg)
@@ -93,12 +95,16 @@ class CommandPost(object):
             if not i in self.degenerate_indices:
                 self.degenerate_indices.append(i)
 
-        self.degenerate_path_msg.header.stamp = rospy.Time.now()
-        self.pub_anchor.publish(self.degenerate_path_msg)
+        # Publish the anchor nodes.
+        self.degenerate_path_msg.header.stamp = self.comms.time_now()
+        self.comms.publish(self.degenerate_path_msg, Path,
+                           self.config.anchor_node_topic)
         self.anchor_constraint_counter = self.anchor_constraint_counter + n_constraints
 
     def update_degenerate_anchors(self, all_opt_nodes):
         if len(self.degenerate_indices) == 0:
             return
-        rospy.logerr('Sending degenerate anchor update for {degenerate_indices}'.format(degenerate_indices=self.degenerate_indices))
-        self.send_degenerate_anchors_based_on_indices(all_opt_nodes, self.degenerate_indices)
+        Logger.LogError(
+            f'CommandPost: Sending degenerate anchor update for {self.degenerate_indices}')
+        self.send_degenerate_anchors_based_on_indices(
+            all_opt_nodes, self.degenerate_indices)

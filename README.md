@@ -17,7 +17,7 @@ Similar to the `graph_monitor`, this is also agnostic to the used framework as l
 ## Getting started
 
 There are mainly two options to build FGSP:
- * Regular `catkin` build
+ * Regular `colcon` build
  * Deployment build with `docker`
 
 
@@ -32,7 +32,7 @@ Other dependencies are `numpy`, `pandas`, `scipy` and need to be installed with,
 ### Catkin Build
 Having all dependencies installed, FGSP can be built with
 ```
-catkin build fgsp
+colcon build fgsp
 ```
 
 The server then runs `graph_monitor.py` (see `launch/graph_monitor.launch` for an example) while the clients runs `graph_client.py` (see `launch/robots/local_client.launch` for an example).

@@ -29,10 +29,10 @@ There are mainly two options to build FGSP:
 A submodule of each dependency can be found in the in the `dependencies/` directory.
 Other dependencies are `numpy`, `pandas`, `scipy` and need to be installed with, e.g., `pip`.
 
-### Catkin Build
+### Colcon Build
 Having all dependencies installed, FGSP can be built with
 ```
-colcon build fgsp
+colcon build
 ```
 
 The server then runs `graph_monitor.py` (see `launch/graph_monitor.launch` for an example) while the clients runs `graph_client.py` (see `launch/robots/local_client.launch` for an example).

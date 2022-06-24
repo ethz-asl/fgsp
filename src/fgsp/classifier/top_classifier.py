@@ -7,6 +7,7 @@ class TopClassifier(object):
 
     def __init__(self, top_n=5):
         self.top_n = top_n
+        self.threshold = 0.4
 
     def classify(self, data):
         n_nodes = data.shape[0]
@@ -19,6 +20,10 @@ class TopClassifier(object):
         for i in range(0, self.top_n):
             row_idx = xy_indices[0][i]
             col_idx = xy_indices[1][i]
+
+            if data[row_idx, col_idx] < self.threshold:
+                continue
+
             if labels[row_idx] == None:
                 labels[row_idx] = []
             labels[row_idx].append(col_idx + 1)

@@ -45,8 +45,11 @@ class Simulation(Node):
         ros2_bag_out = Rosbag2Writer(self.out_bag_file)
         ros2_bag_out.open()
 
-        self.write_odometry(self.robot_traj, ros2_bag_out)
-        self.write_server_trajectory(self.server_traj, ros2_bag_out)
+        ros_time_odom = self.write_odometry(self.robot_traj, ros2_bag_out)
+        ros_time_traj = self.write_server_trajectory(
+            self.server_traj, ros2_bag_out)
+
+        self.write_delayed_msg(ros_time_odom, ros_time_traj, ros2_bag_out)
 
         ros2_bag_out.close()
         Logger.LogInfo('Simulation: Writing bag file done.')
@@ -89,8 +92,8 @@ class Simulation(Node):
                                     robot_traj.orientations_quat_wxyz):
             sec = int(stamp // 1)
             nanosec = int((stamp - sec) * 1e9)
-            time = Time(sec, nanosec)
-            header = Header(time, self.map_frame)
+            ros_time = Time(sec, nanosec)
+            header = Header(ros_time, self.map_frame)
             position = Position(x=xyz[0], y=xyz[1], z=xyz[2])
             quaternion = Quaternion(w=quat[0], x=quat[1], y=quat[2], z=quat[3])
             pose = Pose(position, quaternion)
@@ -106,6 +109,7 @@ class Simulation(Node):
         Logger.LogInfo(f'Simulation: Wrote topic: {self.odom_topic}')
 
         Logger.LogInfo('Simulation: Writing odometry to bag file done.')
+        return ros_time
 
     def write_server_trajectory(self, server_traj, ros2_bag_out):
         TRAJECTORY_MSG = """
@@ -176,6 +180,25 @@ class Simulation(Node):
 
         Logger.LogInfo(
             'Simulation: Writing server trajectory to bag file done.')
+
+        return ros_time
+
+    def write_delayed_msg(self, ros_time_odom, ros_time_traj, ros2_bag_out):
+        from rosbags.typesys.types import (std_msgs__msg__Header as Header,
+                                           std_msgs__msg__String as String,
+                                           builtin_interfaces__msg__Time as Time)
+
+        max_time_s = max(ros_time_odom.sec, ros_time_traj.sec)
+        delay_s = 600
+
+        str_msg = String(data=f'Delaying by {delay_s} seconds.')
+        msg_type = String.__msgtype__
+        connection = ros2_bag_out.add_connection('delay', msg_type)
+        serialized_msg = serialize_cdr(str_msg, msg_type)
+
+        ros2_bag_out.write(connection, int(
+            (max_time_s + delay_s) * 1e9), serialized_msg)
+        Logger.LogInfo(f'Simulation: Wrote delayed topic to the bag.')
 
 
 def main(args=None):

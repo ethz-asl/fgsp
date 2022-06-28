@@ -27,13 +27,15 @@ def process_poses(poses, tree, w_func, i):
     nn_indices = tree.query_ball_point(
         poses[i, 0:3], r=max_pos_dist, p=2)
 
-    return nn_indices, [w_func(poses[i, :], poses[nn_i, :]) for nn_i in nn_indices]
+    return nn_indices, [w_func(poses[i, 0:3], poses[nn_i, 0:3]) for nn_i in nn_indices]
 
 
 def compute_distance_weights(coords_lhs, coords_rhs):
     sigma = 1.0
     normalization = 2.0*(sigma**2)
     dist = spatial.distance.euclidean(coords_lhs, coords_rhs)
+    # print(f'Distance between {coords_lhs} and {coords_rhs} is {dist}')
+
     return np.exp(-dist/normalization)
 
 
@@ -156,9 +158,7 @@ class GlobalGraph(object):
         self.build_graph()
 
     def build_from_path(self, path_msg):
-        start_time = time.time()
-        self.build_from_pose_msgs(path_msg.poses)
-        return self.build_graph()
+        return self.build_from_pose_msgs(path_msg.poses)
 
     def build_from_pose_msgs(self, poses):
         start_time = time.time()
@@ -172,6 +172,7 @@ class GlobalGraph(object):
             f'GlobalGraph: Building with coords {self.coords.shape}.')
         self.adj = self.create_adjacency_from_poses(poses)
         Logger.LogDebug(f'GlobalGraph: Building with adj: {self.adj.shape}.')
+        return self.build_graph()
 
     def build_from_poses(self, poses):
         start_time = time.time()
@@ -184,7 +185,7 @@ class GlobalGraph(object):
             f'GlobalGraph Building with coords {self.coords.shape}.')
         self.adj = self.create_adjacency_from_poses(self.coords)
         Logger.LogDebug(f'GlobalGraph: Building with adj: {self.adj.shape}.')
-        self.build_graph()
+        return self.build_graph()
 
     def skip_jumping_coords(self, prev_coords, next_coords):
         n_coords_to_check = len(prev_coords)

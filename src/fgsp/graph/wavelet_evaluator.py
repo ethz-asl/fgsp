@@ -88,22 +88,11 @@ class WaveletEvaluator(object):
         for i in range(n_nodes):
             D = self.compute_distances_1D(
                 submap_coeffs_1[i, :], submap_coeffs_2[i, :])
-            print(f'data is {D}')
             data = pandas.DataFrame({
-                # Euclidean distance.
-                # self.feature_names[0]:[np.sum(D[0, 0])],
-                # self.feature_names[1]:[np.sum(D[0, 1])],
-                # self.feature_names[2]:[np.sum(D[0, 2])],
-
                 self.feature_names[0]: [np.sum(D[0, 0:2])],
                 self.feature_names[1]: [np.sum(D[0, 2:4])],
                 self.feature_names[2]: [np.sum(D[0, 4:6])],
-
-                # self.feature_names[0]:[np.sum(D[0, 0:4])],
-                # self.feature_names[1]:[np.sum(D[0, 4:8])],
-                # self.feature_names[2]:[np.sum(D[0, 8:12])],
             })
-            # all_data = all_data.append(data)
             all_data = pandas.concat([all_data, data])
         return np.nan_to_num(all_data)
 

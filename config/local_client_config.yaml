@@ -28,7 +28,7 @@ graph_client:
     # Div
     dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"
     robot_name: "cerberus"
-    update_rate: 0.05
+    update_rate: 0.02
     enable_client_update: False
     enable_anchor_constraints: False
     enable_relative_constraints: True
@@ -42,4 +42,4 @@ graph_client:
     trajectory_raw_export_path: "/data/{src}_raw_trajectory.npy"
     degenerate_window: 20
     synchronization_max_diff_s: 0.5
-    verbosity: 3
+    verbosity: 5

@@ -72,8 +72,8 @@ class GraphClient(Node):
         self.robot_eval = WaveletEvaluator()
         self.commander = CommandPost(self.config)
 
-        self.classifier = SimpleClassifier()
-        # self.classifier = TopClassifier(50)
+        # self.classifier = SimpleClassifier()
+        self.classifier = TopClassifier(200)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -455,6 +455,7 @@ class GraphClient(Node):
 
     def evaluate_and_publish_features(self, labels):
         if labels == None or labels == [] or labels.size() == 0:
+            Logger.get_logger().log_error('[GraphClient] No labels found.')
             return
         self.commander.evaluate_labels_per_node(labels)
 

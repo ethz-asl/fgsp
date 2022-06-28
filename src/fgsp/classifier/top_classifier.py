@@ -21,7 +21,6 @@ class TopClassifier(object):
         # Find top n entries in the data.
         xy_indices = np.unravel_index(np.argsort(
             data.ravel())[-self.top_n:], data.shape)
-        print(xy_indices)
         for i in range(0, self.top_n):
             row_idx = xy_indices[0][i]
             col_idx = xy_indices[1][i]

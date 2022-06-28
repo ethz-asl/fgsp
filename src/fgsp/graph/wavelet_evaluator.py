@@ -88,7 +88,6 @@ class WaveletEvaluator(object):
         for i in range(n_nodes):
             D = self.compute_distances_1D(
                 submap_coeffs_1[i, :], submap_coeffs_2[i, :])
-            print(f'data is {D}')
             data = pandas.DataFrame({
                 self.feature_names[0]: [np.sum(D[0, 0:2])],
                 self.feature_names[1]: [np.sum(D[0, 2:4])],

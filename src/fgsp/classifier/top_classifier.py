@@ -13,6 +13,11 @@ class TopClassifier(object):
         n_nodes = data.shape[0]
         labels = [None] * n_nodes
 
+        np.set_printoptions(suppress=True)
+        print('--- DATA ---------------------------------')
+        print(data)
+        print('------------------------------------------')
+
         # Find top n entries in the data.
         xy_indices = np.unravel_index(np.argsort(
             data.ravel())[-self.top_n:], data.shape)

@@ -20,6 +20,7 @@ from src.fgsp.common.plotter import Plotter
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
 from src.fgsp.classifier.top_classifier import TopClassifier
+from src.fgsp.classifier.simple_classifier import SimpleClassifier
 from src.fgsp.classifier.classification_result import ClassificationResult
 
 
@@ -71,7 +72,8 @@ class GraphClient(Node):
         self.robot_eval = WaveletEvaluator()
         self.commander = CommandPost(self.config)
 
-        self.classifier = TopClassifier(20)
+        self.classifier = SimpleClassifier()
+        # self.classifier = TopClassifier(50)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -398,12 +400,6 @@ class GraphClient(Node):
 
         psi = self.eval.get_wavelets()
         robot_psi = self.robot_eval.get_wavelets()
-        print('SERVER PSI')
-        print(psi)
-        print('---------------------------------------------')
-        print('ROBOT PSI')
-        print(robot_psi)
-        print('---------------------------------------------')
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
             Logger.LogWarn(

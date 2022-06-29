@@ -10,13 +10,12 @@ from src.fgsp.common.comms import Comms
 
 
 class Visualizer(object):
-    def __init__(self):
-        self.spheres = MarkerArray()
-        self.adjacency = MarkerArray()
-        self.signals = MarkerArray()
+    def __init__(self, config=None):
+        self.config = config
         self.line_marker = self.create_line_marker()
         self.sphere_graph_marker = self.create_sphere_marker()
         self.signal_graph_marker = self.create_sphere_marker()
+        self.resetConstraintVisualization()
 
         self.comms = Comms()
         self.robot_colors = self.generate_robot_colors()
@@ -69,9 +68,10 @@ class Visualizer(object):
 
     def create_sphere(self, sphere, point):
         sphere.header.stamp = self.time_now().to_msg()
-        sphere.pose.position.x = point[0]
-        sphere.pose.position.y = point[1]
-        sphere.pose.position.z = point[2]
+        print(f'header is sphere.header.stamp: {sphere.header.stamp}')
+        sphere.pose.position.x = float(point[0])
+        sphere.pose.position.y = float(point[1])
+        sphere.pose.position.z = float(point[2])
         return sphere
 
     def add_graph_coordinate(self, point):
@@ -89,13 +89,13 @@ class Visualizer(object):
 
     def add_graph_adjacency(self, point_a, point_b):
         line_point_a = Point()
-        line_point_a.x = point_a[0]
-        line_point_a.y = point_a[1]
-        line_point_a.z = point_a[2]
+        line_point_a.x = float(point_a[0])
+        line_point_a.y = float(point_a[1])
+        line_point_a.z = float(point_a[2])
         line_point_b = Point()
-        line_point_b.x = point_b[0]
-        line_point_b.y = point_b[1]
-        line_point_b.z = point_b[2]
+        line_point_b.x = float(point_b[0])
+        line_point_b.y = float(point_b[1])
+        line_point_b.z = float(point_b[2])
 
         self.line_marker.id += 1
         line_marker = copy.deepcopy(self.line_marker)

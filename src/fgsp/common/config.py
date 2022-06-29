@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from src.fgsp.common.utils import Utils
+import numpy as np
 from src.fgsp.common.logger import Logger
 
 
@@ -158,6 +158,7 @@ class ClientConfig(BaseConfig):
 
         # input and output
         self.client_update_topic = "/graph_client/latest_graph"
+        self.T_robot_server = np.eye(4).reshape(16).tolist()
 
     def init_from_config(self):
         # general config
@@ -233,6 +234,8 @@ class ClientConfig(BaseConfig):
         # input and output
         self.client_update_topic = self.try_get_param(
             "client_update_topic", self.client_update_topic)
+        self.T_robot_server = np.array(self.try_get_param(
+            "T_robot_server", self.T_robot_server)).reshape(4, 4)
 
 
 class DebugConfig(BaseConfig):

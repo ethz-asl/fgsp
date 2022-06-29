@@ -260,7 +260,7 @@ class GlobalGraph(BaseGraph):
     def publish(self):
         if not self.is_built:
             return
-        viz = Visualizer()
+        viz = Visualizer(self.config)
 
         n_coords = self.G.N
         if n_coords > self.coords.shape[0] or n_coords > self.adj.shape[0]:
@@ -268,21 +268,30 @@ class GlobalGraph(BaseGraph):
                 f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}.')
             return
 
-        # First publish the coordinates of the global graph.
+        # Publish the coordinates of the global graph along with the adjacency matrix
         for i in range(0, n_coords):
-            viz.add_graph_coordinate(self.coords[i, :])
+            pt_h_i = np.ones((4, 1), dtype=np.float32)
+            pt_h_i[0:3, 0] = self.coords[i, 0:3]
+            pt_i = np.dot(self.config.T_robot_server, pt_h_i)
+            print(f'initial point {self.coords[i, 0:3]}')
+            print(f'transformed point {pt_i}')
+
+            viz.add_graph_coordinate(pt_i)
+            # viz.add_graph_coordinate(self.coords[i, 0:3])
+
+            # for j in range(0, n_coords):
+            #     pt_h_j = np.ones((4, 1), dtype=np.float32)
+            #     pt_h_j[0:3, 0] = self.coords[j, 0:3]
+            #     pt_j = np.dot(self.config.T_robot_server, pt_h_j)
+            #     if i >= n_coords or j >= self.coords.shape[0]:
+            #         continue
+            #     if i >= self.adj.shape[0] or j >= self.adj.shape[1]:
+            #         continue
+            #     if self.adj[i, j] <= 0.0:
+            #         continue
+
+            #     viz.add_graph_adjacency(pt_i, pt_j)
         viz.visualize_coords()
+        # viz.visualize_adjacency()
 
-        # Next publish the adjacency matrix of the global graph.
-        for i in range(0, n_coords):
-            for j in range(0, n_coords):
-                if i >= n_coords or j >= self.coords.shape[0]:
-                    continue
-                if i >= self.adj.shape[0] or j >= self.adj.shape[1]:
-                    continue
-                if self.adj[i, j] <= 0.0:
-                    continue
-
-                viz.add_graph_adjacency(self.coords[i, :], self.coords[j, :])
-        viz.visualize_adjacency()
         Logger.LogInfo('GlobalGraph: Visualized global graph.')

@@ -18,6 +18,7 @@ from src.fgsp.common.signal_synchronizer import SignalSynchronizer
 from src.fgsp.common.config import ClientConfig
 from src.fgsp.common.plotter import Plotter
 from src.fgsp.common.utils import Utils
+from src.fgsp.common.comms import Comms
 from src.fgsp.common.logger import Logger
 from src.fgsp.classifier.top_classifier import TopClassifier
 from src.fgsp.classifier.simple_classifier import SimpleClassifier
@@ -27,6 +28,8 @@ from src.fgsp.classifier.classification_result import ClassificationResult
 class GraphClient(Node):
     def __init__(self):
         super().__init__('graph_client')
+        self.comms = Comms()
+        self.comms.node = self
 
         self.is_initialized = False
         self.initialize_logging = True

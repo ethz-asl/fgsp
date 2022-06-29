@@ -1,12 +1,6 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 
-import rospy
 import numpy as np
-import sensor_msgs.point_cloud2 as pc2
-
-from maplab_msgs.msg import Submap, DenseNode
-from geometry_msgs.msg import PoseStamped
-from sensor_msgs.msg import PointCloud2, PointField
 
 from .utils import Utils
 
@@ -99,39 +93,3 @@ class SubmapModel(object):
         if n_poses == 0:
             return None
         return self.ts[n_poses // 2]
-
-if __name__ == "__main__":
-    rospy.init_node('foo')
-
-    submap_msg = Submap()
-    submap_msg.header.stamp = rospy.get_rostime()
-    submap_msg.header.seq = 0
-
-    pose_msg = PoseStamped()
-    pose_msg.header.stamp = rospy.get_rostime()
-    pose_msg.header.seq = 0
-    pose_msg.pose.position.x = 1
-    pose_msg.pose.position.y = 2
-    pose_msg.pose.position.z = 3
-    pose_msg.pose.orientation.w = 1
-    pose_msg.pose.orientation.x = 0
-    pose_msg.pose.orientation.y = 0
-    pose_msg.pose.orientation.z = 0
-
-    cloud_msg = PointCloud2()
-    points = np.random.random_sample((3, 3))
-    cloud_msg.fields = [
-        PointField('x', 0, PointField.FLOAT32, 1),
-        PointField('y', 4, PointField.FLOAT32, 1),
-        PointField('z', 8, PointField.FLOAT32, 1)]
-    cloud_msg.data = points.tostring()
-
-    dense_node = DenseNode()
-    dense_node.pose = pose_msg
-    dense_node.cloud = cloud_msg
-    submap_msg.nodes.append(dense_node)
-
-    model = SubmapModel()
-    model.construct_data(submap_msg)
-
-    print("Model for robot {robot_name} contains {n_poses} poses and {n_clouds} clouds.".format(robot_name=model.robot_name, n_poses=len(model.poses), n_clouds=len(model.pointclouds)))

@@ -1,0 +1,12 @@
+simulation:
+  ros__parameters:
+    server_file: "/home/berlukas/Documents/workspace/darpa/src/trajectory_eval/Trajectories/4_camel/3_m3rm/m3rm_tum.csv"
+    robot_file: "/home/berlukas/Documents/workspace/darpa/src/trajectory_eval/Trajectories/4_camel/2_compslam_post/compslam_post_tum.csv"
+    robot_name: "cerberus"
+    map_frame: "map"
+    child_frame: "base"
+
+    odom_topic: "/odometry"
+    monitor_topic: "/graph_monitor/sparse_graph/trajectory"
+
+    out_bag_file: "/tmp/odom_and_monitor.bag"

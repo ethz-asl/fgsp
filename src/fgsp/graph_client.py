@@ -195,6 +195,7 @@ class GraphClient(Node):
 
         self.compare_estimations()
         # self.publish_client_update()
+        self.global_graph.publish()
 
         n_constraints = self.commander.get_total_amount_of_constraints()
         if n_constraints > 0:

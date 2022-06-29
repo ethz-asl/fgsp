@@ -95,6 +95,8 @@ class GlobalGraph(BaseGraph):
 
         if (self.is_reduced):
             self.reduce_graph()
+
+        self.is_built = True
         return True
 
     def build_graph_from_coords_and_adj(self, coords, adj):

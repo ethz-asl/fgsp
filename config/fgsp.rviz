@@ -5,8 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Status1
-        - /FGSP1
+        - /Graph1
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz_common/Selection
@@ -78,11 +77,53 @@ Visualization Manager:
       Value: true
     - Class: rviz_common/Group
       Displays:
+        - Class: rviz_default_plugins/MarkerArray
+          Enabled: false
+          Name: Adjacency
+          Namespaces:
+            {}
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /graph/adjacency
+          Value: false
+        - Class: rviz_default_plugins/MarkerArray
+          Enabled: true
+          Name: Coords
+          Namespaces:
+            "": true
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /graph/coords
+          Value: true
+      Enabled: true
+      Name: Graph
+    - Class: rviz_common/Group
+      Displays:
+        - Class: rviz_default_plugins/MarkerArray
+          Enabled: true
+          Name: Texts
+          Namespaces:
+            relative_num_children: true
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /constraint_text_markers
+          Value: true
         - Class: rviz_default_plugins/Marker
           Enabled: true
           Name: Constraints
           Namespaces:
-            {}
+            anchor_constraints: true
+            relative_constraints: true
+            relative_parent_nodes: true
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -91,20 +132,8 @@ Visualization Manager:
             Reliability Policy: Reliable
             Value: /constraint_markers
           Value: true
-        - Class: rviz_default_plugins/MarkerArray
-          Enabled: true
-          Name: Texts
-          Namespaces:
-            {}
-          Topic:
-            Depth: 5
-            Durability Policy: Volatile
-            History Policy: Keep Last
-            Reliability Policy: Reliable
-            Value: /constraint_text_markers
-          Value: true
       Enabled: true
-      Name: FGSP
+      Name: Constraints
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -151,25 +180,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 118.5228500366211
+      Distance: 48.87112045288086
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 25.493831634521484
-        Y: -32.611915588378906
-        Z: -4.135594367980957
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.399796724319458
+      Pitch: 0.6553983092308044
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.5654147863388062
+      Yaw: 1.0303980112075806
     Saved: ~
 Window Geometry:
   Displays:

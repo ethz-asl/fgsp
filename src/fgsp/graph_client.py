@@ -9,7 +9,8 @@ from maplab_msgs.msg import Graph, Trajectory, SubmapConstraint
 from multiprocessing import Lock
 
 from src.fgsp.graph.wavelet_evaluator import WaveletEvaluator
-from src.fgsp.graph.global_graph import GlobalGraph, HierarchicalGraph
+from src.fgsp.graph.global_graph import GlobalGraph
+from src.fgsp.graph.hierarchical_graph import HierarchicalGraph
 from src.fgsp.controller.signal_handler import SignalHandler
 from src.fgsp.controller.command_post import CommandPost
 from src.fgsp.controller.constraint_handler import ConstraintHandler

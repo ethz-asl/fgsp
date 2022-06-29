@@ -80,8 +80,8 @@ class GraphClient(Node):
         self.robot_eval = WaveletEvaluator()
         self.commander = CommandPost(self.config)
 
-        # self.classifier = SimpleClassifier()
-        self.classifier = TopClassifier(200)
+        self.classifier = SimpleClassifier()
+        # self.classifier = TopClassifier(200)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []

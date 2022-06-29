@@ -1,26 +1,22 @@
 #! /usr/bin/env python3
-from src.fgsp.common.logger import Logger
-from src.fgsp.common.utils import Utils
-from src.fgsp.common.visualizer import Visualizer
-from fgsp.graph.base_graph import BaseGraph
-from fgsp.common.utils import Utils
-from fgsp.common.visualizer import Visualizer
-from scipy.spatial.transform import Rotation
+import time
+import multiprocessing
+
+import numpy as np
 from scipy import spatial
 from maplab_msgs.msg import Graph
 from geometry_msgs.msg import Point
-from pygsp import graphs, filters, reduction
-from py import process
-from psutil import process_iter
 from pygsp import graphs, filters, reduction, utils
-import multiprocessing
-import time
-import sys
 from functools import partial
 from multiprocessing import Pool
-
-import numpy as np
 from liegroups import SE3
+
+from src.fgsp.common.logger import Logger
+from src.fgsp.common.utils import Utils
+from src.fgsp.common.visualizer import Visualizer
+from src.fgsp.graph.base_graph import BaseGraph
+from src.fgsp.common.utils import Utils
+from src.fgsp.common.visualizer import Visualizer
 
 
 def process_poses(poses, tree, w_func, i):

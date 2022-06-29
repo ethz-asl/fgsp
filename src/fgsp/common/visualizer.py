@@ -28,7 +28,6 @@ class Visualizer(object):
         line_marker.ns = "Line"
         line_marker.action = Marker().ADD
         line_marker.type = Marker().LINE_STRIP
-        # line_marker.lifetime = 0
         line_marker.scale.x = 0.05
         return line_marker
 

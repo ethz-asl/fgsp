@@ -5,6 +5,7 @@ from pygsp import graphs, reduction
 
 from src.fgsp.graph.base_graph import BaseGraph
 from src.fgsp.common.logger import Logger
+from src.fgsp.common.visualizer import Visualizer
 
 
 class HierarchicalGraph(BaseGraph):
@@ -75,3 +76,31 @@ class HierarchicalGraph(BaseGraph):
     def write_graph_to_disk(self, coords_file, adj_file):
         np.save(coords_file, self.coords[0])
         np.save(adj_file, self.adj[0])
+
+    def publish(self):
+        viz = Visualizer()
+
+        n_coords = self.G.N
+        if n_coords > self.coords.shape[0] or n_coords > self.adj.shape[0]:
+            Logger.LogError(
+                f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}.')
+            return
+
+        # First publish the coordinates of the global graph.
+        for i in range(0, n_coords):
+            viz.add_graph_coordinate(self.coords[i, :])
+        viz.visualize_coords()
+
+        # Next publish the adjacency matrix of the global graph.
+        for i in range(0, n_coords):
+            for j in range(0, n_coords):
+                if i >= n_coords or j >= self.coords.shape[0]:
+                    continue
+                if i >= self.adj.shape[0] or j >= self.adj.shape[1]:
+                    continue
+                if self.adj[i, j] <= 0.0:
+                    continue
+
+                viz.add_graph_adjacency(self.coords[i, :], self.coords[j, :])
+        viz.visualize_adjacency()
+        Logger.LogInfo('GlobalGraph: Visualized global graph.')

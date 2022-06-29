@@ -148,6 +148,7 @@ class Simulation(Node):
         update_every_n_poses = 5
         nodes = []
         last_pos = np.array([0, 0, 0])
+        n_poses = len(server_traj.timestamps)
         for stamp, xyz, quat in zip(server_traj.timestamps, server_traj.positions_xyz,
                                     server_traj.orientations_quat_wxyz):
             dist = np.linalg.norm(xyz - last_pos)
@@ -168,7 +169,7 @@ class Simulation(Node):
             node = TrajectoryNode(self.robot_name, k, pose_stamped, 0.0)
             nodes.append(node)
 
-            if i > 0 and i % update_every_n_poses == 0:
+            if (i > 0 and i % update_every_n_poses == 0) or i == n_poses - 1:
                 k = k + 1
                 traj_msg = Trajectory(header, nodes)
                 serialized_msg = serialize_cdr(traj_msg, msg_type)

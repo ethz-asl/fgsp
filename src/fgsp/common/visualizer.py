@@ -68,7 +68,6 @@ class Visualizer(object):
 
     def create_sphere(self, sphere, point):
         sphere.header.stamp = self.time_now().to_msg()
-        print(f'header is sphere.header.stamp: {sphere.header.stamp}')
         sphere.pose.position.x = float(point[0])
         sphere.pose.position.y = float(point[1])
         sphere.pose.position.z = float(point[2])

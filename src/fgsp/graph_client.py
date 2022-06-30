@@ -35,6 +35,7 @@ class GraphClient(Node):
         self.initialize_logging = True
         self.is_updating = False
         self.last_update_seq = -1
+        self.opt_node_threshold = 10
         self.config = ClientConfig(self)
         self.config.init_from_config()
         Plotter.PlotClientBanner()
@@ -81,7 +82,7 @@ class GraphClient(Node):
         self.commander = CommandPost(self.config)
 
         self.classifier = SimpleClassifier()
-        # self.classifier = TopClassifier(200)
+        # self.classifier = TopClassifier(100)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -297,6 +298,8 @@ class GraphClient(Node):
         n_opt_nodes = len(all_opt_nodes)
         print(
             f'We have {n_opt_nodes} opt nodes and {len(all_est_nodes)} est nodes.')
+        if n_opt_nodes < self.opt_node_threshold:
+            return False
 
         # Compute the features and publish the results.
         # This evaluates per node the scale of the difference

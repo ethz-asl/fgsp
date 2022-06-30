@@ -78,6 +78,7 @@ class HierarchicalGraph(BaseGraph):
         np.save(adj_file, self.adj[0])
 
     def publish(self):
+        print(f'VISUALIZING HIERARCHICAL GRAPH')
         viz = Visualizer()
 
         n_coords = self.G.N

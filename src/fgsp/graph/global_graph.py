@@ -273,9 +273,7 @@ class GlobalGraph(BaseGraph):
             pt_h_i = np.ones((4, 1), dtype=np.float32)
             pt_h_i[0:3, 0] = self.coords[i, 0:3]
             pt_i = np.dot(self.config.T_robot_server, pt_h_i)
-
             viz.add_graph_coordinate(pt_i)
-            viz.add_graph_coordinate(self.coords[i, 0:3])
 
             for j in range(0, n_coords):
                 pt_h_j = np.ones((4, 1), dtype=np.float32)

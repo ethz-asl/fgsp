@@ -356,6 +356,17 @@ class GraphClient(Node):
         global_poses = np.column_stack([positions, orientations, timestamps])
         self.global_graph.build_from_poses(global_poses)
 
+        if self.config.use_graph_hierarchies:
+            self.global_graph.build_hierarchy()
+            self.robot_graph.build_hierarchy()
+            print(f'GraphClient: Hierarchy built.')
+            print(f'Global graph has {self.global_graph.get_graph().N} nodes.')
+            print(f'Robot graph has {self.robot_graph.get_graph().N} nodes.')
+            print(
+                f'Global coords have shape {self.global_graph.get_coords().shape}.')
+            print(
+                f'Robot coords have shape {self.robot_graph.get_coords().shape}.')
+
         if self.config.client_mode == 'multiscale':
             self.eval.compute_wavelets(self.global_graph.get_graph())
             self.robot_eval.compute_wavelets(self.robot_graph.get_graph())
@@ -405,6 +416,12 @@ class GraphClient(Node):
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
+
+        if self.config.use_graph_hierarchies:
+            x_est = self.signal.marginalize_signal(
+                x_est, self.robot_graph.get_indices())
+            x_opt = self.signal.marginalize_signal(
+                x_opt, self.global_graph.get_indices())
 
         self.record_all_signals(x_est, x_opt)
         self.record_synchronized_trajectories(self.signal.compute_trajectory(
@@ -467,7 +484,7 @@ class GraphClient(Node):
 
     def evaluate_and_publish_features(self, labels):
         if labels == None or labels == [] or labels.size() == 0:
-            Logger.get_logger().log_error('[GraphClient] No labels found.')
+            Logger.LogError('[GraphClient] No labels found.')
             return
         self.commander.evaluate_labels_per_node(labels)
 

@@ -14,6 +14,7 @@ class HierarchicalGraph(BaseGraph):
         self.G = [None]
         self.adj = [None]
         self.coords = [None]
+        self.indices = [None]
         self.idx = 0
         self.node_threshold = 20
         Logger.LogInfo(
@@ -40,10 +41,11 @@ class HierarchicalGraph(BaseGraph):
                 f'HierarchicalGraph: Path graph vertex count is less than 2.')
             return False
 
+        self.indices[self.idx] = np.arange(n_nodes)
         self.G[self.idx].set_coordinates(self.coords[self.idx][:, [0, 1]])
         self.G[self.idx].compute_fourier_basis()
 
-        return self.build_hierarchy()
+        return True
 
     def build_from_poses(self, poses):
         self.idx = 0
@@ -52,18 +54,24 @@ class HierarchicalGraph(BaseGraph):
             self.coords[self.idx])
         self.build_graph()
 
+    def build_hierarchies(self):
+        while self.build_hierarchy():
+            pass
+
     def build_hierarchy(self):
         current_n = self.G[self.idx].N
         if current_n < self.node_threshold:
-            return True
+            return False
         self.coords.append(None)
         self.adj.append(None)
         self.G.append(None)
+        self.indices.append(None)
 
         indices = self.reduce_every_other(self.coords[self.idx])
         G_next = reduction.kron_reduction(self.G[self.idx], indices)
 
         self.idx = self.idx + 1
+        self.indices[self.idx] = indices
         self.G[self.idx] = G_next
         self.adj[self.idx] = G_next.W.toarray()
         self.coords[self.idx] = self.coords[self.idx - 1][indices]
@@ -76,13 +84,14 @@ class HierarchicalGraph(BaseGraph):
     def get_coords(self):
         return self.coords[self.idx]
 
+    def get_indices(self):
+        return self.indices[self.idx]
+
     def write_graph_to_disk(self, coords_file, adj_file):
         np.save(coords_file, self.coords[0])
         np.save(adj_file, self.adj[0])
 
     def publish(self):
-        print(f'VISUALIZING HIERARCHICAL GRAPH')
-
         for i in range(self.idx):
             self.publish_graph_level(
                 self.coords[i], self.adj[i], self.G[i].N, i)

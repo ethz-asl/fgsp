@@ -117,7 +117,7 @@ class GraphClient(Node):
         if self.global_graph.msg_contains_updates(msg) and self.config.client_mode == 'multiscale':
             self.global_graph.build(msg)
             self.record_signal_for_key(np.array([0]), 'opt')
-            self.eval.compute_wavelets(self.global_graph.G)
+            self.eval.compute_wavelets(self.global_graph.get_graph())
 
         self.mutex.release()
 
@@ -247,7 +247,7 @@ class GraphClient(Node):
             self.robot_graph.write_graph_to_disk(
                 graph_coords_file, graph_adj_file)
         Logger.LogWarn(
-            f'GraphClient: for {src} we have {x.shape} and {self.robot_graph.coords.shape}')
+            f'GraphClient: for {src} we have {x.shape} and {self.robot_graph.get_coords().shape}')
 
     def record_traj_for_key(self, traj, src):
         filename = self.config.dataroot + \
@@ -357,8 +357,8 @@ class GraphClient(Node):
         self.global_graph.build_from_poses(global_poses)
 
         if self.config.client_mode == 'multiscale':
-            self.eval.compute_wavelets(self.global_graph.G)
-            self.robot_eval.compute_wavelets(self.robot_graph.G)
+            self.eval.compute_wavelets(self.global_graph.get_graph())
+            self.robot_eval.compute_wavelets(self.robot_graph.get_graph())
         return (all_opt_nodes, all_est_nodes)
 
     def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
@@ -419,7 +419,7 @@ class GraphClient(Node):
 
             positions = np.array([np.array(x.position) for x in all_opt_nodes])
             self.global_graph.build_from_poses(positions)
-            self.eval.compute_wavelets(self.global_graph.G)
+            self.eval.compute_wavelets(self.global_graph.get_graph())
             psi = self.eval.get_wavelets()
             n_dim = psi.shape[0]
 

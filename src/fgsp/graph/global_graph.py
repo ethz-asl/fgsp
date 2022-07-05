@@ -183,6 +183,9 @@ class GlobalGraph(BaseGraph):
     def get_graph(self):
         return self.G
 
+    def get_coords(self):
+        return self.coords
+
     def compute_temporal_decay(self, timestmap_lhs, timestamp_rhs):
         ts_diff_s = Utils.ts_ns_to_seconds(
             np.absolute(timestmap_lhs - timestamp_rhs))

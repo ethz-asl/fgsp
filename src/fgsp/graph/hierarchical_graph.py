@@ -15,14 +15,14 @@ class HierarchicalGraph(BaseGraph):
         self.adj = [None]
         self.coords = [None]
         self.idx = 0
-        self.node_threshold = 200
+        self.node_threshold = 20
         Logger.LogInfo(
-            f'HierarchicalGraph: Initialized with a threshold of {self.node.threshold}.')
+            f'HierarchicalGraph: Initialized with a threshold of {self.node_threshold}.')
 
     def build(self, graph_msg):
         pass
 
-    def build_graph(self, graph_msg):
+    def build_graph(self):
         if len(self.adj[self.idx].tolist()) == 0:
             Logger.LogInfo(
                 f'HierarchicalGraph: Path adjacency matrix is empty. Aborting graph building.')
@@ -66,12 +66,15 @@ class HierarchicalGraph(BaseGraph):
         self.idx = self.idx + 1
         self.G[self.idx] = G_next
         self.adj[self.idx] = G_next.W.toarray()
-        self.coords[self.idx] = self.coords[indices]
+        self.coords[self.idx] = self.coords[self.idx - 1][indices]
 
         return True
 
     def get_graph(self):
         return self.G[self.idx]
+
+    def get_coords(self):
+        return self.coords[self.idx]
 
     def write_graph_to_disk(self, coords_file, adj_file):
         np.save(coords_file, self.coords[0])
@@ -79,29 +82,55 @@ class HierarchicalGraph(BaseGraph):
 
     def publish(self):
         print(f'VISUALIZING HIERARCHICAL GRAPH')
-        viz = Visualizer()
 
-        n_coords = self.G.N
-        if n_coords > self.coords.shape[0] or n_coords > self.adj.shape[0]:
+        for i in range(self.idx):
+            self.publish_graph_level(
+                self.coords[i], self.adj[i], self.G[i].N, i)
+
+    def publish_graph_level(self, coords, adj, n_nodes, level):
+        viz = Visualizer()
+        if n_nodes > coords.shape[0] or n_nodes > adj.shape[0]:
             Logger.LogError(
-                f'Size mismatch in global graph {n_coords} vs. {self.coords.shape[0]} vs. {self.adj.shape[0]}.')
+                f'Size mismatch in global graph {n_nodes} vs. {coords.shape[0]} vs. {adj.shape[0]}.')
             return
 
         # First publish the coordinates of the global graph.
-        for i in range(0, n_coords):
-            viz.add_graph_coordinate(self.coords[i, :])
+        color = self.get_level_color(level)
+        z = np.array([0, 0, 5 * level])
+        for i in range(0, n_nodes):
+            pt = coords[i, :] + z
+            viz.add_graph_coordinate(pt, color)
         viz.visualize_coords()
 
         # Next publish the adjacency matrix of the global graph.
-        for i in range(0, n_coords):
-            for j in range(0, n_coords):
-                if i >= n_coords or j >= self.coords.shape[0]:
+        for i in range(0, n_nodes):
+            pt_i = coords[i, :] + z
+            for j in range(0, n_nodes):
+                if i >= n_nodes or j >= coords.shape[0]:
                     continue
-                if i >= self.adj.shape[0] or j >= self.adj.shape[1]:
+                if i >= adj.shape[0] or j >= adj.shape[1]:
                     continue
-                if self.adj[i, j] <= 0.0:
+                if adj[i, j] <= 0.0:
                     continue
 
-                viz.add_graph_adjacency(self.coords[i, :], self.coords[j, :])
+                pt_j = coords[j, :] + z
+                viz.add_graph_adjacency(pt_i, pt_j)
         viz.visualize_adjacency()
-        Logger.LogInfo('GlobalGraph: Visualized global graph.')
+        Logger.LogInfo(f'HierarchicalGraph: Visualized graph level {level}.')
+
+    def get_level_color(self, idx):
+        max_idx = 6
+        norm_idx = idx % max_idx
+        if norm_idx == 0:
+            return [0.95, 0.05, 0.05]
+        elif norm_idx == 1:
+            return [0.05, 0.95, 0.05]
+        elif norm_idx == 2:
+            return [0.05, 0.05, 0.95]
+        elif norm_idx == 3:
+            return [0.95, 0.05, 0.95]
+        elif norm_idx == 4:
+            return [0.95, 0.95, 0.05]
+        elif norm_idx == 5:
+            return [0.05, 0.95, 0.95]
+        return [0.0, 0.0, 0.0]

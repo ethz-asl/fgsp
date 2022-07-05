@@ -73,10 +73,11 @@ class Visualizer(object):
         sphere.pose.position.z = float(point[2])
         return sphere
 
-    def add_graph_coordinate(self, point):
+    def add_graph_coordinate(self, point, color=[0.9, 0.05, 0.05]):
         self.sphere_graph_marker.id += 1
         sphere = copy.deepcopy(self.sphere_graph_marker)
         sphere = self.create_sphere(sphere, point)
+        sphere.color = self.get_color(color[0], color[1], color[2])
         self.spheres.markers.append(sphere)
 
     def add_signal_coordinate(self, point, robot_idx):

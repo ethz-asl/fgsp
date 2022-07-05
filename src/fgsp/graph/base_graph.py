@@ -71,19 +71,22 @@ class BaseGraph(object):
         self.latest_graph_msg = None
 
     def build(self, graph_msg):
-        Logger.LogFatal('Called method in HierarchicalGraph')
+        Logger.LogFatal('Called method in BaseGraph')
 
     def build_from_poses(self, poses):
-        Logger.LogFatal('Called method in HierarchicalGraph')
+        Logger.LogFatal('Called method in BaseGraph')
 
     def get_graph(self):
-        Logger.LogFatal('Called method in HierarchicalGraph')
+        Logger.LogFatal('Called method in BaseGraph')
+
+    def get_coords(self):
+        Logger.LogFatal('Called method in BaseGraph')
 
     def write_graph_to_disk(self, coords_file, adj_file):
-        Logger.LogFatal('Called method in HierarchicalGraph')
+        Logger.LogFatal('Called method in BaseGraph')
 
     def publish(self):
-        Logger.LogFatal('Called method in HierarchicalGraph')
+        Logger.LogFatal('Called method in BaseGraph')
 
     def create_adjacency_from_poses(self, poses):
         n_coords = poses.shape[0]

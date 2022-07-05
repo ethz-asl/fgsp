@@ -16,7 +16,7 @@ class HierarchicalGraph(BaseGraph):
         self.coords = [None]
         self.indices = [None]
         self.idx = 0
-        self.node_threshold = 20
+        self.node_threshold = 30
         Logger.LogInfo(
             f'HierarchicalGraph: Initialized with a threshold of {self.node_threshold}.')
 
@@ -94,18 +94,18 @@ class HierarchicalGraph(BaseGraph):
         np.save(adj_file, self.adj[0])
 
     def publish(self):
-        print(f'PUBLISH: Building is {self.is_built}.')
         if not self.is_built:
-            print(f'BUILT IS FALSE??')
             return
 
-        print(f'Visualizing graph levels: {self.idx}.')
-        for i in range(self.idx+1):
-            self.publish_graph_level(
-                self.coords[i], self.adj[i], self.G[i].N, i)
-
-    def publish_graph_level(self, coords, adj, n_nodes, level):
+        Logger.LogInfo(f'Visualizing graph up to level: {self.idx}.')
         viz = Visualizer()
+        for i in range(self.idx + 1):
+            self.publish_graph_level(
+                viz, self.coords[i], self.adj[i], self.G[i].N, i)
+        viz.visualize_coords()
+        viz.visualize_adjacency()
+
+    def publish_graph_level(self, viz, coords, adj, n_nodes, level):
         if n_nodes > coords.shape[0] or n_nodes > adj.shape[0]:
             Logger.LogError(
                 f'Size mismatch in global graph {n_nodes} vs. {coords.shape[0]} vs. {adj.shape[0]}.')
@@ -130,9 +130,7 @@ class HierarchicalGraph(BaseGraph):
                 if adj[i, j] <= 0.0:
                     continue
                 viz.add_graph_adjacency(pt_i, pt_j)
-        viz.visualize_coords()
-        viz.visualize_adjacency()
-        Logger.LogInfo(f'HierarchicalGraph: Visualized graph level {level}.')
+        Logger.LogDebug(f'HierarchicalGraph: Visualized graph level {level}.')
 
     def get_level_color(self, idx):
         max_idx = 6

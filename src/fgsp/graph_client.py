@@ -357,8 +357,8 @@ class GraphClient(Node):
         self.global_graph.build_from_poses(global_poses)
 
         if self.config.use_graph_hierarchies:
-            self.global_graph.build_hierarchy()
-            self.robot_graph.build_hierarchy()
+            self.global_graph.build_hierarchies()
+            self.robot_graph.build_hierarchies()
             print(f'GraphClient: Hierarchy built.')
             print(f'Global graph has {self.global_graph.get_graph().N} nodes.')
             print(f'Robot graph has {self.robot_graph.get_graph().N} nodes.')

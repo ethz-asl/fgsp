@@ -297,14 +297,9 @@ class SignalHandler(object):
         if n_indices < 2:
             return signal
 
-        print('-------------------------------')
         # Marginalize all intermediate signals
         marginalized = np.zeros(n_indices)
         for idx in range(1, n_indices):
-            print(f'Marginalizing signal {idx}')
-            print(f'Index {idx}: {[indices[idx]]}')
-            print(f'Index {idx-1}: {[indices[idx-1]]}')
-            print(f'Signal before: {signal[indices[idx - 1]:indices[idx]]}')
             for i in range(indices[idx-1], indices[idx]):
                 marginalized[idx-1] += signal[i]
 

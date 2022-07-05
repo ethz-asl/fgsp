@@ -44,6 +44,8 @@ class HierarchicalGraph(BaseGraph):
         self.indices[self.idx] = np.arange(n_nodes)
         self.G[self.idx].set_coordinates(self.coords[self.idx][:, [0, 1]])
         self.G[self.idx].compute_fourier_basis()
+        self.is_built = True
+        print(f'Building is {self.is_built}.')
 
         return True
 
@@ -92,7 +94,13 @@ class HierarchicalGraph(BaseGraph):
         np.save(adj_file, self.adj[0])
 
     def publish(self):
-        for i in range(self.idx):
+        print(f'PUBLISH: Building is {self.is_built}.')
+        if not self.is_built:
+            print(f'BUILT IS FALSE??')
+            return
+
+        print(f'Visualizing graph levels: {self.idx}.')
+        for i in range(self.idx+1):
             self.publish_graph_level(
                 self.coords[i], self.adj[i], self.G[i].N, i)
 
@@ -103,27 +111,26 @@ class HierarchicalGraph(BaseGraph):
                 f'Size mismatch in global graph {n_nodes} vs. {coords.shape[0]} vs. {adj.shape[0]}.')
             return
 
-        # First publish the coordinates of the global graph.
         color = self.get_level_color(level)
         z = np.array([0, 0, 5 * level])
         for i in range(0, n_nodes):
-            pt = coords[i, :] + z
-            viz.add_graph_coordinate(pt, color)
-        viz.visualize_coords()
+            pt_h_i = np.ones((4, 1), dtype=np.float32)
+            pt_h_i[0:3, 0] = coords[i, 0:3] + z
+            pt_i = np.dot(self.config.T_robot_server, pt_h_i)
+            viz.add_graph_coordinate(pt_i, color)
 
-        # Next publish the adjacency matrix of the global graph.
-        for i in range(0, n_nodes):
-            pt_i = coords[i, :] + z
             for j in range(0, n_nodes):
+                pt_h_j = np.ones((4, 1), dtype=np.float32)
+                pt_h_j[0:3, 0] = coords[j, 0:3]
+                pt_j = np.dot(self.config.T_robot_server, pt_h_j)
                 if i >= n_nodes or j >= coords.shape[0]:
                     continue
                 if i >= adj.shape[0] or j >= adj.shape[1]:
                     continue
                 if adj[i, j] <= 0.0:
                     continue
-
-                pt_j = coords[j, :] + z
                 viz.add_graph_adjacency(pt_i, pt_j)
+        viz.visualize_coords()
         viz.visualize_adjacency()
         Logger.LogInfo(f'HierarchicalGraph: Visualized graph level {level}.')
 

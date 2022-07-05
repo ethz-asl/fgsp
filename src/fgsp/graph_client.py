@@ -362,10 +362,6 @@ class GraphClient(Node):
             print(f'GraphClient: Hierarchy built.')
             print(f'Global graph has {self.global_graph.get_graph().N} nodes.')
             print(f'Robot graph has {self.robot_graph.get_graph().N} nodes.')
-            print(
-                f'Global coords have shape {self.global_graph.get_coords().shape}.')
-            print(
-                f'Robot coords have shape {self.robot_graph.get_coords().shape}.')
 
         if self.config.client_mode == 'multiscale':
             self.eval.compute_wavelets(self.global_graph.get_graph())
@@ -418,10 +414,13 @@ class GraphClient(Node):
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
 
         if self.config.use_graph_hierarchies:
-            x_est = self.signal.marginalize_signal(
-                x_est, self.robot_graph.get_indices())
-            x_opt = self.signal.marginalize_signal(
-                x_opt, self.global_graph.get_indices())
+            robot_indices = self.robot_graph.get_indices()
+            server_indices = self.global_graph.get_indices()
+            all_est_nodes = [all_est_nodes[i] for i in robot_indices]
+            all_opt_nodes = [all_opt_nodes[i] for i in server_indices]
+
+            x_est = self.signal.marginalize_signal(x_est, robot_indices)
+            x_opt = self.signal.marginalize_signal(x_opt, server_indices)
 
         self.record_all_signals(x_est, x_opt)
         self.record_synchronized_trajectories(self.signal.compute_trajectory(
@@ -452,6 +451,7 @@ class GraphClient(Node):
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
         features = self.eval.compute_features(W_opt, W_est)
         self.record_features(features)
+        print(f'FEATURE size is {features.shape}')
 
         labels = self.classifier.classify(features)
         return ClassificationResult(key, all_opt_nodes, features, labels)

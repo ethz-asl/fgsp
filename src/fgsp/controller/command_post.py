@@ -37,6 +37,7 @@ class CommandPost(object):
         # Should always publish for all states as we don't know
         # whether they reached the clients.
         n_nodes = labels.size()
+        print(f'WE HAVE {n_nodes} NODES')
         for i in range(0, n_nodes):
             history = None
             if i in self.previous_relatives.keys():

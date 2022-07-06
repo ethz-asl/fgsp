@@ -211,6 +211,10 @@ class Simulation(Node):
                     stamp * 1e9), serialized_msg)
 
             i = i + 1
+
+        for i in range(0, 10):
+            ros2_bag_out.write(connection, int(
+                (stamp+i*20) * 1e9), serialized_msg)
         Logger.LogInfo(
             f'Simulation: Wrote monitor topic {self.monitor_topic} to the bag.')
 

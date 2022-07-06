@@ -83,7 +83,7 @@ class GraphClient(Node):
         self.commander = CommandPost(self.config)
 
         # self.classifier = SimpleClassifier()
-        self.classifier = TopClassifier(100)
+        self.classifier = TopClassifier(10)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []

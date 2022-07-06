@@ -24,7 +24,7 @@ graph_client:
     use_so3_computation: False
     include_rotational_weight: False
     include_temporal_decay_weight: False
-    use_graph_hierarchies: True
+    use_graph_hierarchies: False
 
     # Div
     dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"

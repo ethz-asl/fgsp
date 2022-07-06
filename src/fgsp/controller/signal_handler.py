@@ -292,6 +292,24 @@ class SignalHandler(object):
             viz.resetConstraintVisualization()
             color_idx += 1
 
+    def marginalize_signal(self, signal, indices):
+        n_indices = len(indices)
+        if n_indices < 2:
+            return signal
+
+        # Marginalize all intermediate signals
+        marginalized = np.zeros(n_indices)
+        for idx in range(1, n_indices):
+            for i in range(indices[idx-1], indices[idx]):
+                marginalized[idx-1] += signal[i]
+
+        # Marginalize remaining signals
+        last_reduced_idx = n_indices - 1
+        for i in range(indices[last_reduced_idx], n_indices):
+            marginalized[last_reduced_idx] += signal[i]
+
+        return marginalized
+
 
 if __name__ == '__main__':
     sh = SignalHandler()

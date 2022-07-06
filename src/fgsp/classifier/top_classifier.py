@@ -7,7 +7,7 @@ class TopClassifier(object):
 
     def __init__(self, top_n=5):
         self.top_n = top_n
-        self.threshold = 0.4
+        self.threshold = 0.01
 
     def classify(self, data):
         n_nodes = data.shape[0]
@@ -18,10 +18,12 @@ class TopClassifier(object):
         print(data)
         print('------------------------------------------')
 
+        top_n = min(self.top_n, n_nodes)
+
         # Find top n entries in the data.
         xy_indices = np.unravel_index(np.argsort(
-            data.ravel())[-self.top_n:], data.shape)
-        for i in range(0, self.top_n):
+            data.ravel())[-top_n:], data.shape)
+        for i in range(0, top_n):
             row_idx = xy_indices[0][i]
             col_idx = xy_indices[1][i]
 
@@ -31,6 +33,10 @@ class TopClassifier(object):
             if labels[row_idx] == None:
                 labels[row_idx] = []
             labels[row_idx].append(col_idx + 1)
+
+        print('--- LABELS ---------------------------------')
+        print(labels)
+        print('------------------------------------------')
 
         return labels
 

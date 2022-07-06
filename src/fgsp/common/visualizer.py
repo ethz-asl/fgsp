@@ -10,33 +10,31 @@ from src.fgsp.common.comms import Comms
 
 
 class Visualizer(object):
-    def __init__(self):
-        self.spheres = MarkerArray()
-        self.adjacency = MarkerArray()
-        self.signals = MarkerArray()
+    def __init__(self, config=None):
+        self.config = config
         self.line_marker = self.create_line_marker()
         self.sphere_graph_marker = self.create_sphere_marker()
         self.signal_graph_marker = self.create_sphere_marker()
+        self.resetConstraintVisualization()
 
         self.comms = Comms()
         self.robot_colors = self.generate_robot_colors()
         self.resetConstraintVisualization()
 
-    def create_line_marker(self, frame_id='darpa'):
+    def create_line_marker(self, frame_id='map'):
         line_marker = Marker()
         line_marker.header.frame_id = frame_id
         line_marker.ns = "Line"
         line_marker.action = Marker().ADD
         line_marker.type = Marker().LINE_STRIP
-        line_marker.lifetime = 0
         line_marker.scale.x = 0.05
         return line_marker
 
-    def create_sphere_marker(self, frame_id='darpa'):
+    def create_sphere_marker(self, frame_id='map'):
         sphere = Marker()
         sphere.header.frame_id = frame_id
         sphere.action = Marker.ADD
-        sphere.pose.orientation.w = 1
+        sphere.pose.orientation.w = 1.0
         sphere.scale.x = sphere.scale.y = sphere.scale.z = 0.5
         sphere.color = self.get_color(0.9, 0.05, 0.05)
         sphere.type = Marker.SPHERE
@@ -54,7 +52,7 @@ class Visualizer(object):
 
     def get_color(self, r, g, b):
         result = ColorRGBA()
-        result.a = 1
+        result.a = 1.0
         result.r = r
         result.g = g
         result.b = b
@@ -70,15 +68,16 @@ class Visualizer(object):
 
     def create_sphere(self, sphere, point):
         sphere.header.stamp = self.time_now().to_msg()
-        sphere.pose.position.x = point[0]
-        sphere.pose.position.y = point[1]
-        sphere.pose.position.z = point[2]
+        sphere.pose.position.x = float(point[0])
+        sphere.pose.position.y = float(point[1])
+        sphere.pose.position.z = float(point[2])
         return sphere
 
-    def add_graph_coordinate(self, point):
+    def add_graph_coordinate(self, point, color=[0.9, 0.05, 0.05]):
         self.sphere_graph_marker.id += 1
         sphere = copy.deepcopy(self.sphere_graph_marker)
         sphere = self.create_sphere(sphere, point)
+        sphere.color = self.get_color(color[0], color[1], color[2])
         self.spheres.markers.append(sphere)
 
     def add_signal_coordinate(self, point, robot_idx):
@@ -89,8 +88,14 @@ class Visualizer(object):
         self.signals.markers.append(sphere)
 
     def add_graph_adjacency(self, point_a, point_b):
-        line_point_a = Point(point_a[0], point_a[1], point_a[2])
-        line_point_b = Point(point_b[0], point_b[1], point_b[2])
+        line_point_a = Point()
+        line_point_a.x = float(point_a[0])
+        line_point_a.y = float(point_a[1])
+        line_point_a.z = float(point_a[2])
+        line_point_b = Point()
+        line_point_b.x = float(point_b[0])
+        line_point_b.y = float(point_b[1])
+        line_point_b.z = float(point_b[2])
 
         self.line_marker.id += 1
         line_marker = copy.deepcopy(self.line_marker)
@@ -104,12 +109,10 @@ class Visualizer(object):
         self.adjacency.markers.append(line_marker)
 
     def visualize_coords(self):
-        self.comms.publish(self.spheres, MarkerArray,
-                           '/graph_monitor/graph/coords')
+        self.comms.publish(self.spheres, MarkerArray, '/graph/coords')
 
     def visualize_adjacency(self):
-        self.comms.publish(self.adjacency, MarkerArray,
-                           '/graph_monitor/graph/adjacency')
+        self.comms.publish(self.adjacency, MarkerArray, '/graph/adjacency')
 
     def visualize_signals(self, topic):
         self.comms.publish(self.signals, MarkerArray, topic)

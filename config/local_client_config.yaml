@@ -24,6 +24,7 @@ graph_client:
     use_so3_computation: False
     include_rotational_weight: False
     include_temporal_decay_weight: False
+    use_graph_hierarchies: True
 
     # Div
     dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"
@@ -43,3 +44,23 @@ graph_client:
     degenerate_window: 20
     synchronization_max_diff_s: 0.5
     verbosity: 5
+
+    T_robot_server:
+      [
+        0.03547377,
+        0.99931998,
+        0.01005935,
+        0.17368547,
+        -0.9993442,
+        0.03539785,
+        0.00762637,
+        -2.14932286,
+        0.00726511,
+        -0.0103233,
+        0.99992032,
+        -0.61567595,
+        0.,
+        0.,
+        0.,
+        1.,
+      ]

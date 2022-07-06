@@ -10,7 +10,7 @@ class Comms(object):
     def __new__(self):
         if self._instance is None:
             self._instance = super(Comms, self).__new__(self)
-            self._instance.node = Node('fgsp_comms')
+            self._instance.node = None
         return self._instance
 
     def publish(self, msg, type, topic):

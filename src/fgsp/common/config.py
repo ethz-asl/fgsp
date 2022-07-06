@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from src.fgsp.common.utils import Utils
+import numpy as np
 from src.fgsp.common.logger import Logger
 
 
@@ -142,6 +142,7 @@ class ClientConfig(BaseConfig):
         self.include_temporal_decay_weight = False
         self.use_se3_computation = False
         self.use_so3_computation = False
+        self.use_graph_hierarchies = False
 
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
@@ -157,6 +158,7 @@ class ClientConfig(BaseConfig):
 
         # input and output
         self.client_update_topic = "/graph_client/latest_graph"
+        self.T_robot_server = np.eye(4).reshape(16).tolist()
 
     def init_from_config(self):
         # general config
@@ -206,6 +208,8 @@ class ClientConfig(BaseConfig):
             "use_se3_computation", self.use_se3_computation)
         self.use_so3_computation = self.try_get_param(
             "use_so3_computation", self.use_so3_computation)
+        self.use_graph_hierarchies = self.try_get_param(
+            "use_graph_hierarchies", self.use_graph_hierarchies)
 
         # input
         self.opt_graph_topic = self.try_get_param(
@@ -230,6 +234,8 @@ class ClientConfig(BaseConfig):
         # input and output
         self.client_update_topic = self.try_get_param(
             "client_update_topic", self.client_update_topic)
+        self.T_robot_server = np.array(self.try_get_param(
+            "T_robot_server", self.T_robot_server)).reshape(4, 4)
 
 
 class DebugConfig(BaseConfig):

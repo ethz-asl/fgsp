@@ -34,6 +34,7 @@ class Simulation(Node):
         self.robot_name = self.get_param('robot_name', 'robot')
         self.map_frame = self.get_param('map_frame', 'map')
         self.child_frame = self.get_param('child_frame', 'base')
+        self.graph_threshold_dist = self.get_param('graph_threshold_dist', 0.5)
 
         Logger.LogInfo(
             f'Simulation: Writing bag file to: {self.out_bag_file}')
@@ -144,16 +145,17 @@ class Simulation(Node):
             f'Writing server trajectory to bag file to: {self.out_bag_file}')
         i = 0
         k = 0
-        update_every_n_poses = 50
+        update_every_n_poses = 5
         nodes = []
-        last_pos = []
+        last_pos = np.array([0, 0, 0])
+        n_poses = len(server_traj.timestamps)
         for stamp, xyz, quat in zip(server_traj.timestamps, server_traj.positions_xyz,
                                     server_traj.orientations_quat_wxyz):
-            if len(last_pos) > 0 and np.linalg.norm(xyz - last_pos) < 0.2:
+            dist = np.linalg.norm(xyz - last_pos)
+            if len(last_pos) > 0 and dist < self.graph_threshold_dist:
                 continue
 
             last_pos = xyz
-
             sec = int(stamp // 1)
             nanosec = int((stamp - sec) * 1e9)
             ros_time = Time(sec, nanosec)
@@ -167,7 +169,7 @@ class Simulation(Node):
             node = TrajectoryNode(self.robot_name, k, pose_stamped, 0.0)
             nodes.append(node)
 
-            if i > 0 and i % update_every_n_poses == 0:
+            if (i > 0 and i % update_every_n_poses == 0) or i == n_poses - 1:
                 k = k + 1
                 traj_msg = Trajectory(header, nodes)
                 serialized_msg = serialize_cdr(traj_msg, msg_type)

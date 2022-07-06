@@ -8,9 +8,9 @@ from nav_msgs.msg import Path
 from maplab_msgs.msg import Graph, Trajectory, SubmapConstraint
 from multiprocessing import Lock
 
-
 from src.fgsp.graph.wavelet_evaluator import WaveletEvaluator
 from src.fgsp.graph.global_graph import GlobalGraph
+from src.fgsp.graph.hierarchical_graph import HierarchicalGraph
 from src.fgsp.controller.signal_handler import SignalHandler
 from src.fgsp.controller.command_post import CommandPost
 from src.fgsp.controller.constraint_handler import ConstraintHandler
@@ -18,20 +18,25 @@ from src.fgsp.common.signal_synchronizer import SignalSynchronizer
 from src.fgsp.common.config import ClientConfig
 from src.fgsp.common.plotter import Plotter
 from src.fgsp.common.utils import Utils
+from src.fgsp.common.comms import Comms
 from src.fgsp.common.logger import Logger
 from src.fgsp.classifier.top_classifier import TopClassifier
 from src.fgsp.classifier.simple_classifier import SimpleClassifier
 from src.fgsp.classifier.classification_result import ClassificationResult
+from src.fgsp.classifier.hierarchical_result import HierarchicalResult
 
 
 class GraphClient(Node):
     def __init__(self):
         super().__init__('graph_client')
+        self.comms = Comms()
+        self.comms.node = self
 
         self.is_initialized = False
         self.initialize_logging = True
         self.is_updating = False
         self.last_update_seq = -1
+        self.opt_node_threshold = 10
         self.config = ClientConfig(self)
         self.config.init_from_config()
         Plotter.PlotClientBanner()
@@ -62,8 +67,13 @@ class GraphClient(Node):
             Path, self.config.intra_constraint_topic, 20)
 
         # Handlers and evaluators.
-        self.global_graph = GlobalGraph(self.config, reduced=False)
-        self.robot_graph = GlobalGraph(self.config, reduced=False)
+        if self.config.use_graph_hierarchies:
+            self.global_graph = HierarchicalGraph(self.config)
+            self.robot_graph = HierarchicalGraph(self.config)
+        else:
+            self.global_graph = GlobalGraph(self.config, reduced=False)
+            self.robot_graph = GlobalGraph(self.config, reduced=False)
+
         self.latest_traj_msg = None
         self.signal = SignalHandler(self.config)
         self.optimized_signal = SignalHandler(self.config)
@@ -73,7 +83,7 @@ class GraphClient(Node):
         self.commander = CommandPost(self.config)
 
         # self.classifier = SimpleClassifier()
-        self.classifier = TopClassifier(200)
+        self.classifier = TopClassifier(100)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -108,7 +118,7 @@ class GraphClient(Node):
         if self.global_graph.msg_contains_updates(msg) and self.config.client_mode == 'multiscale':
             self.global_graph.build(msg)
             self.record_signal_for_key(np.array([0]), 'opt')
-            self.eval.compute_wavelets(self.global_graph.G)
+            self.eval.compute_wavelets(self.global_graph.get_graph())
 
         self.mutex.release()
 
@@ -190,6 +200,7 @@ class GraphClient(Node):
 
         self.compare_estimations()
         # self.publish_client_update()
+        self.global_graph.publish()
 
         n_constraints = self.commander.get_total_amount_of_constraints()
         if n_constraints > 0:
@@ -237,7 +248,7 @@ class GraphClient(Node):
             self.robot_graph.write_graph_to_disk(
                 graph_coords_file, graph_adj_file)
         Logger.LogWarn(
-            f'GraphClient: for {src} we have {x.shape} and {self.robot_graph.coords.shape}')
+            f'GraphClient: for {src} we have {x.shape} and {self.robot_graph.get_coords().shape}')
 
     def record_traj_for_key(self, traj, src):
         filename = self.config.dataroot + \
@@ -288,6 +299,8 @@ class GraphClient(Node):
         n_opt_nodes = len(all_opt_nodes)
         print(
             f'We have {n_opt_nodes} opt nodes and {len(all_est_nodes)} est nodes.')
+        if n_opt_nodes < self.opt_node_threshold:
+            return False
 
         # Compute the features and publish the results.
         # This evaluates per node the scale of the difference
@@ -344,9 +357,13 @@ class GraphClient(Node):
         global_poses = np.column_stack([positions, orientations, timestamps])
         self.global_graph.build_from_poses(global_poses)
 
+        if self.config.use_graph_hierarchies:
+            self.global_graph.build_hierarchies()
+            self.robot_graph.build_hierarchies()
+
         if self.config.client_mode == 'multiscale':
-            self.eval.compute_wavelets(self.global_graph.G)
-            self.robot_eval.compute_wavelets(self.robot_graph.G)
+            self.eval.compute_wavelets(self.global_graph.get_graph())
+            self.robot_eval.compute_wavelets(self.robot_graph.get_graph())
         return (all_opt_nodes, all_est_nodes)
 
     def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
@@ -394,6 +411,15 @@ class GraphClient(Node):
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
 
+        if self.config.use_graph_hierarchies:
+            robot_indices = self.robot_graph.get_indices()
+            server_indices = self.global_graph.get_indices()
+            # all_est_nodes = [all_est_nodes[i] for i in robot_indices]
+            # all_opt_nodes = [all_opt_nodes[i] for i in server_indices]
+
+            x_est = self.signal.marginalize_signal(x_est, robot_indices)
+            x_opt = self.signal.marginalize_signal(x_opt, server_indices)
+
         self.record_all_signals(x_est, x_opt)
         self.record_synchronized_trajectories(self.signal.compute_trajectory(
             all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
@@ -407,7 +433,7 @@ class GraphClient(Node):
 
             positions = np.array([np.array(x.position) for x in all_opt_nodes])
             self.global_graph.build_from_poses(positions)
-            self.eval.compute_wavelets(self.global_graph.G)
+            self.eval.compute_wavelets(self.global_graph.get_graph())
             psi = self.eval.get_wavelets()
             n_dim = psi.shape[0]
 
@@ -425,7 +451,10 @@ class GraphClient(Node):
         self.record_features(features)
 
         labels = self.classifier.classify(features)
-        return ClassificationResult(key, all_opt_nodes, features, labels)
+        if self.config.use_graph_hierarchies:
+            return HierarchicalResult(key, all_opt_nodes, features, labels, self.robot_graph.get_indices())
+        else:
+            return ClassificationResult(key, all_opt_nodes, features, labels)
 
     def perform_euclidean_evaluation(self, key, all_opt_nodes, all_est_nodes):
         est_traj = self.optimized_signal.compute_trajectory(all_opt_nodes)
@@ -455,7 +484,7 @@ class GraphClient(Node):
 
     def evaluate_and_publish_features(self, labels):
         if labels == None or labels == [] or labels.size() == 0:
-            Logger.get_logger().log_error('[GraphClient] No labels found.')
+            Logger.LogError('[GraphClient] No labels found.')
             return
         self.commander.evaluate_labels_per_node(labels)
 

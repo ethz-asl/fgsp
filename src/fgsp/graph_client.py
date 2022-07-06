@@ -23,6 +23,7 @@ from src.fgsp.common.logger import Logger
 from src.fgsp.classifier.top_classifier import TopClassifier
 from src.fgsp.classifier.simple_classifier import SimpleClassifier
 from src.fgsp.classifier.classification_result import ClassificationResult
+from src.fgsp.classifier.hierarchical_result import HierarchicalResult
 
 
 class GraphClient(Node):
@@ -413,8 +414,8 @@ class GraphClient(Node):
         if self.config.use_graph_hierarchies:
             robot_indices = self.robot_graph.get_indices()
             server_indices = self.global_graph.get_indices()
-            all_est_nodes = [all_est_nodes[i] for i in robot_indices]
-            all_opt_nodes = [all_opt_nodes[i] for i in server_indices]
+            # all_est_nodes = [all_est_nodes[i] for i in robot_indices]
+            # all_opt_nodes = [all_opt_nodes[i] for i in server_indices]
 
             x_est = self.signal.marginalize_signal(x_est, robot_indices)
             x_opt = self.signal.marginalize_signal(x_opt, server_indices)
@@ -450,7 +451,10 @@ class GraphClient(Node):
         self.record_features(features)
 
         labels = self.classifier.classify(features)
-        return ClassificationResult(key, all_opt_nodes, features, labels)
+        if self.config.use_graph_hierarchies:
+            return HierarchicalResult(key, all_opt_nodes, features, labels, self.robot_graph.get_indices())
+        else:
+            return ClassificationResult(key, all_opt_nodes, features, labels)
 
     def perform_euclidean_evaluation(self, key, all_opt_nodes, all_est_nodes):
         est_traj = self.optimized_signal.compute_trajectory(all_opt_nodes)

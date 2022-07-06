@@ -81,8 +81,8 @@ class GraphClient(Node):
         self.robot_eval = WaveletEvaluator()
         self.commander = CommandPost(self.config)
 
-        self.classifier = SimpleClassifier()
-        # self.classifier = TopClassifier(100)
+        # self.classifier = SimpleClassifier()
+        self.classifier = TopClassifier(100)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -359,9 +359,6 @@ class GraphClient(Node):
         if self.config.use_graph_hierarchies:
             self.global_graph.build_hierarchies()
             self.robot_graph.build_hierarchies()
-            print(f'GraphClient: Hierarchy built.')
-            print(f'Global graph has {self.global_graph.get_graph().N} nodes.')
-            print(f'Robot graph has {self.robot_graph.get_graph().N} nodes.')
 
         if self.config.client_mode == 'multiscale':
             self.eval.compute_wavelets(self.global_graph.get_graph())
@@ -451,7 +448,6 @@ class GraphClient(Node):
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
         features = self.eval.compute_features(W_opt, W_est)
         self.record_features(features)
-        print(f'FEATURE size is {features.shape}')
 
         labels = self.classifier.classify(features)
         return ClassificationResult(key, all_opt_nodes, features, labels)

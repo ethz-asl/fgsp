@@ -22,7 +22,7 @@ from src.fgsp.controller.signal_handler import SignalHandler
 class Simulation(Node):
     def __init__(self):
         super().__init__('simulation')
-        Logger.Verbosity = 4
+        Logger.Verbosity = 5
         Logger.LogInfo('Simulation: Initializing...')
 
         self.server_traj = self.get_traj_file('server_file')
@@ -183,6 +183,8 @@ class Simulation(Node):
         nodes = []
         last_pos = np.array([0, 0, 0])
         n_poses = len(server_traj.timestamps)
+        Logger.LogDebug(
+            f'Using a threshold of {self.graph_threshold_dist}m for distance.')
         for stamp, xyz, quat in zip(server_traj.timestamps, server_traj.positions_xyz,
                                     server_traj.orientations_quat_wxyz):
             dist = np.linalg.norm(xyz - last_pos)

@@ -82,8 +82,16 @@ class GraphClient(Node):
         self.robot_eval = WaveletEvaluator()
         self.commander = CommandPost(self.config)
 
-        # self.classifier = SimpleClassifier()
-        self.classifier = TopClassifier(10)
+        if self.config.classifier == 'top':
+            self.classifier = TopClassifier(
+                self.config.top_classifier_select_n)
+        elif self.config.classifier == 'simple':
+            self.classifier = SimpleClassifier()
+        else:
+            Logger.LogError(
+                f'Unknown classifier type: {self.config.classifier}')
+            self.mutex.release()
+            return
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []

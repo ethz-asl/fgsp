@@ -18,13 +18,13 @@ def process_poses(poses, tree, w_func, i):
     nn_indices = tree.query_ball_point(
         poses[i, 0:3], r=max_pos_dist, p=2)
 
-    return nn_indices, [w_func(poses[i, 0:3], poses[nn_i, 0:3]) for nn_i in nn_indices]
+    return nn_indices, [w_func(poses[i, :], poses[nn_i, :]) for nn_i in nn_indices]
 
 
 def compute_distance_weights(coords_lhs, coords_rhs):
     sigma = 1.0
     normalization = 2.0*(sigma**2)
-    dist = spatial.distance.euclidean(coords_lhs, coords_rhs)
+    dist = spatial.distance.euclidean(coords_lhs[0:3], coords_rhs[0:3])
 
     return np.exp(-dist/normalization)
 

@@ -47,10 +47,10 @@ def compute_se3_weights(poses_lhs, poses_rhs):
 
     Xi_12 = (pose1.inv().dot(pose2)).log()
     W = np.eye(4, 4)
-    W[0, 0] = 10
-    W[1, 1] = 10
-    W[2, 2] = 1
-    W[3, 3] = 3
+    W[0, 0] = 5
+    W[1, 1] = 5
+    W[2, 2] = 0.1
+    W[3, 3] = 0.1
     inner = np.trace(
         np.matmul(np.matmul(SE3.wedge(Xi_12), W), SE3.wedge(Xi_12).transpose()))
 

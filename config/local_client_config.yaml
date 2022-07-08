@@ -19,11 +19,11 @@ graph_client:
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
     classifier: "top" # "top" or "simple"
-    top_classifier_select_n: 50
+    top_classifier_select_n: 100
 
     # Graph configuration.
     use_se3_computation: False
-    use_so3_computation: False
+    use_so3_computation: True
     include_rotational_weight: False
     include_temporal_decay_weight: False
     use_graph_hierarchies: False

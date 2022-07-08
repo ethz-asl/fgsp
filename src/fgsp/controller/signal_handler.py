@@ -233,10 +233,10 @@ class SignalHandler(object):
     def compute_se3_distance(self, pose_lhs, pose_rhs):
         Xi_12 = (pose_lhs.inv().dot(pose_rhs)).log()
         W = np.eye(4, 4)
-        W[0, 0] = 10
-        W[1, 1] = 10
-        W[2, 2] = 1.5
-        W[3, 3] = 1.5
+        W[0, 0] = 5
+        W[1, 1] = 5
+        W[2, 2] = 0.1
+        W[3, 3] = 0.1
 
         inner = np.trace(
             np.matmul(np.matmul(SE3.wedge(Xi_12), W), SE3.wedge(Xi_12).transpose()))

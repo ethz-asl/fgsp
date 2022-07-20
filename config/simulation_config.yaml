@@ -7,7 +7,7 @@ simulation:
     robot_name: "cerberus"
     map_frame: "map"
     child_frame: "base"
-    graph_threshold_dist: 0.2
+    graph_threshold_dist: 0.1
 
     odom_topic: "/odometry"
     monitor_topic: "/graph_monitor/sparse_graph/trajectory"

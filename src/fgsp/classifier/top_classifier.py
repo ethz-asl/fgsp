@@ -7,7 +7,7 @@ class TopClassifier(object):
 
     def __init__(self, top_n=5):
         self.top_n = top_n
-        self.threshold = 0.2
+        self.threshold = 0.15
 
     def classify(self, data):
         n_nodes = data.shape[0]

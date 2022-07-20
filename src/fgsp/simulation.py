@@ -3,9 +3,12 @@
 from os.path import exists
 
 import rclpy
+import pathlib
 from rclpy.node import Node
 from evo.tools import file_interface
+from evo.core.trajectory import PoseTrajectory3D
 from maplab_msgs.msg import Graph, Trajectory, SubmapConstraint
+
 import numpy as np
 
 from rosbags.serde import serialize_cdr
@@ -19,13 +22,20 @@ from src.fgsp.controller.signal_handler import SignalHandler
 class Simulation(Node):
     def __init__(self):
         super().__init__('simulation')
+        Logger.Verbosity = 5
         Logger.LogInfo('Simulation: Initializing...')
 
         self.server_traj = self.get_traj_file('server_file')
         self.robot_traj = self.get_traj_file('robot_file')
         if self.server_traj is None or self.robot_traj is None:
-            Logger.LogError('Simulation: Trajectory files not found!')
+            Logger.LogError(
+                'Simulation: Not all trajectory files have been parsed. Aborting.!')
             return
+
+        Logger.LogInfo(
+            f'Simulation: Server trajectory has {self.server_traj.num_poses} poses')
+        Logger.LogInfo(
+            f'Simulation: Robot trajectory has {self.robot_traj.num_poses} poses')
 
         self.odom_topic = self.get_param('odom_topic', '/odometry')
         self.monitor_topic = self.get_param('monitor_topic', '/monitor')
@@ -60,12 +70,36 @@ class Simulation(Node):
         return self.get_parameter(key).value
 
     def get_traj_file(self, traj_key):
-        return self.read_trajectory_file(self.get_param(traj_key, ''))
+        traj_file_path = self.get_param(traj_key, '')
+        ext = pathlib.Path(traj_file_path).suffix
+        if ext == '.csv':
+            Logger.LogInfo('Simulation: Reading CSV file.')
+            return self.read_csv_file(traj_file_path)
+        elif ext == '.npy':
+            Logger.LogInfo('Simulation: Reading NPY file.')
+            return self.read_npy_file(traj_file_path)
+        Logger.LogError(f'Simulation: Unknown file extension: {ext}')
+        return None
 
-    def read_trajectory_file(self, filename):
+    def read_csv_file(self, filename):
         Logger.LogInfo(f'Simulation: Reading file {filename}.')
         if exists(filename):
             return file_interface.read_tum_trajectory_file(filename)
+        else:
+            Logger.LogError(f'Simulation: File does not exist!')
+            return None
+
+    def convert_to_traj(self, trajectory):
+        k_ns_per_s = 1e9
+        ts = trajectory[:, 0] / k_ns_per_s
+        xyz = trajectory[:, 1:4]
+        wxyz = trajectory[:, 4:8]
+        return PoseTrajectory3D(positions_xyz=xyz, orientations_quat_wxyz=wxyz, timestamps=ts)
+
+    def read_npy_file(self, filename):
+        Logger.LogInfo(f'Simulation: Reading file {filename}.')
+        if exists(filename):
+            return self.convert_to_traj(np.load(filename))
         else:
             Logger.LogError(f'Simulation: File does not exist!')
             return None
@@ -149,6 +183,8 @@ class Simulation(Node):
         nodes = []
         last_pos = np.array([0, 0, 0])
         n_poses = len(server_traj.timestamps)
+        Logger.LogDebug(
+            f'Using a threshold of {self.graph_threshold_dist}m for distance.')
         for stamp, xyz, quat in zip(server_traj.timestamps, server_traj.positions_xyz,
                                     server_traj.orientations_quat_wxyz):
             dist = np.linalg.norm(xyz - last_pos)
@@ -177,6 +213,10 @@ class Simulation(Node):
                     stamp * 1e9), serialized_msg)
 
             i = i + 1
+
+        for i in range(0, 10):
+            ros2_bag_out.write(connection, int(
+                (stamp+i*20) * 1e9), serialized_msg)
         Logger.LogInfo(
             f'Simulation: Wrote monitor topic {self.monitor_topic} to the bag.')
 

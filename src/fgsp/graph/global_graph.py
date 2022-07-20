@@ -128,7 +128,7 @@ class GlobalGraph(BaseGraph):
         self.coords = poses
         Logger.LogDebug(
             f'GlobalGraph Building with coords {self.coords.shape}.')
-        self.adj = self.create_adjacency_from_poses(self.coords)
+        self.adj = self.create_adjacency_from_poses(poses)
         Logger.LogDebug(f'GlobalGraph: Building with adj: {self.adj.shape}.')
         return self.build_graph()
 

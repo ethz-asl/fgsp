@@ -18,13 +18,15 @@ graph_client:
 
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
+    classifier: "top" # "top" or "simple"
+    top_classifier_select_n: 10
 
     # Graph configuration.
-    use_se3_computation: False
+    use_se3_computation: True
     use_so3_computation: False
     include_rotational_weight: False
     include_temporal_decay_weight: False
-    use_graph_hierarchies: True
+    use_graph_hierarchies: False
 
     # Div
     dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"

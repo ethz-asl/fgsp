@@ -1,11 +1,13 @@
 simulation:
   ros__parameters:
-    server_file: "/home/berlukas/Documents/workspace/darpa/src/trajectory_eval/Trajectories/1_cerberus/3_m3rm/m3rm_tum.csv"
-    robot_file: "/home/berlukas/Documents/workspace/darpa/src/trajectory_eval/Trajectories/1_cerberus/2_compslam_post/compslam_post_tum.csv"
+    # server_file: "/home/berlukas/Documents/workspace/darpa/src/trajectory_eval/Trajectories/1_cerberus/3_m3rm/m3rm_tum.csv"
+    # robot_file: "/home/berlukas/Documents/workspace/darpa/src/trajectory_eval/Trajectories/1_cerberus/2_compslam_post/compslam_post_tum.csv"
+    robot_file: "/media/berlukas/Data/data/datasets/fgsp/results/gt/icra/h_floor_anymal_1/compslam_break_2.npy"
+    server_file: "/media/berlukas/Data/data/datasets/fgsp/results/h_floor/opt_trajectory.npy"
     robot_name: "cerberus"
     map_frame: "map"
     child_frame: "base"
-    graph_threshold_dist: 1.0
+    graph_threshold_dist: 0.1
 
     odom_topic: "/odometry"
     monitor_topic: "/graph_monitor/sparse_graph/trajectory"

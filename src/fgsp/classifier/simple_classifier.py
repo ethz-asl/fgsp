@@ -18,7 +18,7 @@ class SimpleClassifier(object):
 
             np.set_printoptions(suppress=True)
             local_labels = []
-            # h floor
+
             if dists[0] > 0.3:
                 local_labels.append(1)
             if dists[1] > 0.2:

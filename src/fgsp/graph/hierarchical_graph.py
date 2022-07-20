@@ -16,7 +16,7 @@ class HierarchicalGraph(BaseGraph):
         self.coords = [None]
         self.indices = [None]
         self.idx = 0
-        self.node_threshold = 30
+        self.node_threshold = 100
         Logger.LogInfo(
             f'HierarchicalGraph: Initialized with a threshold of {self.node_threshold}.')
 
@@ -45,7 +45,6 @@ class HierarchicalGraph(BaseGraph):
         self.G[self.idx].set_coordinates(self.coords[self.idx][:, [0, 1]])
         self.G[self.idx].compute_fourier_basis()
         self.is_built = True
-        print(f'Building is {self.is_built}.')
 
         return True
 

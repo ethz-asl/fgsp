@@ -27,7 +27,7 @@ class Logger(object):
 
     @staticmethod
     def LogError(msg):
-        if Logger.Verbosity > 2:
+        if Logger.Verbosity > 1:
             ts_ns = time.time() * 1e6
             print(f'{Font.RED}[{ts_ns}] {msg} {Font.END}')
 

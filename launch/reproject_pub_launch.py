@@ -9,18 +9,18 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     config = os.path.join(
-        get_package_share_directory('reproject_viz'),
+        get_package_share_directory('fgsp'),
         'config',
-        'config.yaml'
+        'reproject.yaml'
     )
 
-    ply_pub = Node(
-        package="reproject_viz",
-        executable="reproject_viz",
+    pub = Node(
+        package="fgsp",
+        executable="reproject_pub",
         output={'full': 'screen'},
         emulate_tty=True,
         parameters=[config]
     )
-    ld.add_action(ply_pub)
+    ld.add_action(pub)
 
     return ld

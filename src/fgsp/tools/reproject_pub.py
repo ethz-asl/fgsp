@@ -24,7 +24,7 @@ FIELDS_XYZ = [
 ]
 
 
-class PlyPosePublisher(Node):
+class ReprojectPub(Node):
     def __init__(self):
         super().__init__('reproject_viz')
         self.gt_traj = self.read_traj_file('traj_file')
@@ -51,6 +51,11 @@ class PlyPosePublisher(Node):
         self.timer = self.create_timer(5, self.publish_map)
 
     def publish_map(self):
+        n_points = len(self.map.points)
+        if n_points <= 0:
+            return
+
+        print(f'Publishing cloud msg with {n_points} points.')
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = 'map'
@@ -58,14 +63,16 @@ class PlyPosePublisher(Node):
         map_ros = point_cloud2.create_cloud(
             header, FIELDS_XYZ, map.points)
         self.map_pub.publish(map_ros)
-        path_msg = self.create_path_up_to_idx(self.latest_idx)
-        self.path_pub.publish(path_msg)
+
+        if self.latest_idx > 0:
+            print(f'Publishing path msg up to index {self.latest_idx}.')
+            path_msg = self.create_path_up_to_idx(self.latest_idx)
+            self.path_pub.publish(path_msg)
 
     def create_path_up_to_idx(self, idx):
         path_msg = Path()
         path_msg.header.stamp = self.get_clock().now().to_msg()
         path_msg.header.frame_id = 'map'
-        print(f'Publishing path msg up to index {idx}.')
         for i in range(idx):
             ts_s = self.gt_traj[i, 0]
             t = self.gt_traj[i, 1:4]
@@ -95,7 +102,6 @@ class PlyPosePublisher(Node):
         if (len(pose) == 0):
             return
         pose, T_M_L = self.transform_pose_to_sensor_frame(pose)
-        print(f'Found pose at {ts_s}.')
         cloud = self.parse_cloud(cloud_msg)
 
         cloud.transform(T_M_L)
@@ -119,7 +125,6 @@ class PlyPosePublisher(Node):
             return np.array([])
 
         self.latest_idx = np.where(timestamps == minval)[0][0]
-        print(f'Found min index {self.latest_idx} with val {minval}.')
         return self.gt_traj[self.latest_idx, :]
 
     def transform_pose_to_sensor_frame(self, pose):
@@ -191,7 +196,7 @@ class PlyPosePublisher(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    pub = PlyPosePublisher()
+    pub = ReprojectPub()
     rclpy.spin(pub)
     pub.destroy_node()
     rclpy.shutdown()

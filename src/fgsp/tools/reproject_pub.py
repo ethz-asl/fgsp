@@ -3,6 +3,7 @@
 import open3d as o3d
 import numpy as np
 import pathlib
+import copy
 from os.path import exists
 
 from nav_msgs.msg import Path
@@ -35,11 +36,10 @@ class ReprojectPub(Node):
 
         self.T_O_L = np.array(self.try_get_param(
             'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
-
-        self.map = o3d.geometry.PointCloud()
         self.voxel_size = 0.1
-        self.map_pub = self.create_publisher(PointCloud2, 'map_cloud', 10)
-        self.path_pub = self.create_publisher(Path, 'trajectory', 10)
+
+        self.gt_map_pub = self.create_publisher(PointCloud2, 'map_cloud', 10)
+        self.gt_path_pub = self.create_publisher(Path, 'trajectory', 10)
         self.latest_idx = -1
         self.ts_cloud_map = {}
 
@@ -52,21 +52,24 @@ class ReprojectPub(Node):
         self.timer = self.create_timer(5, self.publish_all_maps)
 
     def publish_all_maps(self):
-        if self.latest_idx <= 0:
+        if len(self.ts_cloud_map) == 0:
+            print(f'Received no clouds yet.')
             return
 
         gt_map = self.accumulate_cloud(self.gt_traj)
+        self.publish_map(self.gt_map_pub, self.gt_path_pub,
+                         gt_map, self.gt_traj)
+        print(f'Published gt map with {len(gt_map.points)} points.')
 
     def publish_map(self, map_pub, path_pub, map, traj):
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = 'map'
-        gt_map = gt_map.voxel_down_sample(voxel_size=self.voxel_size)
+        map = map.voxel_down_sample(voxel_size=self.voxel_size)
         map_ros = point_cloud2.create_cloud(
-            header, FIELDS_XYZ, gt_map.points)
+            header, FIELDS_XYZ, map.points)
         map_pub.publish(map_ros)
 
-        print(f'Publishing path msg up to index {self.latest_idx}.')
         path_msg = self.create_path_up_to_idx(traj, self.latest_idx)
         path_pub.publish(path_msg)
 
@@ -109,7 +112,8 @@ class ReprojectPub(Node):
             if (len(pose) == 0):
                 continue
             pose, T_M_L = self.transform_pose_to_sensor_frame(pose)
-            cloud.transform(T_M_L)
+            cloud = copy.deepcopy(cloud)
+            cloud = cloud.transform(T_M_L)
             map += cloud
 
         return map

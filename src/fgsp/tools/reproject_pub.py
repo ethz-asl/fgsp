@@ -41,6 +41,7 @@ class ReprojectPub(Node):
         self.map_pub = self.create_publisher(PointCloud2, 'map_cloud', 10)
         self.path_pub = self.create_publisher(Path, 'trajectory', 10)
         self.latest_idx = -1
+        self.ts_cloud_map = {}
 
         cloud_topic = self.try_get_param('cloud_in', '/cloud')
         self.cloud_sub = self.create_subscription(
@@ -48,35 +49,35 @@ class ReprojectPub(Node):
         self.cloud_counter = 0
         print(f'Subscribed to {cloud_topic}.')
         print('------------------------------------------------')
-        self.timer = self.create_timer(5, self.publish_map)
+        self.timer = self.create_timer(5, self.publish_all_maps)
 
-    def publish_map(self):
-        n_points = len(self.map.points)
-        if n_points <= 0:
+    def publish_all_maps(self):
+        if self.latest_idx <= 0:
             return
 
-        print(f'Publishing cloud msg with {n_points} points.')
+        gt_map = self.accumulate_cloud(self.gt_traj)
+
+    def publish_map(self, map_pub, path_pub, map, traj):
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = 'map'
-        map = self.map.voxel_down_sample(voxel_size=self.voxel_size)
+        gt_map = gt_map.voxel_down_sample(voxel_size=self.voxel_size)
         map_ros = point_cloud2.create_cloud(
-            header, FIELDS_XYZ, map.points)
-        self.map_pub.publish(map_ros)
+            header, FIELDS_XYZ, gt_map.points)
+        map_pub.publish(map_ros)
 
-        if self.latest_idx > 0:
-            print(f'Publishing path msg up to index {self.latest_idx}.')
-            path_msg = self.create_path_up_to_idx(self.latest_idx)
-            self.path_pub.publish(path_msg)
+        print(f'Publishing path msg up to index {self.latest_idx}.')
+        path_msg = self.create_path_up_to_idx(traj, self.latest_idx)
+        path_pub.publish(path_msg)
 
-    def create_path_up_to_idx(self, idx):
+    def create_path_up_to_idx(self, trajectory, idx):
         path_msg = Path()
         path_msg.header.stamp = self.get_clock().now().to_msg()
         path_msg.header.frame_id = 'map'
         for i in range(idx):
-            ts_s = self.gt_traj[i, 0]
-            t = self.gt_traj[i, 1:4]
-            q = self.gt_traj[i, 4:8]
+            ts_s = trajectory[i, 0]
+            t = trajectory[i, 1:4]
+            q = trajectory[i, 4:8]
 
             pose_msg = PoseStamped()
             pose_msg.header.stamp = self.get_clock().now().to_msg()
@@ -98,17 +99,20 @@ class ReprojectPub(Node):
             return
 
         ts_s = self.ros_time_msg_to_s(cloud_msg.header.stamp)
-        pose = self.lookup_closest_pose(ts_s)
-        if (len(pose) == 0):
-            return
-        pose, T_M_L = self.transform_pose_to_sensor_frame(pose)
         cloud = self.parse_cloud(cloud_msg)
+        self.ts_cloud_map[ts_s] = cloud
 
-        cloud.transform(T_M_L)
-        self.accumulate_cloud(cloud)
+    def accumulate_cloud(self, trajectory):
+        map = o3d.geometry.PointCloud()
+        for ts_s, cloud in self.ts_cloud_map.items():
+            pose = self.lookup_closest_pose(trajectory, ts_s)
+            if (len(pose) == 0):
+                continue
+            pose, T_M_L = self.transform_pose_to_sensor_frame(pose)
+            cloud.transform(T_M_L)
+            map += cloud
 
-    def accumulate_cloud(self, pcd):
-        self.map += pcd
+        return map
 
     def parse_cloud(self, cloud_msg: PointCloud2):
         cloud = point_cloud2.read_points_numpy(
@@ -117,15 +121,15 @@ class ReprojectPub(Node):
         pcd = pcd.voxel_down_sample(voxel_size=self.voxel_size)
         return pcd
 
-    def lookup_closest_pose(self, ts_s):
-        timestamps = np.abs(self.gt_traj[:, 0] - ts_s)
+    def lookup_closest_pose(self, trajectory, ts_s):
+        timestamps = np.abs(trajectory[:, 0] - ts_s)
         minval = np.amin(timestamps)
         if (minval > 1e-4):
             print(f'Timestamp {ts_s} is not available (min diff: {minval}).')
             return np.array([])
 
         self.latest_idx = np.where(timestamps == minval)[0][0]
-        return self.gt_traj[self.latest_idx, :]
+        return trajectory[self.latest_idx, :]
 
     def transform_pose_to_sensor_frame(self, pose):
         qxyzw = pose[[5, 6, 7, 4]]

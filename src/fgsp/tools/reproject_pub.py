@@ -35,10 +35,12 @@ class ReprojectPub(Node):
         if self.enable_gt:
             self.create_gt_pub()
 
+        # Est Publisher
         self.enable_est = self.try_get_param('enable_est', False)
         if self.enable_est:
             self.create_est_pub()
 
+        # Corr Publisher
         self.enable_corr = self.try_get_param('enable_corr', False)
         if self.enable_corr:
             self.create_corr_pub()
@@ -80,11 +82,10 @@ class ReprojectPub(Node):
             print('Error occurred while reading the trajectory file.')
             self.enable_est = False
             return
-        print(f'Read {self.est_traj.shape[0]} est poses.')
-
         self.T_GT_EST = np.array(self.try_get_param(
             'T_GT_EST', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
         self.est_traj = self.align_poses(self.est_traj, self.T_GT_EST)
+        print(f'Read {self.est_traj.shape[0]} est poses.')
 
         self.est_map_pub = self.create_publisher(
             PointCloud2, 'est_map_cloud', 10)
@@ -96,6 +97,9 @@ class ReprojectPub(Node):
             print('Error occurred while reading the trajectory file.')
             self.enable_corr = False
             return
+        self.T_GT_CORR = np.array(self.try_get_param(
+            'T_GT_CORR', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
+        self.corr_traj = self.align_poses(self.corr_traj, self.T_GT_CORR)
         print(f'Read {self.corr_traj.shape[0]} corr poses.')
         self.corr_map_pub = self.create_publisher(
             PointCloud2, 'corr_map_cloud', 10)

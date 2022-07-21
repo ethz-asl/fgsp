@@ -49,8 +49,6 @@ class ReprojectPub(Node):
         # Configuration
         self.T_O_L = np.array(self.try_get_param(
             'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
-        self.T_GT_EST = np.array(self.try_get_param(
-            'T_GT_EST', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
         self.voxel_size = 0.1
 
         # Cloud subscriber
@@ -71,6 +69,7 @@ class ReprojectPub(Node):
             self.enable_gt = False
             return
         print(f'Read {self.gt_traj.shape[0]} gt poses.')
+
         self.gt_map_pub = self.create_publisher(
             PointCloud2, 'gt_map_cloud', 10)
         self.gt_path_pub = self.create_publisher(Path, 'gt_trajectory', 10)
@@ -82,6 +81,11 @@ class ReprojectPub(Node):
             self.enable_est = False
             return
         print(f'Read {self.est_traj.shape[0]} est poses.')
+
+        self.T_GT_EST = np.array(self.try_get_param(
+            'T_GT_EST', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
+        self.est_traj = self.align_poses(self.est_traj, self.T_GT_EST)
+
         self.est_map_pub = self.create_publisher(
             PointCloud2, 'est_map_cloud', 10)
         self.est_path_pub = self.create_publisher(Path, 'est_trajectory', 10)
@@ -96,6 +100,24 @@ class ReprojectPub(Node):
         self.corr_map_pub = self.create_publisher(
             PointCloud2, 'corr_map_cloud', 10)
         self.corr_path_pub = self.create_publisher(Path, 'corr_trajectory', 10)
+
+    def create_transformation(self, pose):
+        qxyzw = pose[[5, 6, 7, 4]]
+        rot_mat = Rotation.from_quat(qxyzw).as_matrix().reshape([3, 3])
+        transl = pose[1:4].reshape([3, 1])
+        return np.vstack([np.hstack([rot_mat, transl]), np.array([0, 0, 0, 1])])
+
+    def align_poses(self, poses, T_G_M):
+        n_poses = len(poses)
+        for i in range(n_poses):
+            T_M_B = self.create_transformation(poses[i])
+            T_G_B = np.matmul(T_G_M, T_M_B)
+
+            poses[i, 1:4] = T_G_B[0:3, 3]
+            xyzw = Rotation.from_matrix(T_G_B[0:3, 0:3]).as_quat()
+            poses[i, 4:] = xyzw[[3, 0, 1, 2]]
+
+        return poses
 
     def publish_all_maps(self):
         if len(self.ts_cloud_map) == 0:
@@ -170,9 +192,8 @@ class ReprojectPub(Node):
                 continue
 
             T_M_L = self.transform_pose_to_sensor_frame(trajectory[idx, :])
-            T_GT_L = np.matmul(T_GT_M, T_M_L)
             cloud = copy.deepcopy(cloud)
-            cloud = cloud.transform(T_GT_L)
+            cloud = cloud.transform(T_M_L)
             map += cloud
 
         return map, idx

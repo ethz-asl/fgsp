@@ -49,6 +49,8 @@ class ReprojectPub(Node):
         # Configuration
         self.T_O_L = np.array(self.try_get_param(
             'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
+        self.T_GT_EST = np.array(self.try_get_param(
+            'T_GT_EST', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
         self.voxel_size = 0.1
 
         # Cloud subscriber
@@ -107,7 +109,8 @@ class ReprojectPub(Node):
             print(f'Published gt map with {len(gt_map.points)} points.')
 
         if self.enable_est:
-            est_map, est_idx = self.accumulate_cloud(self.est_traj)
+            est_map, est_idx = self.accumulate_cloud(
+                self.est_traj, self.T_GT_EST)
             self.publish_map(self.est_map_pub, self.est_path_pub,
                              est_map, self.est_traj[0:est_idx+1, :])
             print(f'Published est map with {len(est_map.points)} points.')
@@ -158,7 +161,7 @@ class ReprojectPub(Node):
         cloud = self.parse_cloud(cloud_msg)
         self.ts_cloud_map[ts_s] = cloud
 
-    def accumulate_cloud(self, trajectory):
+    def accumulate_cloud(self, trajectory, T_GT_M=np.eye(4)):
         map = o3d.geometry.PointCloud()
         idx = -1
         for ts_s, cloud in self.ts_cloud_map.items():
@@ -166,10 +169,10 @@ class ReprojectPub(Node):
             if idx < 0:
                 continue
 
-            pose = trajectory[idx, :]
-            pose, T_M_L = self.transform_pose_to_sensor_frame(pose)
+            T_M_L = self.transform_pose_to_sensor_frame(trajectory[idx, :])
+            T_GT_L = np.matmul(T_GT_M, T_M_L)
             cloud = copy.deepcopy(cloud)
-            cloud = cloud.transform(T_M_L)
+            cloud = cloud.transform(T_GT_L)
             map += cloud
 
         return map, idx
@@ -198,13 +201,7 @@ class ReprojectPub(Node):
             [np.hstack([rot_mat, transl]), np.array([0, 0, 0, 1])])
         T_M_L = np.matmul(T_M_O, self.T_O_L)
 
-        result = np.zeros_like(pose)
-        result[0] = pose[0]
-        result[1:4] = T_M_L[0:3, 3].reshape([1, 3])
-        result[4:] = Rotation.from_matrix(T_M_L[0:3, 0:3]).as_quat()
-        result[4:] = result[[7, 4, 5, 6]]
-
-        return result, T_M_L
+        return T_M_L
 
     def try_get_param(self, key, default=None):
         self.declare_parameter(key, default)

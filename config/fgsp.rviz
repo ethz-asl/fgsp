@@ -5,10 +5,12 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Graph1
-        - /Viz1/gt1
+        - /Viz1
         - /Viz1/gt1/Path1
         - /Viz1/gt1/Path1/Status1
+        - /Viz1/est1/ReprojectedCloud1/Status1
+        - /Viz1/est1/Path1
+        - /Viz1/corr1/ReprojectedCloud1
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz_common/Selection
@@ -124,9 +126,7 @@ Visualization Manager:
           Enabled: true
           Name: Constraints
           Namespaces:
-            anchor_constraints: true
-            relative_constraints: true
-            relative_parent_nodes: true
+            {}
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -203,7 +203,7 @@ Visualization Manager:
                 Reliability Policy: Reliable
                 Value: /gt_trajectory
               Value: true
-          Enabled: true
+          Enabled: false
           Name: gt
         - Class: rviz_common/Group
           Displays:
@@ -217,14 +217,14 @@ Visualization Manager:
               Channel Name: z
               Class: rviz_default_plugins/PointCloud2
               Color: 255; 0; 0
-              Color Transformer: Intensity
+              Color Transformer: FlatColor
               Decay Time: 0
               Enabled: true
               Invert Rainbow: false
               Max Color: 119; 118; 123
-              Max Intensity: 15.814522743225098
+              Max Intensity: 15.693140029907227
               Min Color: 36; 31; 49
-              Min Intensity: -13.800031661987305
+              Min Intensity: -8.917491912841797
               Name: ReprojectedCloud
               Position Transformer: XYZ
               Selectable: true
@@ -244,13 +244,13 @@ Visualization Manager:
             - Alpha: 1
               Buffer Length: 1
               Class: rviz_default_plugins/Path
-              Color: 0; 255; 255
+              Color: 165; 29; 45
               Enabled: true
               Head Diameter: 0.30000001192092896
               Head Length: 0.20000000298023224
               Length: 0.30000001192092896
               Line Style: Billboards
-              Line Width: 0.20000000298023224
+              Line Width: 0.10000000149011612
               Name: Path
               Offset:
                 X: 0
@@ -282,15 +282,15 @@ Visualization Manager:
               Axis: Z
               Channel Name: z
               Class: rviz_default_plugins/PointCloud2
-              Color: 255; 0; 0
-              Color Transformer: Intensity
+              Color: 25; 255; 0
+              Color Transformer: FlatColor
               Decay Time: 0
               Enabled: true
               Invert Rainbow: false
               Max Color: 119; 118; 123
-              Max Intensity: 15.814522743225098
+              Max Intensity: 21.127431869506836
               Min Color: 36; 31; 49
-              Min Intensity: -13.800031661987305
+              Min Intensity: -11.153794288635254
               Name: ReprojectedCloud
               Position Transformer: XYZ
               Selectable: true
@@ -310,7 +310,7 @@ Visualization Manager:
             - Alpha: 1
               Buffer Length: 1
               Class: rviz_default_plugins/Path
-              Color: 0; 255; 255
+              Color: 38; 162; 105
               Enabled: true
               Head Diameter: 0.30000001192092896
               Head Length: 0.20000000298023224
@@ -385,25 +385,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 157.68031311035156
+      Distance: 55.29560852050781
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.3574854135513306
-        Y: -0.9938357472419739
-        Z: 0.0014670308446511626
+        X: -5.444464683532715
+        Y: -3.79333233833313
+        Z: 1.2604689598083496
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.4447964429855347
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.045399636030197144
+      Yaw: 0.04039974883198738
     Saved: ~
 Window Geometry:
   Displays:

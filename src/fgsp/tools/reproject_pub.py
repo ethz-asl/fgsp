@@ -106,6 +106,18 @@ class ReprojectPub(Node):
                              gt_map, self.gt_traj[0:gt_idx+1, :])
             print(f'Published gt map with {len(gt_map.points)} points.')
 
+        if self.enable_est:
+            est_map, est_idx = self.accumulate_cloud(self.est_traj)
+            self.publish_map(self.est_map_pub, self.est_path_pub,
+                             est_map, self.est_traj[0:est_idx+1, :])
+            print(f'Published est map with {len(est_map.points)} points.')
+
+        if self.enable_corr:
+            corr_map, corr_idx = self.accumulate_cloud(self.corr_traj)
+            self.publish_map(self.corr_map_pub, self.corr_path_pub,
+                             corr_map, self.corr_traj[0:corr_idx+1, :])
+            print(f'Published corr map with {len(corr_map.points)} points.')
+
     def publish_map(self, map_pub, path_pub, map, traj):
         header = Header()
         header.stamp = self.get_clock().now().to_msg()

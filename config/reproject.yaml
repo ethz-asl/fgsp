@@ -1,4 +1,6 @@
 reproject_viz:
   ros__parameters:
-    traj_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/se3_r3_comparison_h_floor/gt.csv"
+    gt_traj_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/se3_r3_comparison_h_floor/gt.csv"
     cloud_in: "/point_cloud_filter/lidar/point_cloud_filtered"
+
+    enable_gt: true

@@ -17,6 +17,7 @@ import rclpy
 from rclpy.node import Node
 from evo.tools import file_interface
 from scipy.spatial.transform import Rotation
+from src.fgsp.common.utils import Utils
 
 FIELDS_XYZ = [
     PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
@@ -28,27 +29,33 @@ FIELDS_XYZ = [
 class ReprojectPub(Node):
     def __init__(self):
         super().__init__('reproject_viz')
-        self.gt_traj = self.read_traj_file('traj_file')
-        if (len(self.gt_traj) == 0):
-            print('Error occurred while reading the trajectory file.')
-            return
-        print(f'Read {self.gt_traj.shape[0]} poses.')
 
+        # GT Publisher
+        self.enable_gt = self.try_get_param('enable_gt', False)
+        if self.enable_gt:
+            self.gt_traj = self.read_traj_file('gt_traj_file')
+            if (len(self.gt_traj) == 0):
+                print('Error occurred while reading the trajectory file.')
+                return
+            print(f'Read {self.gt_traj.shape[0]} poses.')
+            self.gt_map_pub = self.create_publisher(
+                PointCloud2, 'map_cloud', 10)
+            self.gt_path_pub = self.create_publisher(Path, 'trajectory', 10)
+
+        # Configuration
         self.T_O_L = np.array(self.try_get_param(
             'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
         self.voxel_size = 0.1
 
-        self.gt_map_pub = self.create_publisher(PointCloud2, 'map_cloud', 10)
-        self.gt_path_pub = self.create_publisher(Path, 'trajectory', 10)
-        self.latest_idx = -1
-        self.ts_cloud_map = {}
-
+        # Cloud subscriber
         cloud_topic = self.try_get_param('cloud_in', '/cloud')
         self.cloud_sub = self.create_subscription(
             PointCloud2, cloud_topic, self.cloud_callback, 10)
-        self.cloud_counter = 0
-        print(f'Subscribed to {cloud_topic}.')
+        self.ts_cloud_map = {}
+        print(f'Subscribed to {cloud_topic}. Waiting for clouds...')
         print('------------------------------------------------')
+
+        # Updater
         self.timer = self.create_timer(5, self.publish_all_maps)
 
     def publish_all_maps(self):
@@ -56,10 +63,11 @@ class ReprojectPub(Node):
             print(f'Received no clouds yet.')
             return
 
-        gt_map = self.accumulate_cloud(self.gt_traj)
-        self.publish_map(self.gt_map_pub, self.gt_path_pub,
-                         gt_map, self.gt_traj)
-        print(f'Published gt map with {len(gt_map.points)} points.')
+        if self.enable_gt:
+            gt_map, gt_idx = self.accumulate_cloud(self.gt_traj)
+            self.publish_map(self.gt_map_pub, self.gt_path_pub,
+                             gt_map, self.gt_traj[0:gt_idx+1, :])
+            print(f'Published gt map with {len(gt_map.points)} points.')
 
     def publish_map(self, map_pub, path_pub, map, traj):
         header = Header()
@@ -70,14 +78,15 @@ class ReprojectPub(Node):
             header, FIELDS_XYZ, map.points)
         map_pub.publish(map_ros)
 
-        path_msg = self.create_path_up_to_idx(traj, self.latest_idx)
+        path_msg = self.create_path_msg(traj)
         path_pub.publish(path_msg)
 
-    def create_path_up_to_idx(self, trajectory, idx):
+    def create_path_msg(self, trajectory):
         path_msg = Path()
         path_msg.header.stamp = self.get_clock().now().to_msg()
         path_msg.header.frame_id = 'map'
-        for i in range(idx):
+        n_poses = trajectory.shape[0]
+        for i in range(n_poses):
             ts_s = trajectory[i, 0]
             t = trajectory[i, 1:4]
             q = trajectory[i, 4:8]
@@ -97,26 +106,25 @@ class ReprojectPub(Node):
         return path_msg
 
     def cloud_callback(self, cloud_msg):
-        self.cloud_counter += 1
-        if self.cloud_counter % 2 != 0:
-            return
-
-        ts_s = self.ros_time_msg_to_s(cloud_msg.header.stamp)
+        ts_s = Utils.ros_time_msg_to_s(cloud_msg.header.stamp)
         cloud = self.parse_cloud(cloud_msg)
         self.ts_cloud_map[ts_s] = cloud
 
     def accumulate_cloud(self, trajectory):
         map = o3d.geometry.PointCloud()
+        idx = -1
         for ts_s, cloud in self.ts_cloud_map.items():
-            pose = self.lookup_closest_pose(trajectory, ts_s)
-            if (len(pose) == 0):
+            idx = self.lookup_closest_pose_idx(trajectory, ts_s)
+            if idx < 0:
                 continue
+
+            pose = trajectory[idx, :]
             pose, T_M_L = self.transform_pose_to_sensor_frame(pose)
             cloud = copy.deepcopy(cloud)
             cloud = cloud.transform(T_M_L)
             map += cloud
 
-        return map
+        return map, idx
 
     def parse_cloud(self, cloud_msg: PointCloud2):
         cloud = point_cloud2.read_points_numpy(
@@ -125,15 +133,14 @@ class ReprojectPub(Node):
         pcd = pcd.voxel_down_sample(voxel_size=self.voxel_size)
         return pcd
 
-    def lookup_closest_pose(self, trajectory, ts_s):
+    def lookup_closest_pose_idx(self, trajectory, ts_s):
         timestamps = np.abs(trajectory[:, 0] - ts_s)
         minval = np.amin(timestamps)
         if (minval > 1e-4):
             print(f'Timestamp {ts_s} is not available (min diff: {minval}).')
-            return np.array([])
+            return -1
 
-        self.latest_idx = np.where(timestamps == minval)[0][0]
-        return trajectory[self.latest_idx, :]
+        return np.where(timestamps == minval)[0][0]
 
     def transform_pose_to_sensor_frame(self, pose):
         qxyzw = pose[[5, 6, 7, 4]]
@@ -185,21 +192,6 @@ class ReprojectPub(Node):
         else:
             print(f'Simulation: File does not exist!')
             return np.array([])
-
-    def ros_time_msg_to_s(self, time):
-        k_s_to_ns = 1e9
-        return (time.sec * k_s_to_ns + time.nanosec) / k_s_to_ns
-
-    def ts_ns_to_ros_time(self, ts_ns):
-        k_ns_per_s = 1e9
-        ros_timestamp_sec = ts_ns / k_ns_per_s
-        ros_timestamp_nsec = ts_ns - (ros_timestamp_sec * k_ns_per_s)
-        return rclpy.time.Time(seconds=ros_timestamp_sec,
-                               nanoseconds=ros_timestamp_nsec)
-
-    def ts_sec_to_ns(self, ts_s):
-        k_ns_per_s = 1e9
-        return ts_s * k_ns_per_s
 
 
 def main(args=None):

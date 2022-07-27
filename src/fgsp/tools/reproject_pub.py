@@ -62,7 +62,7 @@ class ReprojectPub(Node):
         print('------------------------------------------------')
 
         # Updater
-        self.timer = self.create_timer(5, self.publish_all_maps)
+        self.timer = self.create_timer(1, self.publish_all_maps)
 
     def create_gt_pub(self):
         self.gt_traj = self.read_traj_file('gt_traj_file')
@@ -129,20 +129,24 @@ class ReprojectPub(Node):
             return
 
         if self.enable_gt:
-            gt_map, gt_idx = self.accumulate_cloud(self.gt_traj)
+            ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
+            gt_map, gt_idx = self.accumulate_cloud(self.gt_traj, ts_cloud_map)
             self.publish_map(self.gt_map_pub, self.gt_path_pub,
                              gt_map, self.gt_traj[0:gt_idx+1, :])
             print(f'Published gt map with {len(gt_map.points)} points.')
 
         if self.enable_est:
+            ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             est_map, est_idx = self.accumulate_cloud(
-                self.est_traj, self.T_GT_EST)
+                self.est_traj, ts_cloud_map)
             self.publish_map(self.est_map_pub, self.est_path_pub,
                              est_map, self.est_traj[0:est_idx+1, :])
             print(f'Published est map with {len(est_map.points)} points.')
 
         if self.enable_corr:
-            corr_map, corr_idx = self.accumulate_cloud(self.corr_traj)
+            ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
+            corr_map, corr_idx = self.accumulate_cloud(
+                self.corr_traj, ts_cloud_map)
             self.publish_map(self.corr_map_pub, self.corr_path_pub,
                              corr_map, self.corr_traj[0:corr_idx+1, :])
             print(f'Published corr map with {len(corr_map.points)} points.')
@@ -187,16 +191,15 @@ class ReprojectPub(Node):
         cloud = self.parse_cloud(cloud_msg)
         self.ts_cloud_map[ts_s] = cloud
 
-    def accumulate_cloud(self, trajectory, T_GT_M=np.eye(4)):
+    def accumulate_cloud(self, trajectory, ts_cloud_map):
         map = o3d.geometry.PointCloud()
         idx = -1
-        for ts_s, cloud in self.ts_cloud_map.items():
+        for ts_s, cloud in ts_cloud_map.items():
             idx = self.lookup_closest_pose_idx(trajectory, ts_s)
             if idx < 0:
                 continue
 
             T_M_L = self.transform_pose_to_sensor_frame(trajectory[idx, :])
-            cloud = copy.deepcopy(cloud)
             cloud = cloud.transform(T_M_L)
             map += cloud
 

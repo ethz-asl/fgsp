@@ -115,6 +115,7 @@ class CommandPost(object):
             all_opt_nodes, self.degenerate_indices)
 
     def serialize_labels(self, labels):
-        outputFile = open(self.config.label_output_path, 'wb')
+        filename = self.config.dataroot + self.config.label_output_path
+        outputFile = open(filename, 'w+b')
         pickle.dump(labels, outputFile)
         outputFile.close()

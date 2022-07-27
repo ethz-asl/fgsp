@@ -181,10 +181,13 @@ class ReprojectPub(Node):
                 self.publish_constraints(corr_traj)
 
     def publish_constraints(self, traj):
+        if len(traj) == 0:
+            return
+
         self.constraint_markers.markers = []
         for ts_ns, labels in self.ts_constraint_map.items():
-            ctr_timestamps_s = Utils.ts_ns_to_seconds(ts_ns)
-            idx = self.lookup_closest_ts_idx(traj[:, 0], ctr_timestamps_s)
+            ts_s = Utils.ts_ns_to_seconds(ts_ns)
+            idx = self.lookup_closest_ts_idx(traj[:, 0], ts_s)
             if idx == -1:
                 continue
 
@@ -199,13 +202,14 @@ class ReprojectPub(Node):
         self.constraints_pub.publish(self.constraint_markers)
 
     def add_constraint_at(self, traj, idx_a, idx_b):
+        print(f'Adding constraint between {idx_a} and {idx_b}')
         n_poses = traj.shape[0]
         if (idx_a < 0 or idx_a >= n_poses):
             return
         if (idx_b < 0 or idx_b >= n_poses):
             return
-        points = [traj[idx_a, 0:3], traj[idx_b, 0:3]]
-        line_marker = self.vis_helper.create_line_marker(points)
+        points = [traj[idx_a, 1:4], traj[idx_b, 1:4]]
+        line_marker = self.vis_helper.create_point_line_markers(points)
         self.constraint_markers.markers.append(line_marker)
 
     def publish_map(self, map_pub, path_pub, map, traj):
@@ -273,7 +277,6 @@ class ReprojectPub(Node):
         diff_timestamps = np.abs(timestamps_s - ts_s)
         minval = np.amin(diff_timestamps)
         if (minval > 1e-4):
-            print(f'Timestamp {ts_s} is not available (min diff: {minval}).')
             return -1
 
         return np.where(diff_timestamps == minval)[0][0]

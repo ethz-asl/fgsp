@@ -5,10 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Grid1
         - /Viz1
-        - /Viz1/gt1
         - /Viz1/gt1/Path1/Status1
-        - /Viz1/est1
         - /Viz1/corr1
       Splitter Ratio: 0.5
     Tree Height: 719
@@ -37,7 +36,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz_default_plugins/Grid
       Color: 160; 160; 164
-      Enabled: false
+      Enabled: true
       Line Style:
         Line Width: 0.029999999329447746
         Value: Lines
@@ -48,9 +47,9 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 100
       Reference Frame: <Fixed Frame>
-      Value: false
+      Value: true
     - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
@@ -155,9 +154,9 @@ Visualization Manager:
               Enabled: true
               Invert Rainbow: false
               Max Color: 119; 118; 123
-              Max Intensity: 15.814522743225098
+              Max Intensity: 15.00225830078125
               Min Color: 36; 31; 49
-              Min Intensity: -13.800031661987305
+              Min Intensity: -11.812422752380371
               Name: ReprojectedCloud
               Position Transformer: XYZ
               Selectable: true
@@ -202,7 +201,7 @@ Visualization Manager:
                 Reliability Policy: Reliable
                 Value: /gt_trajectory
               Value: true
-          Enabled: true
+          Enabled: false
           Name: gt
         - Class: rviz_common/Group
           Displays:
@@ -268,7 +267,7 @@ Visualization Manager:
                 Reliability Policy: Reliable
                 Value: /est_trajectory
               Value: true
-          Enabled: true
+          Enabled: false
           Name: est
         - Class: rviz_common/Group
           Displays:
@@ -334,6 +333,18 @@ Visualization Manager:
                 Reliability Policy: Reliable
                 Value: /corr_trajectory
               Value: true
+            - Class: rviz_default_plugins/MarkerArray
+              Enabled: true
+              Name: Constraints
+              Namespaces:
+                Line: true
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /constraints
+              Value: true
           Enabled: true
           Name: corr
       Enabled: true
@@ -384,25 +395,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 29.14590072631836
+      Distance: 45.61940383911133
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -2.6242096424102783
-        Y: -12.453496932983398
-        Z: 0.3283954858779907
+        X: 0.6640909910202026
+        Y: -1.723318338394165
+        Z: 0.001067727105692029
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5597968101501465
+      Pitch: 1.4997963905334473
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.3154009282588959
+      Yaw: 0.3403986096382141
     Saved: ~
 Window Geometry:
   Displays:

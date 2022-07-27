@@ -204,7 +204,6 @@ class ReprojectPub(Node):
         self.constraints_pub.publish(self.constraint_markers)
 
     def add_constraint_at(self, traj, idx_a, idx_b, color):
-        print(f'Adding constraint between {idx_a} and {idx_b}')
         n_poses = traj.shape[0]
         if (idx_a < 0 or idx_a >= n_poses):
             return

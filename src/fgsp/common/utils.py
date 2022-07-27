@@ -18,6 +18,11 @@ class Utils(object):
         return time.sec * k_s_to_ns + time.nanosec
 
     @staticmethod
+    def ros_time_msg_to_s(time):
+        k_s_to_ns = 1e9
+        return Utils.ros_time_msg_to_ns(time) / k_s_to_ns
+
+    @staticmethod
     def ts_ns_to_ros_time(ts_ns):
         k_ns_per_s = 1e9
         ros_timestamp_sec = ts_ns / k_ns_per_s

@@ -8,7 +8,7 @@ package_name = 'fgsp'
 setup(
     name=package_name,
     version='2.0.0',
-    packages=[f'src/{package_name}', f'src/{package_name}.classifier',
+    packages=[f'src/{package_name}', f'src/{package_name}.classifier', f'src/', f'src/{package_name}.tools',
               f'src/{package_name}.graph', f'src/{package_name}.common', f'src/{package_name}.controller'],
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -28,7 +28,8 @@ setup(
         'console_scripts': [
             'graph_monitor = src.fgsp.graph_monitor:main',
             'graph_client = src.fgsp.graph_client:main',
-            'simulation = src.fgsp.simulation:main',
+            'simulation = src.fgsp.tools.simulation:main',
+            'reproject_pub = src.fgsp.tools.reproject_pub:main',
         ],
     },
 )

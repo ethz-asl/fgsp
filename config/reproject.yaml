@@ -1,0 +1,53 @@
+reproject_viz:
+  ros__parameters:
+    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/se3_r3_comparison_h_floor/"
+    gt_traj_file: "gt.csv"
+    est_traj_file: "onboard.csv"
+    corr_traj_file: "se3_top30.csv"
+    constraints_file: "opt_labels.dat"
+
+    cloud_in: "/point_cloud_filter/lidar/point_cloud_filtered"
+
+    enable_gt: true
+    enable_est: true
+    enable_corr: true
+
+    T_GT_EST:
+      [
+        0.918835,
+        -0.394608,
+        -0.005173,
+        1.077152,
+        0.394460,
+        0.918731,
+        -0.018294,
+        -0.268902,
+        0.011971,
+        0.014769,
+        0.999819,
+        -0.428035,
+        0.000000,
+        0.000000,
+        0.000000,
+        1.000000,
+      ]
+
+    T_GT_CORR:
+      [
+        0.90748787,
+        -0.4199247,
+        0.01135842,
+        1.06843516,
+        0.42005013,
+        0.90740832,
+        -0.0129626,
+        0.31985667,
+        -0.00486341,
+        0.01653451,
+        0.99985147,
+        -0.48456108,
+        0.,
+        0.,
+        0.,
+        1.,
+      ]

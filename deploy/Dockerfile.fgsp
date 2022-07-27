@@ -8,19 +8,16 @@ RUN sh ./install_base.sh && rm ./install_base.sh
 ENV TZ=Europe/Zurich
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 COPY install_ros.sh ./install_ros.sh
-RUN sh ./install_ros.sh && rm ./install_ros.sh
+RUN ./install_ros.sh && rm ./install_ros.sh
 
 # Install the custom packages for which we will switch to the home directory.
 WORKDIR /usr/home
-COPY ./ws/src/liegroups/ ./ws/src/liegroups/
+COPY ./ws ./ws
 COPY install_packages.sh ./install_packages.sh
 RUN sh ./install_packages.sh && rm ./install_packages.sh
 
-# Configure the catkin environment.
-COPY ./ws ./ws
-WORKDIR /usr/home/ws
-
 # Build the project.
+WORKDIR /usr/home/ws
 SHELL ["/bin/bash", "-c"]
 COPY compile.sh ../
 RUN ../compile.sh

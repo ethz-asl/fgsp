@@ -29,3 +29,4 @@ apt -y update && apt -y install \
   wget
 
 apt -y install ros-humble-ros-base
+apt -y install ros-humble-sensor-msgs-py

@@ -1,9 +1,11 @@
 #! /usr/bin/env python3
 
+import os
 import open3d as o3d
 import numpy as np
 import pathlib
 import copy
+import pickle
 from os.path import exists
 
 from nav_msgs.msg import Path
@@ -29,6 +31,7 @@ FIELDS_XYZ = [
 class ReprojectPub(Node):
     def __init__(self):
         super().__init__('reproject_viz')
+        self.dataroot = self.try_get_param('dataroot', './')
 
         # GT Publisher
         self.enable_gt = self.try_get_param('enable_gt', False)
@@ -44,6 +47,12 @@ class ReprojectPub(Node):
         self.enable_corr = self.try_get_param('enable_corr', False)
         if self.enable_corr:
             self.create_corr_pub()
+
+        self.constraints_file = self.try_get_param('constraints_file', '')
+        if self.constraints_file != '':
+            self.constraints = self.read_constraints_file(
+                self.constraints_file)
+            print(f'Read {len(self.constraints)} constraints.')
 
         print(
             f'Enable GT: {self.enable_gt} - Enable EST: {self.enable_est} - Enable CORR: {self.enable_corr}')
@@ -237,33 +246,49 @@ class ReprojectPub(Node):
 
     def read_traj_file(self, traj_key):
         traj_file_path = self.try_get_param(traj_key, '')
+        traj_full_path = os.path.join(self.dataroot, traj_file_path)
         ext = pathlib.Path(traj_file_path).suffix
         if ext == '.csv':
-            print(f'Reading CSV file: {traj_file_path}')
-            return self.read_csv_file(traj_file_path)
+            print(f'Reading CSV file: {traj_full_path}')
+            return self.read_csv_file(traj_full_path)
         elif ext == '.npy':
-            print(f'Reading NPY file: {traj_file_path}')
-            return self.read_npy_file(traj_file_path)
+            print(f'Reading NPY file: {traj_full_path}')
+            return self.read_npy_file(traj_full_path)
         print(f'Unknown file extension: {ext}')
         return np.array([])
 
     def read_csv_file(self, filename):
-        print(f'Simulation: Reading file {filename}.')
+        filename = os.path.join(self.dataroot, filename)
+        print(f'ReprojectPub: Reading file {filename}.')
         if exists(filename):
             robot_traj = file_interface.read_tum_trajectory_file(filename)
             return np.column_stack((robot_traj.timestamps, robot_traj.positions_xyz,
                                     robot_traj.orientations_quat_wxyz))
 
         else:
-            print(f'Simulation: File does not exist!')
+            print(f'ReprojectPub: File does not exist!')
             return np.array([])
 
     def read_npy_file(self, filename):
-        print(f'Simulation: Reading file {filename}.')
+        filename = os.path.join(self.dataroot, filename)
+        print(f'ReprojectPub: Reading file {filename}.')
         if exists(filename):
             return self.convert_to_traj(np.load(filename))
         else:
-            print(f'Simulation: File does not exist!')
+            print(f'ReprojectPub: File does not exist!')
+            return np.array([])
+
+    def read_constraints_file(self, filename):
+        filename = os.path.join(self.dataroot, filename)
+        print(f'ReprojectPub: Reading constraints file {filename}.')
+        if exists(filename):
+            input_file = open(filename, 'rb')
+            dict = pickle.load(input_file)
+            input_file.close()
+            return dict
+
+        else:
+            print(f'ReprojectPub: File does not exist!')
             return np.array([])
 
 

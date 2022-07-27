@@ -1,8 +1,10 @@
 reproject_viz:
   ros__parameters:
-    gt_traj_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/se3_r3_comparison_h_floor/gt.csv"
-    est_traj_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/se3_r3_comparison_h_floor/onboard.csv"
-    corr_traj_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/se3_r3_comparison_h_floor/se3_top30.csv"
+    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/se3_r3_comparison_h_floor/"
+    gt_traj_file: "gt.csv"
+    est_traj_file: "onboard.csv"
+    corr_traj_file: "se3_top30.csv"
+    constraints_file: "opt_labels.dat"
 
     cloud_in: "/point_cloud_filter/lidar/point_cloud_filtered"
 

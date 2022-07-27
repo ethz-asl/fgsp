@@ -11,6 +11,7 @@ from os.path import exists
 from nav_msgs.msg import Path
 from sensor_msgs.msg import PointCloud2, PointField
 from sensor_msgs_py import point_cloud2
+from visualization_msgs.msg import MarkerArray
 from std_msgs.msg import Header
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
@@ -19,7 +20,10 @@ import rclpy
 from rclpy.node import Node
 from evo.tools import file_interface
 from scipy.spatial.transform import Rotation
+
 from src.fgsp.common.utils import Utils
+from src.fgsp.common.comms import Comms
+from src.fgsp.common.visualizer import Visualizer
 
 FIELDS_XYZ = [
     PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
@@ -49,13 +53,17 @@ class ReprojectPub(Node):
             self.create_corr_pub()
 
         self.constraints_file = self.try_get_param('constraints_file', '')
-        if self.constraints_file != '':
-            self.constraints = self.read_constraints_file(
-                self.constraints_file)
-            print(f'Read {len(self.constraints)} constraints.')
+        self.enable_constraints = self.constraints_file != ''
+        if self.enable_constraints:
+            self.create_constraints_pub()
+            self.comms = Comms()
+            self.comms.node = self
+            self.vis_helper = Visualizer()
 
-        print(
-            f'Enable GT: {self.enable_gt} - Enable EST: {self.enable_est} - Enable CORR: {self.enable_corr}')
+        print(f'Enable GT: {self.enable_gt}')
+        print(f'Enable EST: {self.enable_est}')
+        print(f'Enable CORR: {self.enable_corr}')
+        print(f'Enable CONSTR: {self.enable_constraints}')
 
         # Configuration
         self.T_O_L = np.array(self.try_get_param(
@@ -114,6 +122,15 @@ class ReprojectPub(Node):
             PointCloud2, 'corr_map_cloud', 10)
         self.corr_path_pub = self.create_publisher(Path, 'corr_trajectory', 10)
 
+    def create_constraints_pub(self):
+        self.ts_constraint_map = self.read_constraints_file(
+            self.constraints_file)
+        print(f'Read {len(self.ts_constraint_map.keys())} constraints.')
+
+        self.constraint_markers = MarkerArray()
+        self.constraints_pub = self.create_publisher(
+            MarkerArray, 'constraints', 10)
+
     def create_transformation(self, pose):
         qxyzw = pose[[5, 6, 7, 4]]
         rot_mat = Rotation.from_quat(qxyzw).as_matrix().reshape([3, 3])
@@ -156,9 +173,40 @@ class ReprojectPub(Node):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             corr_map, corr_idx = self.accumulate_cloud(
                 self.corr_traj, ts_cloud_map)
-            self.publish_map(self.corr_map_pub, self.corr_path_pub,
-                             corr_map, self.corr_traj[0:corr_idx+1, :])
+            corr_traj = self.corr_traj[0:corr_idx+1, :]
+            self.publish_map(self.corr_map_pub,
+                             self.corr_path_pub, corr_map, corr_traj)
             print(f'Published corr map with {len(corr_map.points)} points.')
+            if self.enable_constraints:
+                self.publish_constraints(corr_traj)
+
+    def publish_constraints(self, traj):
+        self.constraint_markers.markers = []
+        for ts_ns, labels in self.ts_constraint_map.items():
+            ctr_timestamps_s = Utils.ts_ns_to_seconds(ts_ns)
+            idx = self.lookup_closest_ts_idx(traj[:, 0], ctr_timestamps_s)
+            if idx == -1:
+                continue
+
+            if 1 in labels:
+                self.add_constraint_at(traj, idx, idx-1)
+                self.add_constraint_at(traj, idx, idx+1)
+
+            if 2 in labels:
+                self.add_constraint_at(traj, idx, idx-5)
+                self.add_constraint_at(traj, idx, idx+5)
+
+        self.constraints_pub.publish(self.constraint_markers)
+
+    def add_constraint_at(self, traj, idx_a, idx_b):
+        n_poses = traj.shape[0]
+        if (idx_a < 0 or idx_a >= n_poses):
+            return
+        if (idx_b < 0 or idx_b >= n_poses):
+            return
+        points = [traj[idx_a, 0:3], traj[idx_b, 0:3]]
+        line_marker = self.vis_helper.create_line_marker(points)
+        self.constraint_markers.markers.append(line_marker)
 
     def publish_map(self, map_pub, path_pub, map, traj):
         header = Header()
@@ -204,7 +252,7 @@ class ReprojectPub(Node):
         map = o3d.geometry.PointCloud()
         idx = -1
         for ts_s, cloud in ts_cloud_map.items():
-            idx = self.lookup_closest_pose_idx(trajectory, ts_s)
+            idx = self.lookup_closest_ts_idx(trajectory[:, 0], ts_s)
             if idx < 0:
                 continue
 
@@ -221,14 +269,14 @@ class ReprojectPub(Node):
         pcd = pcd.voxel_down_sample(voxel_size=self.voxel_size)
         return pcd
 
-    def lookup_closest_pose_idx(self, trajectory, ts_s):
-        timestamps = np.abs(trajectory[:, 0] - ts_s)
-        minval = np.amin(timestamps)
+    def lookup_closest_ts_idx(self, timestamps_s, ts_s):
+        diff_timestamps = np.abs(timestamps_s - ts_s)
+        minval = np.amin(diff_timestamps)
         if (minval > 1e-4):
             print(f'Timestamp {ts_s} is not available (min diff: {minval}).')
             return -1
 
-        return np.where(timestamps == minval)[0][0]
+        return np.where(diff_timestamps == minval)[0][0]
 
     def transform_pose_to_sensor_frame(self, pose):
         qxyzw = pose[[5, 6, 7, 4]]
@@ -281,15 +329,14 @@ class ReprojectPub(Node):
     def read_constraints_file(self, filename):
         filename = os.path.join(self.dataroot, filename)
         print(f'ReprojectPub: Reading constraints file {filename}.')
+        dict = {}
         if exists(filename):
             input_file = open(filename, 'rb')
             dict = pickle.load(input_file)
             input_file.close()
-            return dict
-
         else:
-            print(f'ReprojectPub: File does not exist!')
-            return np.array([])
+            print(f'ReprojectPub: Constraints file does not exist!')
+        return dict
 
 
 def main(args=None):

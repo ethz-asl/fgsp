@@ -88,25 +88,32 @@ class Visualizer(object):
         self.signals.markers.append(sphere)
 
     def add_graph_adjacency(self, point_a, point_b):
+        points = [point_a, point_b]
+        color = [0.9, 0.05, 0.05]
+        line_marker = self.create_point_line_markers(points, color)
+
+        self.adjacency.markers.append(line_marker)
+
+    def create_point_line_markers(self, points, color=[0.9, 0.05, 0.05]):
         line_point_a = Point()
-        line_point_a.x = float(point_a[0])
-        line_point_a.y = float(point_a[1])
-        line_point_a.z = float(point_a[2])
+        line_point_a.x = float(points[0][0])
+        line_point_a.y = float(points[0][1])
+        line_point_a.z = float(points[0][2])
         line_point_b = Point()
-        line_point_b.x = float(point_b[0])
-        line_point_b.y = float(point_b[1])
-        line_point_b.z = float(point_b[2])
+        line_point_b.x = float(points[1][0])
+        line_point_b.y = float(points[1][1])
+        line_point_b.z = float(points[1][2])
 
         self.line_marker.id += 1
         line_marker = copy.deepcopy(self.line_marker)
         line_marker.header.stamp = self.time_now().to_msg()
-        line_marker.color = self.get_color(0.1, 0.8, 0.1)
+        line_marker.color = self.get_color(color[0], color[1], color[2])
 
         line_marker.points[:] = []
         line_marker.points.append(line_point_a)
         line_marker.points.append(line_point_b)
 
-        self.adjacency.markers.append(line_marker)
+        return line_marker
 
     def visualize_coords(self):
         self.comms.publish(self.spheres, MarkerArray, '/graph/coords')

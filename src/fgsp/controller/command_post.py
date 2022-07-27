@@ -2,6 +2,10 @@
 
 import numpy as np
 import time
+import pickle
+
+from yaml import serialize
+
 from maplab_msgs.msg import Graph, Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
@@ -55,6 +59,7 @@ class CommandPost(object):
             self.add_to_constraint_counter(
                 small_relative_counter, mid_relative_counter, large_relative_counter)
             self.history = labels.history
+            self.serialize_labels(self.previous_relatives)
             time.sleep(0.001)
 
     def add_to_constraint_counter(self, n_small_constraints, n_mid_constraints, n_large_constraints):
@@ -108,3 +113,8 @@ class CommandPost(object):
             f'CommandPost: Sending degenerate anchor update for {self.degenerate_indices}')
         self.send_degenerate_anchors_based_on_indices(
             all_opt_nodes, self.degenerate_indices)
+
+    def serialize_labels(self, labels):
+        outputFile = open(self.config.label_output_path, 'wb')
+        pickle.dump(labels, outputFile)
+        outputFile.close()

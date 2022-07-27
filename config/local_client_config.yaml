@@ -43,6 +43,7 @@ graph_client:
     graph_adj_export_path: "/data/{src}_graph_adj.npy"
     trajectory_export_path: "/data/{src}_trajectory.npy"
     trajectory_raw_export_path: "/data/{src}_raw_trajectory.npy"
+    label_output_path: "/data/opt_labels.dat"
     degenerate_window: 20
     synchronization_max_diff_s: 0.5
     verbosity: 5

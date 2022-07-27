@@ -192,16 +192,18 @@ class ReprojectPub(Node):
                 continue
 
             if 1 in labels:
-                self.add_constraint_at(traj, idx, idx-1)
-                self.add_constraint_at(traj, idx, idx+1)
+                color = [0.9, 0.05, 0.05]
+                self.add_constraint_at(traj, idx, idx-1, color)
+                self.add_constraint_at(traj, idx, idx+1, color)
 
             if 2 in labels:
-                self.add_constraint_at(traj, idx, idx-5)
-                self.add_constraint_at(traj, idx, idx+5)
+                color = [0.05, 0.05, 0.9]
+                self.add_constraint_at(traj, idx, idx-5, color)
+                self.add_constraint_at(traj, idx, idx+5, color)
 
         self.constraints_pub.publish(self.constraint_markers)
 
-    def add_constraint_at(self, traj, idx_a, idx_b):
+    def add_constraint_at(self, traj, idx_a, idx_b, color):
         print(f'Adding constraint between {idx_a} and {idx_b}')
         n_poses = traj.shape[0]
         if (idx_a < 0 or idx_a >= n_poses):
@@ -209,7 +211,7 @@ class ReprojectPub(Node):
         if (idx_b < 0 or idx_b >= n_poses):
             return
         points = [traj[idx_a, 1:4], traj[idx_b, 1:4]]
-        line_marker = self.vis_helper.create_point_line_markers(points)
+        line_marker = self.vis_helper.create_point_line_markers(points, color)
         self.constraint_markers.markers.append(line_marker)
 
     def publish_map(self, map_pub, path_pub, map, traj):

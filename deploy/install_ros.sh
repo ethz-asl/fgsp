@@ -1,8 +1,8 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 # Install ROS humble
 curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(source /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(source /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
 apt -y update && apt -y install \
   build-essential \
@@ -11,7 +11,7 @@ apt -y update && apt -y install \
   python3-colcon-common-extensions \
   python3-flake8 \
   python3-flake8-blind-except \
-  python3-flake8-builtins \
+  python3-flake8-builtins 
   python3-flake8-class-newline \
   python3-flake8-comprehensions \
   python3-flake8-deprecated \

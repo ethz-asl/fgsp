@@ -8,7 +8,7 @@ RUN sh ./install_base.sh && rm ./install_base.sh
 ENV TZ=Europe/Zurich
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 COPY install_ros.sh ./install_ros.sh
-RUN sh ./install_ros.sh && rm ./install_ros.sh
+RUN ./install_ros.sh && rm ./install_ros.sh
 
 # Install the custom packages for which we will switch to the home directory.
 WORKDIR /usr/home

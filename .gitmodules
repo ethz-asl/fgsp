@@ -7,6 +7,3 @@
 [submodule "dependencies/maplab_msgs"]
 	path = dependencies/maplab_msgs
 	url = https://github.com/ethz-asl/maplab_msgs
-[submodule "dependencies/catkin_simple"]
-	path = dependencies/catkin_simple
-	url = https://github.com/catkin/catkin_simple

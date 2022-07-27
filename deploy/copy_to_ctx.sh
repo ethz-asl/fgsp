@@ -14,7 +14,6 @@ rsync -a \
   --exclude '*.pyc' \
   --exclude '*.ipynb' \
   --exclude '__pycache__' \
-  --exclude 'src' \
   --exclude '*.git' \
   --exclude '*.md' \
   --exclude 'deploy' \

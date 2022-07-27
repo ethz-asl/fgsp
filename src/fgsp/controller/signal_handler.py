@@ -1,11 +1,8 @@
 #! /usr/bin/env python3
 
-from natsort import ns
 import numpy as np
 from liegroups import SE3
-from rsa import sign
 from scipy.spatial.transform import Rotation
-from pygsp import graphs, filters, reduction
 from maplab_msgs.msg import Trajectory, TrajectoryNode
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path

@@ -10,7 +10,6 @@ from rclpy.node import Node
 
 from src.fgsp.graph.global_graph import GlobalGraph
 from src.fgsp.controller.signal_handler import SignalHandler
-from src.fgsp.common.submap_model import SubmapModel
 from src.fgsp.common.config import MonitorConfig
 from src.fgsp.common.plotter import Plotter
 from src.fgsp.common.logger import Logger

@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+from more_itertools import partition
 import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
@@ -18,7 +19,7 @@ class ClassificationResult(object):
         self.features = features
         self.labels = self.check_and_fix_labels(labels)
         self.history = {}
-        self.partitions = self.partition_nodes(method='nth')
+        self.partitions = self.partition_nodes('id')
         self.ts_partitions = self.get_ts_from_nodes(self.partitions)
 
     def check_and_fix_labels(self, labels):
@@ -31,6 +32,8 @@ class ClassificationResult(object):
     def partition_nodes(self, method='nth'):
         if method == 'nth':
             return self.take_every_nth_node()
+        if method == 'id':
+            return self.take_nodes_by_id()
         else:
             Logger.LogWarn(f'Unknown partiion method {method} specified')
             return []
@@ -43,7 +46,7 @@ class ClassificationResult(object):
         return np.array(ts)
 
     def take_every_nth_node(self):
-        n_steps = 30
+        n_steps = 15
         prev = 0
         partitioned_nodes = []
         partitions = np.arange(prev, self.n_nodes, n_steps)
@@ -51,6 +54,26 @@ class ClassificationResult(object):
             pivot = (cur + prev) // 2
             partitioned_nodes.append(pivot)
             prev = cur
+        return partitioned_nodes
+
+    def take_nodes_by_id(self):
+        partitioned_nodes = []
+        prev = 0
+        prev_id = 0
+        for i in range(0, self.n_nodes):
+            cur_id = self.opt_nodes[i].id
+            if cur_id != prev_id:
+                pivot = (i + prev) // 2
+                partitioned_nodes.append(pivot)
+                prev_id = cur_id
+                prev = i
+
+        if prev_id > 0:
+            pivot = (self.n_nodes + prev) // 2
+            partitioned_nodes.append(pivot)
+
+        print(f'IDs: {[n.id for n in self.opt_nodes]}')
+        print(f'Partitioned nodes: {partitioned_nodes}')
         return partitioned_nodes
 
     def size(self):

@@ -162,21 +162,24 @@ class ClassificationResult(object):
     def construct_mid_area_constraint(self, idx, relative_constraint, history):
         cur_opt = self.opt_nodes[idx]
         counter = 0
-        if idx - 5 >= 0:
+        n_hop = 10
+        lower = idx - n_hop
+        upper = idx + n_hop
+        if lower >= 0:
             T_a_b = self.compute_relative_distance(
-                cur_opt, self.opt_nodes[idx - 5])
-            if history.has_different_transform(idx - 5, T_a_b):
-                pose_msg = self.create_pose_msg(self.opt_nodes[idx - 5], T_a_b)
+                cur_opt, self.opt_nodes[lower])
+            if history.has_different_transform(lower, T_a_b):
+                pose_msg = self.create_pose_msg(self.opt_nodes[lower], T_a_b)
                 relative_constraint.poses.append(pose_msg)
-                history.add_record(idx - 5, T_a_b)
+                history.add_record(lower, T_a_b)
                 counter = counter + 1
-        if idx + 5 < self.n_nodes:
+        if upper < self.n_nodes:
             T_a_b = self.compute_relative_distance(
-                cur_opt, self.opt_nodes[idx + 5])
-            if history.has_different_transform(idx + 5, T_a_b):
-                pose_msg = self.create_pose_msg(self.opt_nodes[idx + 5], T_a_b)
+                cur_opt, self.opt_nodes[upper])
+            if history.has_different_transform(upper, T_a_b):
+                pose_msg = self.create_pose_msg(self.opt_nodes[upper], T_a_b)
                 relative_constraint.poses.append(pose_msg)
-                history.add_record(idx + 5, T_a_b)
+                history.add_record(upper, T_a_b)
                 counter = counter + 1
         return relative_constraint, history, counter
 

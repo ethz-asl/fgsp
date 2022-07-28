@@ -43,7 +43,7 @@ class ClassificationResult(object):
         return np.array(ts)
 
     def take_every_nth_node(self):
-        n_steps = 10
+        n_steps = 30
         prev = 0
         partitioned_nodes = []
         partitions = np.arange(prev, self.n_nodes, n_steps)
@@ -71,14 +71,14 @@ class ClassificationResult(object):
         if transform_history == None:
             transform_history = TransformHistory()
 
-        if 1 in local_labels:
-            relative_constraint, transform_history, n_added = self.construct_small_area_constraint(
-                idx, relative_constraint, transform_history)
-            small_relative_counter = n_added
-        if 2 in local_labels:
-            relative_constraint, transform_history, n_added = self.construct_mid_area_constraint(
-                idx, relative_constraint, transform_history)
-            mid_relative_counter = n_added
+        # if 1 in local_labels:
+        #     relative_constraint, transform_history, n_added = self.construct_small_area_constraint(
+        #         idx, relative_constraint, transform_history)
+        #     small_relative_counter = n_added
+        # if 2 in local_labels:
+        #     relative_constraint, transform_history, n_added = self.construct_mid_area_constraint(
+        #         idx, relative_constraint, transform_history)
+        #     mid_relative_counter = n_added
         if 3 in local_labels:
             relative_constraint, transform_history, n_added = self.construct_large_area_constraint(
                 idx, relative_constraint, transform_history)
@@ -137,16 +137,16 @@ class ClassificationResult(object):
                 history.add_record(target_idx, T_a_b)
                 counter = counter + 1
 
-        if idx != 0:
-            target_idx = 1
-            T_a_b = self.compute_relative_distance(
-                cur_opt, self.opt_nodes[target_idx])
-            if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(
-                    self.opt_nodes[target_idx], T_a_b)
-                relative_constraint.poses.append(pose_msg)
-                history.add_record(target_idx, T_a_b)
-                counter = counter + 1
+        # if idx != 0:
+        #     target_idx = 1
+        #     T_a_b = self.compute_relative_distance(
+        #         cur_opt, self.opt_nodes[target_idx])
+        #     if history.has_different_transform(target_idx, T_a_b):
+        #         pose_msg = self.create_pose_msg(
+        #             self.opt_nodes[target_idx], T_a_b)
+        #         relative_constraint.poses.append(pose_msg)
+        #         history.add_record(target_idx, T_a_b)
+        #         counter = counter + 1
 
         return relative_constraint, history, counter
 

@@ -18,7 +18,7 @@ graph_client:
 
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
-    classifier: "top" # "top" or "simple"
+    classifier: "simple" # "top" or "simple"
     top_classifier_select_n: 20
 
     # Graph configuration.

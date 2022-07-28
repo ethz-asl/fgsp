@@ -427,9 +427,9 @@ class GraphClient(Node):
 
         labels = self.classifier.classify(features)
         if self.config.use_graph_hierarchies:
-            return HierarchicalResult(key, all_opt_nodes, features, labels, self.robot_graph.get_indices())
+            return HierarchicalResult(self.config, key, all_opt_nodes, features, labels, self.robot_graph.get_indices())
         else:
-            return ClassificationResult(key, all_opt_nodes, features, labels)
+            return ClassificationResult(self.config, key, all_opt_nodes, features, labels)
 
     def perform_euclidean_evaluation(self, key, all_opt_nodes, all_est_nodes):
         est_traj = self.optimized_signal.compute_trajectory(all_opt_nodes)
@@ -441,7 +441,7 @@ class GraphClient(Node):
         for i in range(0, n_nodes):
             if euclidean_dist[i] > 1.0:
                 labels[i].append(1)
-        return ClassificationResult(key, all_opt_nodes, euclidean_dist, labels)
+        return ClassificationResult(self.config, key, all_opt_nodes, euclidean_dist, labels)
 
     def perform_relative(self, key, all_opt_nodes, all_est_nodes):
         return self.set_label_for_all_nodes(1, key, all_opt_nodes, all_est_nodes)
@@ -455,7 +455,7 @@ class GraphClient(Node):
     def set_label_for_all_nodes(self, label, key, all_opt_nodes, all_est_nodes):
         n_nodes = len(all_opt_nodes)
         labels = [[label]] * n_nodes
-        return ClassificationResult(key, all_opt_nodes, None, labels)
+        return ClassificationResult(self.config, key, all_opt_nodes, None, labels)
 
     def evaluate_and_publish_features(self, labels):
         if labels == None or labels == [] or labels.size() == 0:

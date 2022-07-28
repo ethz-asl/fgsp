@@ -137,6 +137,7 @@ class ClientConfig(BaseConfig):
         self.client_mode = 'multiscale'
         self.classifier = 'top'
         self.top_classifier_select_n = 10
+        self.large_scale_partition_method = 'id'
 
         # Graph construction
         self.include_rotational_weight = False
@@ -201,6 +202,8 @@ class ClientConfig(BaseConfig):
         self.classifier = self.try_get_param("classifier", self.classifier)
         self.top_classifier_select_n = self.try_get_param(
             "top_classifier_select_n", self.top_classifier_select_n)
+        self.large_scale_partition_method = self.try_get_param(
+            "large_scale_partition_method", self.large_scale_partition_method)
 
         # Graph construction
         self.include_rotational_weight = self.try_get_param(

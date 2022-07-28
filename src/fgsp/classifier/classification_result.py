@@ -5,6 +5,7 @@ import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 from scipy.spatial.transform import Rotation
+from scipy import spatial
 
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
@@ -12,14 +13,16 @@ from src.fgsp.common.transform_history import TransformHistory
 
 
 class ClassificationResult(object):
-    def __init__(self, robot_name, opt_nodes, features, labels):
+    def __init__(self, config, robot_name, opt_nodes, features, labels):
+        self.config = config
         self.robot_name = robot_name
         self.opt_nodes = opt_nodes
         self.n_nodes = len(opt_nodes)
         self.features = features
         self.labels = self.check_and_fix_labels(labels)
         self.history = {}
-        self.partitions = self.partition_nodes('id')
+        self.partitions = self.partition_nodes(
+            self.config.large_scale_partition_method)
         self.ts_partitions = self.get_ts_from_nodes(self.partitions)
 
     def check_and_fix_labels(self, labels):
@@ -54,7 +57,7 @@ class ClassificationResult(object):
             pivot = (cur + prev) // 2
             partitioned_nodes.append(pivot)
             prev = cur
-        return partitioned_nodes
+        return np.array(partitioned_nodes)
 
     def take_nodes_by_id(self):
         partitioned_nodes = []
@@ -72,9 +75,7 @@ class ClassificationResult(object):
             pivot = (self.n_nodes + prev) // 2
             partitioned_nodes.append(pivot)
 
-        print(f'IDs: {[n.id for n in self.opt_nodes]}')
-        print(f'Partitioned nodes: {partitioned_nodes}')
-        return partitioned_nodes
+        return np.array(partitioned_nodes)
 
     def size(self):
         return len(self.opt_nodes)
@@ -94,14 +95,14 @@ class ClassificationResult(object):
         if transform_history == None:
             transform_history = TransformHistory()
 
-        # if 1 in local_labels:
-        #     relative_constraint, transform_history, n_added = self.construct_small_area_constraint(
-        #         idx, relative_constraint, transform_history)
-        #     small_relative_counter = n_added
-        # if 2 in local_labels:
-        #     relative_constraint, transform_history, n_added = self.construct_mid_area_constraint(
-        #         idx, relative_constraint, transform_history)
-        #     mid_relative_counter = n_added
+        if 1 in local_labels:
+            relative_constraint, transform_history, n_added = self.construct_small_area_constraint(
+                idx, relative_constraint, transform_history)
+            small_relative_counter = n_added
+        if 2 in local_labels:
+            relative_constraint, transform_history, n_added = self.construct_mid_area_constraint(
+                idx, relative_constraint, transform_history)
+            mid_relative_counter = n_added
         if 3 in local_labels:
             relative_constraint, transform_history, n_added = self.construct_large_area_constraint(
                 idx, relative_constraint, transform_history)
@@ -115,42 +116,14 @@ class ClassificationResult(object):
 
     def construct_large_area_constraint(self, idx, relative_constraint, history):
         cur_opt = self.opt_nodes[idx]
-        cur_submap_idx = self.lookup_closest_submap(cur_opt)
+        if self.config.large_scale_partition_method == 'nth':
+            cur_submap_idx = self.lookup_closest_submap(cur_opt)
+        else:
+            cur_submap_idx = cur_opt.id
         counter = 0
 
-        target_idx = cur_submap_idx - 1
-        if target_idx >= 0:
-            T_a_b = self.compute_relative_distance(
-                cur_opt, self.opt_nodes[target_idx])
-            if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(
-                    self.opt_nodes[target_idx], T_a_b)
-                relative_constraint.poses.append(pose_msg)
-                history.add_record(target_idx, T_a_b)
-                counter = counter + 1
-        target_idx = cur_submap_idx - 2
-        if target_idx >= 0:
-            T_a_b = self.compute_relative_distance(
-                cur_opt, self.opt_nodes[target_idx])
-            if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(
-                    self.opt_nodes[target_idx], T_a_b)
-                relative_constraint.poses.append(pose_msg)
-                history.add_record(target_idx, T_a_b)
-                counter = counter + 1
-
-        target_idx = cur_submap_idx + 1
-        if target_idx < self.n_nodes:
-            T_a_b = self.compute_relative_distance(
-                cur_opt, self.opt_nodes[target_idx])
-            if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(
-                    self.opt_nodes[target_idx], T_a_b)
-                relative_constraint.poses.append(pose_msg)
-                history.add_record(target_idx, T_a_b)
-                counter = counter + 1
-        target_idx = cur_submap_idx + 2
-        if target_idx < self.n_nodes:
+        submap_partitions = self.lookup_spatially_close_submaps(cur_submap_idx)
+        for target_idx in submap_partitions:
             T_a_b = self.compute_relative_distance(
                 cur_opt, self.opt_nodes[target_idx])
             if history.has_different_transform(target_idx, T_a_b):
@@ -181,6 +154,28 @@ class ClassificationResult(object):
         # Retrieve the index in opt_nodes.
         partition_idx = np.where(ts_diff == ts_min)[0][0]
         return self.partitions[partition_idx]
+
+    def lookup_spatially_close_submaps(self, submap_idx):
+        submap_positions = [
+            self.opt_nodes[i].position for i in self.partitions]
+        tree = spatial.KDTree(submap_positions)
+        _, nn_indices = self.query_tree(submap_idx, tree)
+        print(f'partitions: {self.partitions}')
+        print(f'nn_indices: {nn_indices}')
+        return self.partitions[nn_indices]
+
+    def query_tree(self, cur_id, tree, n_neighbors=10, p_norm=2, dist=10):
+        cur_position = self.opt_nodes[self.partitions[cur_id]].position
+        nn_dists, nn_indices = tree.query(
+            cur_position,
+            p=p_norm,
+            k=n_neighbors,
+            distance_upper_bound=dist)
+
+        # Remove self and fix output.
+        nn_dists, nn_indices = Utils.fix_nn_output(
+            n_neighbors, cur_id, nn_dists, nn_indices)
+        return nn_dists, nn_indices
 
     def construct_mid_area_constraint(self, idx, relative_constraint, history):
         cur_opt = self.opt_nodes[idx]

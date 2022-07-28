@@ -20,6 +20,7 @@ graph_client:
     client_mode: "multiscale"
     classifier: "simple" # "top" or "simple"
     top_classifier_select_n: 20
+    large_scale_partition_method: "id" # 'id' or 'nth'
 
     # Graph configuration.
     use_se3_computation: True

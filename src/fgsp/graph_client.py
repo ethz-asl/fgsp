@@ -13,7 +13,6 @@ from src.fgsp.graph.global_graph import GlobalGraph
 from src.fgsp.graph.hierarchical_graph import HierarchicalGraph
 from src.fgsp.controller.signal_handler import SignalHandler
 from src.fgsp.controller.command_post import CommandPost
-from src.fgsp.controller.constraint_handler import ConstraintHandler
 from src.fgsp.common.signal_synchronizer import SignalSynchronizer
 from src.fgsp.common.config import ClientConfig
 from src.fgsp.common.plotter import Plotter
@@ -57,12 +56,6 @@ class GraphClient(Node):
             Trajectory, self.config.est_traj_topic, self.traj_callback, 10)
         self.est_traj_path_sub = self.create_subscription(
             Path, self.config.est_traj_path_topic, self.traj_path_callback, 10)
-
-        if self.config.enable_submap_constraints:
-            self.submap_sub = self.create_subscription(
-                SubmapConstraint, self.config.submap_constraint_topic, self.submap_constraint_callback, 10)
-            self.constraint_handler = ConstraintHandler()
-
         self.intra_constraint_pub = self.create_publisher(
             Path, self.config.intra_constraint_topic, 20)
 
@@ -174,16 +167,6 @@ class GraphClient(Node):
         self.keys.append(key)
         return True
 
-    def submap_constraint_callback(self, msg):
-        if not (self.is_initialized and self.config.enable_submap_constraints):
-            Logger.LogInfo(
-                'GraphClient: Received submap constraint message before being initialized.')
-            return
-        Logger.LogInfo('GraphClient: Received submap constraint message.')
-        self.constraint_mutex.acquire()
-        self.constraint_handler.add_constraints(msg)
-        self.constraint_mutex.release()
-
     def update(self):
         if (self.initialize_logging):
             self.create_data_export_folder()
@@ -207,7 +190,6 @@ class GraphClient(Node):
             return
 
         self.compare_estimations()
-        # self.publish_client_update()
         self.global_graph.publish()
 
         n_constraints = self.commander.get_total_amount_of_constraints()
@@ -279,17 +261,6 @@ class GraphClient(Node):
             Logger.LogWarn(
                 f'GraphClient: Found no optimized version of {self.config.robot_name} for comparison.')
 
-    def check_for_submap_constraints(self, labels, all_opt_nodes):
-        if not self.config.enable_submap_constraints:
-            return
-        # self.constraint_mutex.acquire()
-        # path_msgs = self.constraint_handler.create_msg_for_intra_constraints(self.config.robot_name, labels, all_opt_nodes)
-        # self.constraint_mutex.release()
-        # for msg in path_msgs:
-        #     self.intra_constraint_pub.publish(msg)
-        #     self.commander.add_to_constraint_counter(0,0,len(msg.poses))
-        #     time.sleep(0.01)
-
     def publish_client_update(self):
         if not (self.config.enable_anchor_constraints and self.global_graph.is_built and self.config.enable_client_update):
             return
@@ -327,10 +298,6 @@ class GraphClient(Node):
         # Check if we the robot identified a degeneracy in its state.
         # Publish an anchor node curing the affected areas.
         self.check_for_degeneracy(all_opt_nodes, all_est_nodes)
-
-        # Check for large discrepancies in the data.
-        # If so publish submap constraints.
-        self.check_for_submap_constraints(labels, all_opt_nodes)
 
         return True
 
@@ -460,9 +427,9 @@ class GraphClient(Node):
 
         labels = self.classifier.classify(features)
         if self.config.use_graph_hierarchies:
-            return HierarchicalResult(key, all_opt_nodes, features, labels, self.robot_graph.get_indices())
+            return HierarchicalResult(self.config, key, all_opt_nodes, features, labels, self.robot_graph.get_indices())
         else:
-            return ClassificationResult(key, all_opt_nodes, features, labels)
+            return ClassificationResult(self.config, key, all_opt_nodes, features, labels)
 
     def perform_euclidean_evaluation(self, key, all_opt_nodes, all_est_nodes):
         est_traj = self.optimized_signal.compute_trajectory(all_opt_nodes)
@@ -474,7 +441,7 @@ class GraphClient(Node):
         for i in range(0, n_nodes):
             if euclidean_dist[i] > 1.0:
                 labels[i].append(1)
-        return ClassificationResult(key, all_opt_nodes, euclidean_dist, labels)
+        return ClassificationResult(self.config, key, all_opt_nodes, euclidean_dist, labels)
 
     def perform_relative(self, key, all_opt_nodes, all_est_nodes):
         return self.set_label_for_all_nodes(1, key, all_opt_nodes, all_est_nodes)
@@ -488,7 +455,7 @@ class GraphClient(Node):
     def set_label_for_all_nodes(self, label, key, all_opt_nodes, all_est_nodes):
         n_nodes = len(all_opt_nodes)
         labels = [[label]] * n_nodes
-        return ClassificationResult(key, all_opt_nodes, None, labels)
+        return ClassificationResult(self.config, key, all_opt_nodes, None, labels)
 
     def evaluate_and_publish_features(self, labels):
         if labels == None or labels == [] or labels.size() == 0:

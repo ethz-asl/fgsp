@@ -19,7 +19,8 @@ graph_client:
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
     classifier: "top" # "top" or "simple"
-    top_classifier_select_n: 10
+    top_classifier_select_n: 20
+    large_scale_partition_method: "id" # 'id' or 'nth'
 
     # Graph configuration.
     use_se3_computation: True

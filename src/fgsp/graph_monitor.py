@@ -10,8 +10,6 @@ from rclpy.node import Node
 
 from src.fgsp.graph.global_graph import GlobalGraph
 from src.fgsp.controller.signal_handler import SignalHandler
-from src.fgsp.controller.submap_handler import SubmapHandler
-from src.fgsp.common.submap_model import SubmapModel
 from src.fgsp.common.config import MonitorConfig
 from src.fgsp.common.plotter import Plotter
 from src.fgsp.common.logger import Logger
@@ -50,7 +48,6 @@ class GraphMonitor(Node):
         self.graph = GlobalGraph(
             self.config, reduced=self.config.reduce_global_graph)
         self.optimized_signal = SignalHandler(self.config)
-        self.submap_handler = SubmapHandler(self.config)
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
@@ -94,10 +91,6 @@ class GraphMonitor(Node):
         self.latest_opt_traj_msg = msg
 
     def update(self):
-        # Compute the submap constraints and publish them if enabled.
-        if self.config.enable_submap_constraints:
-            self.compute_and_publish_submaps()
-
         # Compute the global graph and signal, then publish it
         if self.config.enable_graph_building:
             self.compute_and_publish_graph()
@@ -127,50 +120,6 @@ class GraphMonitor(Node):
         # Publish the graph to the clients.
         self.publish_graph_and_traj()
 
-    def submap_callback(self, submap_msg):
-        submap = SubmapModel()
-        submap.construct_data(submap_msg)
-        submap.compute_dense_map()
-
-        id = submap.id
-        self.mutex.acquire()
-        self.submaps[id] = submap
-        if not id in self.submap_counter:
-            self.submap_counter[id] = 0
-        else:
-            self.submap_counter[id] += 1
-
-        self.mutex.release()
-
-    def compute_and_publish_submaps(self):
-        n_submaps = len(self.submaps)
-        if n_submaps != len(self.submap_counter) or n_submaps == 0:
-            return
-
-        self.mutex.acquire()
-        submaps = copy.deepcopy(self.submaps)
-        submap_counter = copy.deepcopy(self.submap_counter)
-        self.mutex.release()
-
-        # Filter out submaps based on min count.
-        if self.config.submap_min_count > 0:
-            for k, v in submap_counter.items():
-                if v < self.config.submap_min_count:
-                    submaps.pop(k)
-
-        self.publish_all_submaps(submaps)
-        msg = self.compute_submap_constraints(submaps)
-        if msg is not None:
-            self.submap_pub.publish(msg)
-
-    def compute_submap_constraints(self, submaps):
-        n_submaps = len(submaps)
-        if n_submaps == 0:
-            return None
-        Logger.LogWarn(
-            f'GraphMonitor: Computing constraints for {n_submaps} submaps.')
-        return self.submap_handler.compute_constraints(submaps)
-
     def publish_graph_and_traj(self):
         graph_msg = self.graph.to_graph_msg()
         self.pub_graph.publish(graph_msg)
@@ -190,9 +139,6 @@ class GraphMonitor(Node):
             time.sleep(0.10)
             Logger.LogInfo(
                 f'GraphMonitor: Published separate trajectory for {key}.')
-
-    def publish_all_submaps(self, submaps):
-        self.submap_handler.publish_submaps(submaps)
 
     def key_in_optimized_keys(self, key):
         return any(key in k for k in self.optimized_keys)

@@ -4,8 +4,8 @@ from src.fgsp.classifier import ClassificationResult
 
 
 class HierarchicalResult(ClassificationResult):
-    def __init__(self, robot_name, opt_nodes, features, labels, indices):
-        super().__init__(robot_name, opt_nodes, features, labels)
+    def __init__(self, config, robot_name, opt_nodes, features, labels, indices):
+        super().__init__(config, robot_name, opt_nodes, features, labels)
         self.indices = indices
         n_nodes = len(self.opt_nodes)
         self.labels = self.create_downstream_labels(n_nodes, labels)

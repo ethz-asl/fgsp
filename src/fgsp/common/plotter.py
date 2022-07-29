@@ -113,10 +113,10 @@ class Plotter(object):
         print('\n')
 
         print('{color} --- Operating Mode --------------------------------------------------------- {end}'.format(color=font.RED, end=font.END))
-        if config.use_se3_computation:
+        if config.construction_method == 'se3':
             print('{bold} Using SE(3) computations {end}'.format(
                 bold=font.BOLD, end=font.END))
-        elif config.use_so3_computation:
+        elif config.construction_method == 'so3':
             print('{bold} Using SO(3) computations {end}'.format(
                 bold=font.BOLD, end=font.END))
         else:

@@ -95,13 +95,17 @@ class BaseGraph(object):
 
         indices = np.arange(0, n_coords)
 
-        if self.config.use_se3_computation:
+        if self.config.construction_method == 'se3':
             func = partial(process_poses, poses, tree, compute_se3_weights)
-        elif self.config.use_so3_computation:
+        elif self.config.construction_method == 'so3':
             func = partial(process_poses, poses, tree, compute_so3_weights)
-        else:
+        elif self.config.construction_method == 'r3':
             func = partial(process_poses, poses, tree,
                            compute_distance_weights)
+        else:
+            Logger.LogError(
+                f'Unknown construction method: {self.config.construction_method}. Using default (se3).')
+            func = partial(process_poses, poses, tree, compute_se3_weights)
 
         n_cores = multiprocessing.cpu_count()
         with Pool(n_cores) as p:

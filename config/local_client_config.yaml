@@ -23,10 +23,7 @@ graph_client:
     large_scale_partition_method: "id" # 'id' or 'nth'
 
     # Graph configuration.
-    use_se3_computation: True
-    use_so3_computation: False
-    include_rotational_weight: False
-    include_temporal_decay_weight: False
+    construction_method: "se3" # "se3" or "so3" or "r3"
     use_graph_hierarchies: False
 
     # Div

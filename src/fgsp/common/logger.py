@@ -5,7 +5,7 @@ from .font import Font
 
 
 class Logger(object):
-    Verbosity = 1
+    Verbosity = 2
 
     @staticmethod
     def LogDebug(msg):

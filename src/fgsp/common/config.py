@@ -129,6 +129,7 @@ class ClientConfig(BaseConfig):
         self.trajectory_export_path = "/data/{key}_{src}_trajectory.npy"
         self.trajectory_raw_export_path = "/data/{key}_{src}_raw_trajectory.npy"
         self.label_output_path = "/data/opt_labels.dat"
+        self.connections_output_path = "/data/opt_connections.dat"
         self.degenerate_window = 10
         self.synchronization_max_diff_s = 1.0
         self.verbosity = 1
@@ -188,6 +189,9 @@ class ClientConfig(BaseConfig):
             "trajectory_raw_export_path", self.trajectory_raw_export_path)
         self.label_output_path = self.try_get_param(
             "label_output_path", self.label_output_path)
+        self.connections_output_path = self.try_get_param(
+            "connections_output_path", self.connections_output_path)
+
         self.degenerate_window = self.try_get_param(
             "degenerate_window", self.degenerate_window)
         self.synchronization_max_diff_s = self.try_get_param(

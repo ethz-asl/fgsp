@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+from fileinput import filename
 import numpy as np
 import time
 import pickle
@@ -61,6 +62,7 @@ class CommandPost(object):
                 small_relative_counter, mid_relative_counter, large_relative_counter)
             self.history = labels.history
             self.serialize_labels(self.previous_relatives, labels)
+            self.serialize_connections(self.history)
             time.sleep(0.001)
 
     def add_to_constraint_counter(self, n_small_constraints, n_mid_constraints, n_large_constraints):
@@ -125,4 +127,14 @@ class CommandPost(object):
         filename = self.config.dataroot + self.config.label_output_path
         outputFile = open(filename, 'w+b')
         pickle.dump(ts_label_dict, outputFile)
+        outputFile.close()
+
+    def serialize_connections(self, history):
+        edges_dict = {}
+        for k in history.keys():
+            edges_dict[k] = history[k].children
+
+        filename = self.config.dataroot + self.config.connections_output_path
+        outputFile = open(filename, 'w+b')
+        pickle.dump(edges_dict, outputFile)
         outputFile.close()

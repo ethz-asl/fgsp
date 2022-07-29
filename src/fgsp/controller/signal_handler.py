@@ -209,7 +209,11 @@ class SignalHandler(object):
             return self.compute_se3_signal(nodes)
         elif self.config.construction_method == 'so3':
             return self.compute_so3_signal(nodes)
+        elif self.config.construction_method == 'r3':
+            return self.compute_r3_signal(nodes)
         else:
+            Logger.LogError(
+                f'Unknown construction method: {self.config.construction_method}. Using default SE(3).')
             return self.compute_r3_signal(nodes)
 
     def compute_se3_signal(self, nodes):

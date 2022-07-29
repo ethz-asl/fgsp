@@ -35,7 +35,7 @@ class Logger(object):
     def LogFatal(msg):
         if Logger.Verbosity > 3:
             ts_ns = time.time() * 1e6
-            print(f'{Font.RED}{FONT.BOLD} [{ts_ns}] {msg} {Font.END}')
+            print(f'{Font.RED}{Font.BOLD} [{ts_ns}] {msg} {Font.END}')
             exit()
 
 

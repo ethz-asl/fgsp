@@ -138,6 +138,8 @@ class ReprojectPub(Node):
         if n_constraints != len(self.ts_connections_map.keys()):
             Logger.LogError(
                 'Error occurred while reading the constraints file.')
+            Logger.LogError(
+                f'{n_constraints} vs. {len(self.ts_connections_map.keys())}')
             self.enable_constraints = False
             return
         Logger.LogInfo(f'Read {n_constraints} constraints.')

@@ -104,7 +104,7 @@ class BaseGraph(object):
                            compute_distance_weights)
         else:
             Logger.LogError(
-                f'Unknown construction method: {self.config.construction_method}. Using default (se3).')
+                f'Unknown construction method: {self.config.construction_method}. Using default SE(3).')
             func = partial(process_poses, poses, tree, compute_se3_weights)
 
         n_cores = multiprocessing.cpu_count()

@@ -95,9 +95,9 @@ class BaseGraph(object):
 
         indices = np.arange(0, n_coords)
 
-        if self.config.use_se3_computation:
+        if self.config.construction_method == 'se3':
             func = partial(process_poses, poses, tree, compute_se3_weights)
-        elif self.config.use_so3_computation:
+        elif self.config.construction_method == 'so3':
             func = partial(process_poses, poses, tree, compute_so3_weights)
         else:
             func = partial(process_poses, poses, tree,

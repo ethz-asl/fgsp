@@ -140,10 +140,7 @@ class ClientConfig(BaseConfig):
         self.large_scale_partition_method = 'id'
 
         # Graph construction
-        self.include_rotational_weight = False
-        self.include_temporal_decay_weight = False
-        self.use_se3_computation = False
-        self.use_so3_computation = False
+        self.construction_method = 'se3'
         self.use_graph_hierarchies = False
 
         # input
@@ -206,14 +203,8 @@ class ClientConfig(BaseConfig):
             "large_scale_partition_method", self.large_scale_partition_method)
 
         # Graph construction
-        self.include_rotational_weight = self.try_get_param(
-            "include_rotational_weight", self.include_rotational_weight)
-        self.include_temporal_decay_weight = self.try_get_param(
-            "include_temporal_decay_weight", self.include_temporal_decay_weight)
-        self.use_se3_computation = self.try_get_param(
-            "use_se3_computation", self.use_se3_computation)
-        self.use_so3_computation = self.try_get_param(
-            "use_so3_computation", self.use_so3_computation)
+        self.construction_method = self.try_get_param(
+            "construction_method", self.construction_method)
         self.use_graph_hierarchies = self.try_get_param(
             "use_graph_hierarchies", self.use_graph_hierarchies)
 
@@ -246,9 +237,6 @@ class ClientConfig(BaseConfig):
 
 class DebugConfig(BaseConfig):
     def __init__(self):
-        # Graph construction
-        self.include_rotational_weight = False
-        self.include_temporal_decay_weight = False
         # Reduction settings.
         self.reduce_global_graph = True
         self.reduction_method = 'largest_ev'

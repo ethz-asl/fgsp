@@ -205,9 +205,9 @@ class SignalHandler(object):
         return np.array(x_rot)
 
     def compute_signal(self, nodes):
-        if self.config.use_se3_computation:
+        if self.config.construction_method == 'se3':
             return self.compute_se3_signal(nodes)
-        elif self.config.use_so3_computation:
+        elif self.config.construction_method == 'so3':
             return self.compute_so3_signal(nodes)
         else:
             return self.compute_r3_signal(nodes)

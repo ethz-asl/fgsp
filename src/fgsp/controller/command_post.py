@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+from cProfile import label
 from fileinput import filename
 import numpy as np
 import time
@@ -131,18 +132,28 @@ class CommandPost(object):
 
     def serialize_connections(self, history, labels):
         edges_dict = {}
+        labels_dict = {}
         for k in history.keys():
             parent_node = labels.opt_nodes[k]
             parent_ts_ns = Utils.ros_time_msg_to_ns(parent_node.ts)
-            for child_k in history[k].children:
+            n_children = history[k].size()
+            for i in range(0, n_children):
+                child_k = history[k].children[i]
                 child_node = labels.opt_nodes[child_k]
                 child_ts_ns = Utils.ros_time_msg_to_ns(child_node.ts)
-                if not parent_ts_ns in edges_dict.keys():
+                if parent_ts_ns not in edges_dict.keys():
                     edges_dict[parent_ts_ns] = []
                 edges_dict[parent_ts_ns].append(child_ts_ns)
 
+                child_label = history[k].types[i]
+                if parent_ts_ns not in labels_dict.keys():
+                    labels_dict[parent_ts_ns] = []
+                labels_dict[parent_ts_ns].append(child_label)
+
         print('---- connections ------------------------------------------------')
         print(edges_dict)
+        print('------------------------------------------------------')
+        print(labels_dict)
         print('------------------------------------------------------')
         filename = self.config.dataroot + self.config.connections_output_path
         outputFile = open(filename, 'w+b')

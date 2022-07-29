@@ -3,23 +3,27 @@
 import numpy as np
 from src.fgsp.common.logger import Logger
 
+
 class TransformHistory(object):
     def __init__(self):
         self.children = []
         self.transforms = []
         self.largest_diff = 0.1
+        self.types = []
 
     def size(self):
         n_children = len(self.children)
         assert n_children == len(self.transforms)
+        assert n_children == len(self.types)
         return n_children
 
-    def add_record(self, child, T):
+    def add_record(self, child, T, constraint_type):
         if self.has_child(child):
             self.remove_child(child)
 
         self.children.append(child)
         self.transforms.append(T)
+        self.types.append(constraint_type)
 
     def has_child(self, child):
         return child in self.children
@@ -27,7 +31,8 @@ class TransformHistory(object):
     def remove_child(self, child):
         res = [x for x, z in enumerate(self.children) if z == child]
         if len(res) == 0:
-            Logger.LogWarn('TransformHistory: Index retrieval failed for removal.')
+            Logger.LogWarn(
+                'TransformHistory: Index retrieval failed for removal.')
             return
         res = res[0]
         self.children.pop(res)
@@ -40,11 +45,13 @@ class TransformHistory(object):
         res = [x for x, z in enumerate(self.children) if z == child]
         n_res = len(res)
         if n_res == 0:
-            Logger.LogWarn('[TransformHistory] Index retrieval failed for comparison.')
+            Logger.LogWarn(
+                '[TransformHistory] Index retrieval failed for comparison.')
             return False
 
         if len(res) > 1:
-            Logger.LogWarn('[TransformHistory] Found multiple children for parent.')
+            Logger.LogWarn(
+                '[TransformHistory] Found multiple children for parent.')
         res = res[0]
         T_prev = self.transforms[res]
         T_diff = np.abs(T_prev - T)

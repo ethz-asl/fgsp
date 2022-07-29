@@ -62,7 +62,7 @@ class CommandPost(object):
                 small_relative_counter, mid_relative_counter, large_relative_counter)
             self.history = labels.history
             self.serialize_labels(self.previous_relatives, labels)
-            self.serialize_connections(self.history)
+            self.serialize_connections(self.history, labels)
             time.sleep(0.001)
 
     def add_to_constraint_counter(self, n_small_constraints, n_mid_constraints, n_large_constraints):
@@ -129,11 +129,21 @@ class CommandPost(object):
         pickle.dump(ts_label_dict, outputFile)
         outputFile.close()
 
-    def serialize_connections(self, history):
+    def serialize_connections(self, history, labels):
         edges_dict = {}
         for k in history.keys():
-            edges_dict[k] = history[k].children
+            parent_node = labels.opt_nodes[k]
+            parent_ts_ns = Utils.ros_time_msg_to_ns(parent_node.ts)
+            for child_k in history[k].children:
+                child_node = labels.opt_nodes[child_k]
+                child_ts_ns = Utils.ros_time_msg_to_ns(child_node.ts)
+                if not parent_ts_ns in edges_dict.keys():
+                    edges_dict[parent_ts_ns] = []
+                edges_dict[parent_ts_ns].append(child_ts_ns)
 
+        print('---- connections ------------------------------------------------')
+        print(edges_dict)
+        print('------------------------------------------------------')
         filename = self.config.dataroot + self.config.connections_output_path
         outputFile = open(filename, 'w+b')
         pickle.dump(edges_dict, outputFile)

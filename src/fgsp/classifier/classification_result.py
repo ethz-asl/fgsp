@@ -9,7 +9,7 @@ from scipy import spatial
 
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
-from src.fgsp.common.transform_history import TransformHistory
+from src.fgsp.common.transform_history import TransformHistory, ConstraintType
 
 
 class ClassificationResult(object):
@@ -130,7 +130,7 @@ class ClassificationResult(object):
                 pose_msg = self.create_pose_msg(
                     self.opt_nodes[target_idx], T_a_b)
                 relative_constraint.poses.append(pose_msg)
-                history.add_record(target_idx, T_a_b)
+                history.add_record(target_idx, T_a_b, ConstraintType.LARGE)
                 counter = counter + 1
 
         if idx != 0:
@@ -141,7 +141,7 @@ class ClassificationResult(object):
                 pose_msg = self.create_pose_msg(
                     self.opt_nodes[target_idx], T_a_b)
                 relative_constraint.poses.append(pose_msg)
-                history.add_record(target_idx, T_a_b)
+                history.add_record(target_idx, T_a_b, ConstraintType.LARGE)
                 counter = counter + 1
 
         return relative_constraint, history, counter
@@ -188,7 +188,7 @@ class ClassificationResult(object):
             if history.has_different_transform(lower, T_a_b):
                 pose_msg = self.create_pose_msg(self.opt_nodes[lower], T_a_b)
                 relative_constraint.poses.append(pose_msg)
-                history.add_record(lower, T_a_b)
+                history.add_record(lower, T_a_b, ConstraintType.MID)
                 counter = counter + 1
         if upper < self.n_nodes:
             T_a_b = self.compute_relative_distance(
@@ -196,7 +196,7 @@ class ClassificationResult(object):
             if history.has_different_transform(upper, T_a_b):
                 pose_msg = self.create_pose_msg(self.opt_nodes[upper], T_a_b)
                 relative_constraint.poses.append(pose_msg)
-                history.add_record(upper, T_a_b)
+                history.add_record(upper, T_a_b, ConstraintType.MID)
                 counter = counter + 1
         return relative_constraint, history, counter
 
@@ -211,7 +211,7 @@ class ClassificationResult(object):
             if history.has_different_transform(idx - 1, T_a_b):
                 pose_msg = self.create_pose_msg(self.opt_nodes[idx - 1], T_a_b)
                 relative_constraint.poses.append(pose_msg)
-                history.add_record(idx - 1, T_a_b)
+                history.add_record(idx - 1, T_a_b, ConstraintType.SMALL)
                 counter = counter + 1
         # if idx - 2 >= 0:
         #     T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx - 2])
@@ -226,7 +226,7 @@ class ClassificationResult(object):
             if history.has_different_transform(idx + 1, T_a_b):
                 pose_msg = self.create_pose_msg(self.opt_nodes[idx + 1], T_a_b)
                 relative_constraint.poses.append(pose_msg)
-                history.add_record(idx + 1, T_a_b)
+                history.add_record(idx + 1, T_a_b, ConstraintType.SMALL)
                 counter = counter + 1
         # if idx + 2 < self.n_nodes:
         #     T_a_b = self.compute_relative_distance(cur_opt, self.opt_nodes[idx + 2])

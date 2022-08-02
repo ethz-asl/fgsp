@@ -1,7 +1,14 @@
 #! /usr/bin/env python3
+from enum import Enum
 
 import numpy as np
 from src.fgsp.common.logger import Logger
+
+
+class ConstraintType(Enum):
+    SMALL = 1
+    MID = 2
+    LARGE = 3
 
 
 class TransformHistory(object):
@@ -18,12 +25,16 @@ class TransformHistory(object):
         return n_children
 
     def add_record(self, child, T, constraint_type):
+        if type(constraint_type) is not ConstraintType:
+            Logger.LogError(
+                'TransformHistory: Constraint type is not of type ConstraintType.')
+            return
         if self.has_child(child):
             self.remove_child(child)
 
         self.children.append(child)
         self.transforms.append(T)
-        self.types.append(constraint_type)
+        self.types.append(constraint_type.value)
 
     def has_child(self, child):
         return child in self.children

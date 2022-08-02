@@ -62,7 +62,6 @@ class CommandPost(object):
             self.add_to_constraint_counter(
                 small_relative_counter, mid_relative_counter, large_relative_counter)
             self.history = labels.history
-            self.serialize_labels(self.previous_relatives, labels)
             self.serialize_connections(self.history, labels)
             time.sleep(0.001)
 
@@ -118,18 +117,6 @@ class CommandPost(object):
         self.send_degenerate_anchors_based_on_indices(
             all_opt_nodes, self.degenerate_indices)
 
-    def serialize_labels(self, relative_nodes, labels):
-        ts_label_dict = {}
-        for k, v in relative_nodes.items():
-            opt_node = labels.opt_nodes[k]
-            ts_ns = Utils.ros_time_msg_to_ns(opt_node.ts)
-            ts_label_dict[ts_ns] = v
-
-        filename = self.config.dataroot + self.config.label_output_path
-        outputFile = open(filename, 'w+b')
-        pickle.dump(ts_label_dict, outputFile)
-        outputFile.close()
-
     def serialize_connections(self, history, labels):
         edges_dict = {}
         labels_dict = {}
@@ -150,12 +137,12 @@ class CommandPost(object):
                     labels_dict[parent_ts_ns] = []
                 labels_dict[parent_ts_ns].append(child_label)
 
-        print('---- connections ------------------------------------------------')
-        print(edges_dict)
-        print('------------------------------------------------------')
-        print(labels_dict)
-        print('------------------------------------------------------')
         filename = self.config.dataroot + self.config.connections_output_path
         outputFile = open(filename, 'w+b')
         pickle.dump(edges_dict, outputFile)
+        outputFile.close()
+
+        filename = self.config.dataroot + self.config.label_output_path
+        outputFile = open(filename, 'w+b')
+        pickle.dump(labels_dict, outputFile)
         outputFile.close()

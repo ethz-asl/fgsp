@@ -25,6 +25,7 @@ from src.fgsp.common.utils import Utils
 from src.fgsp.common.comms import Comms
 from src.fgsp.common.logger import Logger
 from src.fgsp.common.visualizer import Visualizer
+from src.fgsp.common.transform_history import ConstraintType
 
 FIELDS_XYZ = [
     PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
@@ -166,12 +167,17 @@ class ReprojectPub(Node):
 
         return poses
 
+    def should_publish(self, map_pub, traj_pub):
+        has_map_subs = map_pub.get_subscription_count() > 0
+        has_traj_subs = traj_pub.get_subscription_count() > 0
+        return has_map_subs & has_traj_subs
+
     def publish_all_maps(self):
         if len(self.ts_cloud_map) == 0:
             Logger.LogWarn(f'Received no clouds yet.')
             return
 
-        if self.enable_gt:
+        if self.enable_gt and self.should_publish(self.gt_map_pub, self.gt_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             gt_map, gt_idx = self.accumulate_cloud(self.gt_traj, ts_cloud_map)
             self.publish_map(self.gt_map_pub, self.gt_path_pub,
@@ -179,7 +185,7 @@ class ReprojectPub(Node):
             Logger.LogInfo(
                 f'Published gt map with {len(gt_map.points)} points.')
 
-        if self.enable_est:
+        if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             est_map, est_idx = self.accumulate_cloud(
                 self.est_traj, ts_cloud_map)
@@ -188,7 +194,7 @@ class ReprojectPub(Node):
             Logger.LogInfo(
                 f'Published est map with {len(est_map.points)} points.')
 
-        if self.enable_corr:
+        if self.enable_corr and self.should_publish(self.corr_map_pub, self.corr_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             corr_map, corr_idx = self.accumulate_cloud(
                 self.corr_traj, ts_cloud_map)
@@ -211,13 +217,18 @@ class ReprojectPub(Node):
             if idx == -1:
                 continue
 
-            if 1 in labels:
+            if ConstraintType.SMALL.value in labels:
                 color = [0.9, 0.05, 0.05]
                 self.add_constraint_at(traj, idx, idx-1, color)
                 self.add_constraint_at(traj, idx, idx+1, color)
 
-            if 2 in labels:
+            if ConstraintType.MID.value in labels:
                 color = [0.05, 0.05, 0.9]
+                self.add_constraint_at(traj, idx, idx-5, color)
+                self.add_constraint_at(traj, idx, idx+5, color)
+
+            if ConstraintType.LARGE.value in labels:
+                color = [0.05, 0.9, 0.9]
                 self.add_constraint_at(traj, idx, idx-5, color)
                 self.add_constraint_at(traj, idx, idx+5, color)
 

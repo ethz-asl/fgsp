@@ -217,20 +217,23 @@ class ReprojectPub(Node):
             if idx == -1:
                 continue
 
-            if ConstraintType.SMALL.value in labels:
-                color = [0.9, 0.05, 0.05]
-                self.add_constraint_at(traj, idx, idx-1, color)
-                self.add_constraint_at(traj, idx, idx+1, color)
+            n_labels = len(labels)
+            for i in range(n_labels):
+                label = labels[i]
+                child_ts_ns = self.ts_connections_map[ts_ns][i]
+                child_ts_s = Utils.ts_ns_to_seconds(child_ts_ns)
+                target_idx = self.lookup_closest_ts_idx(traj[:, 0], child_ts_s)
 
-            if ConstraintType.MID.value in labels:
-                color = [0.05, 0.05, 0.9]
-                self.add_constraint_at(traj, idx, idx-5, color)
-                self.add_constraint_at(traj, idx, idx+5, color)
+                if label == ConstraintType.SMALL.value:
+                    color = [0.9, 0.05, 0.05]
+                elif label == ConstraintType.MID.value:
+                    color = [0.05, 0.05, 0.9]
+                elif label == ConstraintType.LARGE.value:
+                    color = [0.05, 0.9, 0.9]
+                else:
+                    color = [0.0, 0.0, 0.0]
 
-            if ConstraintType.LARGE.value in labels:
-                color = [0.05, 0.9, 0.9]
-                self.add_constraint_at(traj, idx, idx-5, color)
-                self.add_constraint_at(traj, idx, idx+5, color)
+                self.add_constraint_at(traj, idx, target_idx, color)
 
         self.constraints_pub.publish(self.constraint_markers)
 

@@ -23,7 +23,9 @@ from scipy.spatial.transform import Rotation
 
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.comms import Comms
+from src.fgsp.common.logger import Logger
 from src.fgsp.common.visualizer import Visualizer
+from src.fgsp.common.transform_history import ConstraintType
 
 FIELDS_XYZ = [
     PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
@@ -35,6 +37,7 @@ FIELDS_XYZ = [
 class ReprojectPub(Node):
     def __init__(self):
         super().__init__('reproject_viz')
+        Logger.Verbosity = 7
         self.dataroot = self.try_get_param('dataroot', './')
 
         # GT Publisher
@@ -53,17 +56,18 @@ class ReprojectPub(Node):
             self.create_corr_pub()
 
         self.constraints_file = self.try_get_param('constraints_file', '')
-        self.enable_constraints = self.constraints_file != ''
+        self.connections_file = self.try_get_param('connections_file', '')
+        self.enable_constraints = self.constraints_file != '' and self.connections_file != ''
         if self.enable_constraints:
             self.create_constraints_pub()
             self.comms = Comms()
             self.comms.node = self
             self.vis_helper = Visualizer()
 
-        print(f'Enable GT: {self.enable_gt}')
-        print(f'Enable EST: {self.enable_est}')
-        print(f'Enable CORR: {self.enable_corr}')
-        print(f'Enable CONSTR: {self.enable_constraints}')
+        Logger.LogDebug(f'Enable GT: {self.enable_gt}')
+        Logger.LogDebug(f'Enable EST: {self.enable_est}')
+        Logger.LogDebug(f'Enable CORR: {self.enable_corr}')
+        Logger.LogDebug(f'Enable CONSTR: {self.enable_constraints}')
 
         # Configuration
         self.T_O_L = np.array(self.try_get_param(
@@ -75,8 +79,9 @@ class ReprojectPub(Node):
         self.cloud_sub = self.create_subscription(
             PointCloud2, cloud_topic, self.cloud_callback, 10)
         self.ts_cloud_map = {}
-        print(f'Subscribed to {cloud_topic}. Waiting for clouds...')
-        print('------------------------------------------------')
+
+        Logger.LogInfo(f'Subscribed to {cloud_topic}. Waiting for clouds...')
+        Logger.LogInfo('------------------------------------------------')
 
         # Updater
         self.timer = self.create_timer(1, self.publish_all_maps)
@@ -84,10 +89,11 @@ class ReprojectPub(Node):
     def create_gt_pub(self):
         self.gt_traj = self.read_traj_file('gt_traj_file')
         if (len(self.gt_traj) == 0):
-            print('Error occurred while reading the trajectory file.')
+            Logger.LogError(
+                'Error occurred while reading the trajectory file.')
             self.enable_gt = False
             return
-        print(f'Read {self.gt_traj.shape[0]} gt poses.')
+        Logger.LogInfo(f'Read {self.gt_traj.shape[0]} gt poses.')
 
         self.gt_map_pub = self.create_publisher(
             PointCloud2, 'gt_map_cloud', 10)
@@ -96,13 +102,14 @@ class ReprojectPub(Node):
     def create_est_pub(self):
         self.est_traj = self.read_traj_file('est_traj_file')
         if (len(self.est_traj) == 0):
-            print('Error occurred while reading the trajectory file.')
+            Logger.LogError(
+                'Error occurred while reading the trajectory file.')
             self.enable_est = False
             return
         self.T_GT_EST = np.array(self.try_get_param(
             'T_GT_EST', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
         self.est_traj = self.align_poses(self.est_traj, self.T_GT_EST)
-        print(f'Read {self.est_traj.shape[0]} est poses.')
+        Logger.LogInfo(f'Read {self.est_traj.shape[0]} est poses.')
 
         self.est_map_pub = self.create_publisher(
             PointCloud2, 'est_map_cloud', 10)
@@ -111,13 +118,14 @@ class ReprojectPub(Node):
     def create_corr_pub(self):
         self.corr_traj = self.read_traj_file('corr_traj_file')
         if (len(self.corr_traj) == 0):
-            print('Error occurred while reading the trajectory file.')
+            Logger.LogError(
+                'Error occurred while reading the trajectory file.')
             self.enable_corr = False
             return
         self.T_GT_CORR = np.array(self.try_get_param(
             'T_GT_CORR', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
         self.corr_traj = self.align_poses(self.corr_traj, self.T_GT_CORR)
-        print(f'Read {self.corr_traj.shape[0]} corr poses.')
+        Logger.LogInfo(f'Read {self.corr_traj.shape[0]} corr poses.')
         self.corr_map_pub = self.create_publisher(
             PointCloud2, 'corr_map_cloud', 10)
         self.corr_path_pub = self.create_publisher(Path, 'corr_trajectory', 10)
@@ -125,7 +133,19 @@ class ReprojectPub(Node):
     def create_constraints_pub(self):
         self.ts_constraint_map = self.read_constraints_file(
             self.constraints_file)
-        print(f'Read {len(self.ts_constraint_map.keys())} constraints.')
+        self.ts_connections_map = self.read_constraints_file(
+            self.connections_file)
+        n_constraints = len(self.ts_constraint_map.keys())
+        if n_constraints != len(self.ts_connections_map.keys()):
+            Logger.LogError(
+                'Error occurred while reading the constraints file.')
+            Logger.LogError(
+                f'{n_constraints} vs. {len(self.ts_connections_map.keys())}')
+            self.enable_constraints = False
+            return
+        Logger.LogInfo(f'Read {n_constraints} constraints.')
+
+        print(f':constraints {self.ts_constraint_map}')
 
         self.constraint_markers = MarkerArray()
         self.constraints_pub = self.create_publisher(
@@ -149,34 +169,42 @@ class ReprojectPub(Node):
 
         return poses
 
+    def should_publish(self, map_pub, traj_pub):
+        has_map_subs = map_pub.get_subscription_count() > 0
+        has_traj_subs = traj_pub.get_subscription_count() > 0
+        return has_map_subs & has_traj_subs
+
     def publish_all_maps(self):
         if len(self.ts_cloud_map) == 0:
-            print(f'Received no clouds yet.')
+            Logger.LogWarn(f'Received no clouds yet.')
             return
 
-        if self.enable_gt:
+        if self.enable_gt and self.should_publish(self.gt_map_pub, self.gt_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             gt_map, gt_idx = self.accumulate_cloud(self.gt_traj, ts_cloud_map)
             self.publish_map(self.gt_map_pub, self.gt_path_pub,
                              gt_map, self.gt_traj[0:gt_idx+1, :])
-            print(f'Published gt map with {len(gt_map.points)} points.')
+            Logger.LogInfo(
+                f'Published gt map with {len(gt_map.points)} points.')
 
-        if self.enable_est:
+        if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             est_map, est_idx = self.accumulate_cloud(
                 self.est_traj, ts_cloud_map)
             self.publish_map(self.est_map_pub, self.est_path_pub,
                              est_map, self.est_traj[0:est_idx+1, :])
-            print(f'Published est map with {len(est_map.points)} points.')
+            Logger.LogInfo(
+                f'Published est map with {len(est_map.points)} points.')
 
-        if self.enable_corr:
+        if self.enable_corr and self.should_publish(self.corr_map_pub, self.corr_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             corr_map, corr_idx = self.accumulate_cloud(
                 self.corr_traj, ts_cloud_map)
             corr_traj = self.corr_traj[0:corr_idx+1, :]
             self.publish_map(self.corr_map_pub,
                              self.corr_path_pub, corr_map, corr_traj)
-            print(f'Published corr map with {len(corr_map.points)} points.')
+            Logger.LogInfo(
+                f'Published corr map with {len(corr_map.points)} points.')
             if self.enable_constraints:
                 self.publish_constraints(corr_traj)
 
@@ -191,15 +219,25 @@ class ReprojectPub(Node):
             if idx == -1:
                 continue
 
-            if 1 in labels:
-                color = [0.9, 0.05, 0.05]
-                self.add_constraint_at(traj, idx, idx-1, color)
-                self.add_constraint_at(traj, idx, idx+1, color)
+            n_labels = len(labels)
+            for i in range(n_labels):
+                label = labels[i]
+                child_ts_ns = self.ts_connections_map[ts_ns][i]
+                child_ts_s = Utils.ts_ns_to_seconds(child_ts_ns)
+                target_idx = self.lookup_closest_ts_idx(traj[:, 0], child_ts_s)
+                if target_idx == -1:
+                    continue
 
-            if 2 in labels:
-                color = [0.05, 0.05, 0.9]
-                self.add_constraint_at(traj, idx, idx-5, color)
-                self.add_constraint_at(traj, idx, idx+5, color)
+                if label == ConstraintType.SMALL.value:
+                    color = [0.9, 0.05, 0.05]
+                elif label == ConstraintType.MID.value:
+                    color = [0.05, 0.9, 0.05]
+                elif label == ConstraintType.LARGE.value:
+                    color = [0.05, 0.05, 0.9]
+                else:
+                    color = [0.0, 0.0, 0.0]
+
+                self.add_constraint_at(traj, idx, target_idx, color)
 
         self.constraints_pub.publish(self.constraint_markers)
 
@@ -301,45 +339,45 @@ class ReprojectPub(Node):
         traj_full_path = os.path.join(self.dataroot, traj_file_path)
         ext = pathlib.Path(traj_file_path).suffix
         if ext == '.csv':
-            print(f'Reading CSV file: {traj_full_path}')
+            Logger.LogDebug(f'Reading CSV file: {traj_full_path}')
             return self.read_csv_file(traj_full_path)
         elif ext == '.npy':
-            print(f'Reading NPY file: {traj_full_path}')
+            Logger.LogDebug(f'Reading NPY file: {traj_full_path}')
             return self.read_npy_file(traj_full_path)
-        print(f'Unknown file extension: {ext}')
+        Logger.LogError(f'Unknown file extension: {ext}')
         return np.array([])
 
     def read_csv_file(self, filename):
         filename = os.path.join(self.dataroot, filename)
-        print(f'ReprojectPub: Reading file {filename}.')
+        Logger.LogDebug(f'ReprojectPub: Reading file {filename}.')
         if exists(filename):
             robot_traj = file_interface.read_tum_trajectory_file(filename)
             return np.column_stack((robot_traj.timestamps, robot_traj.positions_xyz,
                                     robot_traj.orientations_quat_wxyz))
 
         else:
-            print(f'ReprojectPub: File does not exist!')
+            Logger.LogError(f'ReprojectPub: File does not exist!')
             return np.array([])
 
     def read_npy_file(self, filename):
         filename = os.path.join(self.dataroot, filename)
-        print(f'ReprojectPub: Reading file {filename}.')
+        Logger.LogDebug(f'ReprojectPub: Reading file {filename}.')
         if exists(filename):
             return self.convert_to_traj(np.load(filename))
         else:
-            print(f'ReprojectPub: File does not exist!')
+            Logger.LogError(f'ReprojectPub: File does not exist!')
             return np.array([])
 
     def read_constraints_file(self, filename):
         filename = os.path.join(self.dataroot, filename)
-        print(f'ReprojectPub: Reading constraints file {filename}.')
+        Logger.LogDebug(f'ReprojectPub: Reading constraints file {filename}.')
         dict = {}
         if exists(filename):
             input_file = open(filename, 'rb')
             dict = pickle.load(input_file)
             input_file.close()
         else:
-            print(f'ReprojectPub: Constraints file does not exist!')
+            Logger.LogError(f'ReprojectPub: Constraints file does not exist!')
         return dict
 
 

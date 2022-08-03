@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+from cProfile import label
+from fileinput import filename
 import numpy as np
 import time
 import pickle
@@ -27,7 +29,7 @@ class CommandPost(object):
         self.mid_constraint_counter = 0
         self.large_constraint_counter = 0
         self.anchor_constraint_counter = 0
-        self.history = None
+        self.history = {}
 
         Logger.LogInfo("CommandPost: Initialized command post center.")
 
@@ -42,16 +44,16 @@ class CommandPost(object):
         # Should always publish for all states as we don't know
         # whether they reached the clients.
         n_nodes = labels.size()
+
+        # Set the history for the current labels.
+        labels.history = self.history
         for i in range(0, n_nodes):
-            history = None
             if i in self.previous_relatives.keys():
                 labels.labels[i] = list(
                     set(labels.labels[i]+self.previous_relatives[i]))
-                if i in self.history.keys():
-                    history = self.history[i]
 
             relative_constraint, small_relative_counter, mid_relative_counter, large_relative_counter = labels.check_and_construct_constraint_at(
-                i, history)
+                i)
             if relative_constraint is None:
                 continue  # no-op
             self.previous_relatives[i] = labels.labels[i]
@@ -59,9 +61,9 @@ class CommandPost(object):
                                self.config.relative_node_topic)
             self.add_to_constraint_counter(
                 small_relative_counter, mid_relative_counter, large_relative_counter)
-            self.history = labels.history
-            self.serialize_labels(self.previous_relatives, labels)
             time.sleep(0.001)
+
+        self.serialize_connections(self.history, labels)
 
     def add_to_constraint_counter(self, n_small_constraints, n_mid_constraints, n_large_constraints):
         self.small_constraint_counter = self.small_constraint_counter + n_small_constraints
@@ -115,14 +117,32 @@ class CommandPost(object):
         self.send_degenerate_anchors_based_on_indices(
             all_opt_nodes, self.degenerate_indices)
 
-    def serialize_labels(self, relative_nodes, labels):
-        ts_label_dict = {}
-        for k, v in relative_nodes.items():
-            opt_node = labels.opt_nodes[k]
-            ts_ns = Utils.ros_time_msg_to_ns(opt_node.ts)
-            ts_label_dict[ts_ns] = v
+    def serialize_connections(self, history, labels):
+        edges_dict = {}
+        labels_dict = {}
+        for k in history.keys():
+            parent_node = labels.opt_nodes[k]
+            parent_ts_ns = Utils.ros_time_msg_to_ns(parent_node.ts)
+            n_children = history[k].size()
+            for i in range(0, n_children):
+                child_k = history[k].children[i]
+                child_node = labels.opt_nodes[child_k]
+                child_ts_ns = Utils.ros_time_msg_to_ns(child_node.ts)
+                if parent_ts_ns not in edges_dict.keys():
+                    edges_dict[parent_ts_ns] = []
+                edges_dict[parent_ts_ns].append(child_ts_ns)
+
+                child_label = history[k].types[i]
+                if parent_ts_ns not in labels_dict.keys():
+                    labels_dict[parent_ts_ns] = []
+                labels_dict[parent_ts_ns].append(child_label)
+
+        filename = self.config.dataroot + self.config.connections_output_path
+        outputFile = open(filename, 'w+b')
+        pickle.dump(edges_dict, outputFile)
+        outputFile.close()
 
         filename = self.config.dataroot + self.config.label_output_path
         outputFile = open(filename, 'w+b')
-        pickle.dump(ts_label_dict, outputFile)
+        pickle.dump(labels_dict, outputFile)
         outputFile.close()

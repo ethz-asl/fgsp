@@ -133,16 +133,16 @@ class ClassificationResult(object):
                 history.add_record(target_idx, T_a_b, ConstraintType.LARGE)
                 counter = counter + 1
 
-        if idx != 0:
-            target_idx = 1
-            T_a_b = self.compute_relative_distance(
-                cur_opt, self.opt_nodes[target_idx])
-            if history.has_different_transform(target_idx, T_a_b):
-                pose_msg = self.create_pose_msg(
-                    self.opt_nodes[target_idx], T_a_b)
-                relative_constraint.poses.append(pose_msg)
-                history.add_record(target_idx, T_a_b, ConstraintType.LARGE)
-                counter = counter + 1
+        # if idx != 0:
+        #     target_idx = 1
+        #     T_a_b = self.compute_relative_distance(
+        #         cur_opt, self.opt_nodes[target_idx])
+        #     if history.has_different_transform(target_idx, T_a_b):
+        #         pose_msg = self.create_pose_msg(
+        #             self.opt_nodes[target_idx], T_a_b)
+        #         relative_constraint.poses.append(pose_msg)
+        #         history.add_record(target_idx, T_a_b, ConstraintType.LARGE)
+        #         counter = counter + 1
 
         return relative_constraint, history, counter
 
@@ -162,7 +162,7 @@ class ClassificationResult(object):
         _, nn_indices = self.query_tree(submap_idx, tree)
         return self.partitions[nn_indices]
 
-    def query_tree(self, cur_id, tree, n_neighbors=10, p_norm=2, dist=10):
+    def query_tree(self, cur_id, tree, n_neighbors=15, p_norm=2, dist=40):
         cur_position = self.opt_nodes[self.partitions[cur_id]].position
         nn_dists, nn_indices = tree.query(
             cur_position,
@@ -173,7 +173,7 @@ class ClassificationResult(object):
         # Remove self and fix output.
         nn_dists, nn_indices = Utils.fix_nn_output(
             n_neighbors, cur_id, nn_dists, nn_indices)
-        mask = nn_dists >= 5
+        mask = nn_dists >= 30
         return nn_dists[mask], nn_indices[mask]
 
     def construct_mid_area_constraint(self, idx, relative_constraint, history):

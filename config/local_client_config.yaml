@@ -23,7 +23,7 @@ graph_client:
     large_scale_partition_method: "id" # 'id' or 'nth'
 
     # Graph configuration.
-    construction_method: "r3" # "se3" or "so3" or "r3"
+    construction_method: "so3" # "se3" or "so3" or "r3"
     use_graph_hierarchies: False
 
     # Div

@@ -3,7 +3,7 @@ reproject_viz:
     dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/se3_r3_comparison_h_floor/"
     gt_traj_file: "gt.csv"
     est_traj_file: "onboard.csv"
-    corr_traj_file: "se3_top30.csv"
+    corr_traj_file: "r3_top10.csv"
     constraints_file: "opt_labels.dat"
     connections_file: "opt_connections.dat"
 

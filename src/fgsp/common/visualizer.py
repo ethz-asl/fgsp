@@ -27,7 +27,7 @@ class Visualizer(object):
         line_marker.ns = "Line"
         line_marker.action = Marker().ADD
         line_marker.type = Marker().LINE_STRIP
-        line_marker.scale.x = 0.5
+        line_marker.scale.x = 0.3
         return line_marker
 
     def create_sphere_marker(self, frame_id='map'):

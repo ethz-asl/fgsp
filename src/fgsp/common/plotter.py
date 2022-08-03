@@ -122,10 +122,6 @@ class Plotter(object):
         else:
             print('{bold} Using R^3 computations {end}'.format(
                 bold=font.BOLD, end=font.END))
-            print('{bold} Including rotational weight: {end} {val}'.format(
-                bold=font.BOLD, end=font.END, val=config.include_rotational_weight))
-            print('{bold} Including temporal decay: {end} {val}'.format(
-                bold=font.BOLD, end=font.END, val=config.include_temporal_decay_weight))
         print('{bold} Classifier: {end} {val}'.format(
             bold=font.BOLD, end=font.END, val=config.classifier))
         print('\n')

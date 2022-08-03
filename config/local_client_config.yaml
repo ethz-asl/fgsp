@@ -19,11 +19,11 @@ graph_client:
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
     classifier: "top" # "top" or "simple"
-    top_classifier_select_n: 20
+    top_classifier_select_n: 10
     large_scale_partition_method: "id" # 'id' or 'nth'
 
     # Graph configuration.
-    construction_method: "se3" # "se3" or "so3" or "r3"
+    construction_method: "r3" # "se3" or "so3" or "r3"
     use_graph_hierarchies: False
 
     # Div

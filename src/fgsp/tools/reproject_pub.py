@@ -145,6 +145,8 @@ class ReprojectPub(Node):
             return
         Logger.LogInfo(f'Read {n_constraints} constraints.')
 
+        print(f':constraints {self.ts_constraint_map}')
+
         self.constraint_markers = MarkerArray()
         self.constraints_pub = self.create_publisher(
             MarkerArray, 'constraints', 10)
@@ -220,9 +222,6 @@ class ReprojectPub(Node):
             n_labels = len(labels)
             for i in range(n_labels):
                 label = labels[i]
-                if label == 3:
-                    Logger.LogWarn(
-                        f'==============================================')
                 child_ts_ns = self.ts_connections_map[ts_ns][i]
                 child_ts_s = Utils.ts_ns_to_seconds(child_ts_ns)
                 target_idx = self.lookup_closest_ts_idx(traj[:, 0], child_ts_s)
@@ -232,9 +231,9 @@ class ReprojectPub(Node):
                 if label == ConstraintType.SMALL.value:
                     color = [0.9, 0.05, 0.05]
                 elif label == ConstraintType.MID.value:
-                    color = [0.05, 0.05, 0.9]
-                elif label == ConstraintType.LARGE.value:
                     color = [0.05, 0.9, 0.05]
+                elif label == ConstraintType.LARGE.value:
+                    color = [0.05, 0.05, 0.9]
                 else:
                     color = [0.0, 0.0, 0.0]
 
@@ -316,7 +315,7 @@ class ReprojectPub(Node):
     def lookup_closest_ts_idx(self, timestamps_s, ts_s):
         diff_timestamps = np.abs(timestamps_s - ts_s)
         minval = np.amin(diff_timestamps)
-        if (minval > 1):
+        if (minval > 1e-4):
             return -1
 
         return np.where(diff_timestamps == minval)[0][0]

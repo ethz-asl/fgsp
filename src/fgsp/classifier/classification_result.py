@@ -20,7 +20,7 @@ class ClassificationResult(object):
         self.n_nodes = len(opt_nodes)
         self.features = features
         self.labels = self.check_and_fix_labels(labels)
-        self.history = {}
+        self.history = None
         self.partitions = self.partition_nodes(
             self.config.large_scale_partition_method)
         self.ts_partitions = self.get_ts_from_nodes(self.partitions)
@@ -80,10 +80,15 @@ class ClassificationResult(object):
     def size(self):
         return len(self.opt_nodes)
 
-    def check_and_construct_constraint_at(self, idx, transform_history):
+    def check_and_construct_constraint_at(self, idx):
         local_labels = self.labels[idx]
         if local_labels is None or len(local_labels) == 0:
             return None, 0, 0, 0
+
+        if self.history != None and idx in self.history.keys():
+            transform_history = self.history[idx]
+        else:
+            transform_history = TransformHistory()
 
         cur_opt = self.opt_nodes[idx]
         relative_constraint = Path()
@@ -92,8 +97,6 @@ class ClassificationResult(object):
         small_relative_counter = 0
         mid_relative_counter = 0
         large_relative_counter = 0
-        if transform_history == None:
-            transform_history = TransformHistory()
 
         if 1 in local_labels:
             relative_constraint, transform_history, n_added = self.construct_small_area_constraint(
@@ -111,7 +114,9 @@ class ClassificationResult(object):
         if len(relative_constraint.poses) == 0:
             return None, 0, 0, 0
 
-        self.history[idx] = transform_history
+        if self.history != None:
+            self.history[idx] = transform_history
+
         return relative_constraint, small_relative_counter, mid_relative_counter, large_relative_counter
 
     def construct_large_area_constraint(self, idx, relative_constraint, history):

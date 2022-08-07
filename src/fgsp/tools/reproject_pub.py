@@ -20,6 +20,7 @@ import rclpy
 from rclpy.node import Node
 from evo.tools import file_interface
 from scipy.spatial.transform import Rotation
+from scipy import interpolate
 
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.comms import Comms
@@ -63,6 +64,8 @@ class ReprojectPub(Node):
             self.comms = Comms()
             self.comms.node = self
             self.vis_helper = Visualizer()
+            self.compute_splines = self.try_get_param('compute_splines', False)
+            self.spline_points = self.try_get_param('spline_points', 10)
 
         Logger.LogDebug(f'Enable GT: {self.enable_gt}')
         Logger.LogDebug(f'Enable EST: {self.enable_est}')
@@ -237,19 +240,62 @@ class ReprojectPub(Node):
                 else:
                     color = [0.0, 0.0, 0.0]
 
-                self.add_constraint_at(traj, idx, target_idx, color)
+                self.add_constraint_at(traj, idx, target_idx, label, color)
 
         self.constraints_pub.publish(self.constraint_markers)
 
-    def add_constraint_at(self, traj, idx_a, idx_b, color):
+    def add_constraint_at(self, traj, idx_a, idx_b, label, color):
         n_poses = traj.shape[0]
         if (idx_a < 0 or idx_a >= n_poses):
             return
         if (idx_b < 0 or idx_b >= n_poses):
             return
+        if self.compute_splines:
+            self.add_spline_constraints(traj, idx_a, idx_b, label, color)
+        else:
+            self.add_linear_constraints(traj, idx_a, idx_b, color)
+
+    def add_linear_constraints(self, traj, idx_a, idx_b, color):
         points = [traj[idx_a, 1:4], traj[idx_b, 1:4]]
         line_marker = self.vis_helper.create_point_line_markers(points, color)
         self.constraint_markers.markers.append(line_marker)
+
+    def interpolate_spline(self, xyz, n_points=20):
+        tck, _ = interpolate.splprep(
+            [xyz[:, 0], xyz[:, 1], xyz[:, 2]], k=2, s=2)
+        u = np.linspace(0, 1, n_points)
+        x, y, z = interpolate.splev(u, tck)
+        xyz_interp = np.array([x, y, z]).T
+        return np.reshape(xyz_interp, (n_points, 3))
+
+    def add_spline_constraints(self, traj, idx_a, idx_b, label, color):
+        origin = traj[idx_a, 1:4]
+        dest = traj[idx_b, 1:4]
+
+        z = 0
+        if label == ConstraintType.SMALL.value:
+            z = self.try_get_param('spline_low_height', 0)
+        elif label == ConstraintType.MID.value:
+            z = self.try_get_param('spline_mid_height', 0)
+        elif label == ConstraintType.LARGE.value:
+            z = self.try_get_param('spline_high_height', 0)
+
+        diff = (origin + dest) / 2
+        pivot = np.array([diff[0], diff[1], diff[2] + z])
+        xyz = np.concatenate((origin, pivot, dest))
+        xyz = np.reshape(xyz, (3, -1))
+        xyz_interp = self.interpolate_spline(xyz, self.spline_points)
+
+        prev = xyz_interp[0, :]
+        for i in range(1, self.spline_points):
+            cur = xyz_interp[1, :]
+
+            points = [prev, cur]
+            line_marker = self.vis_helper.create_point_line_markers(
+                points, color)
+            self.constraint_markers.markers.append(line_marker)
+
+            prev = cur
 
     def publish_map(self, map_pub, path_pub, map, traj):
         header = Header()

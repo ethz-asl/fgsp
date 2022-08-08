@@ -65,7 +65,14 @@ class ReprojectPub(Node):
             self.comms.node = self
             self.vis_helper = Visualizer()
             self.compute_splines = self.try_get_param('compute_splines', False)
-            self.spline_points = self.try_get_param('spline_points', 10)
+            if self.compute_splines:
+                self.spline_points = self.try_get_param('spline_points', 10)
+                self.spline_low_height = self.try_get_param(
+                    'spline_low_height', 1)
+                self.spline_mid_height = self.try_get_param(
+                    'spline_mid_height', 5)
+                self.spline_large_height = self.try_get_param(
+                    'spline_large_height', 10)
 
         Logger.LogDebug(f'Enable GT: {self.enable_gt}')
         Logger.LogDebug(f'Enable EST: {self.enable_est}')
@@ -274,11 +281,11 @@ class ReprojectPub(Node):
 
         z = 0
         if label == ConstraintType.SMALL.value:
-            z = self.try_get_param('spline_low_height', 0)
+            z = self.spline_low_height
         elif label == ConstraintType.MID.value:
-            z = self.try_get_param('spline_mid_height', 0)
+            z = self.spline_mid_height
         elif label == ConstraintType.LARGE.value:
-            z = self.try_get_param('spline_high_height', 0)
+            z = self.spline_large_height
 
         diff = (origin + dest) / 2
         pivot = np.array([diff[0], diff[1], diff[2] + z])
@@ -288,7 +295,7 @@ class ReprojectPub(Node):
 
         prev = xyz_interp[0, :]
         for i in range(1, self.spline_points):
-            cur = xyz_interp[1, :]
+            cur = xyz_interp[i, :]
 
             points = [prev, cur]
             line_marker = self.vis_helper.create_point_line_markers(

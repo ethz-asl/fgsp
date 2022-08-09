@@ -23,6 +23,7 @@ class WaveletEvaluator(object):
     def __init__(self, n_scales=6):
         self.n_scales = n_scales
         self.psi = None
+        self.G = None
         self.feature_names = ['Euclidean_L', 'Euclidean_B', 'Euclidean_H', 'Correlation_L', 'Correlation_B',
                               'Correlation_H', 'Manhattan_L', 'Manhattan_B', 'Manhattan_H', 'Chebyshev_L', 'Chebyshev_B', 'Chebyshev_H']
 
@@ -41,6 +42,7 @@ class WaveletEvaluator(object):
         f = g.evaluate(G.e)
         f = np.expand_dims(f.T, 1)
         self.psi = np.zeros((G.N, G.N, self.n_scales))
+        self.G = G
 
         for i in range(0, G.N):
             # Create a Dirac centered at node i.
@@ -54,7 +56,7 @@ class WaveletEvaluator(object):
             if s.ndim == 1:
                 s = np.expand_dims(s, -1)
             s = np.expand_dims(s, 1)
-            s = np.matmul(s, f)
+            s = np.matmul(s, f)  # [nodes, features, scales]
 
             # Transform back the features to the vertex domain.
             self.psi[i, :, :] = G.igft(s).squeeze()

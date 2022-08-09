@@ -18,7 +18,7 @@ graph_client:
 
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
-    classifier: "top" # "top" or "simple"
+    classifier: "simple" # "top" or "simple"
     top_classifier_select_n: 10
     large_scale_partition_method: "id" # 'id' or 'nth'
 
@@ -28,7 +28,7 @@ graph_client:
 
     # Div
     dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"
-    robot_name: "cerberus"
+    robot_name: "euroc_1" # cerberus
     update_rate: 0.02
     enable_client_update: False
     enable_anchor_constraints: False

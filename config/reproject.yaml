@@ -13,6 +13,12 @@ reproject_viz:
     enable_est: true
     enable_corr: true
 
+    compute_splines: true
+    spline_points: 10
+    spline_low_height: 1
+    spline_mid_height: 4
+    spline_large_height: 7
+
     T_GT_EST:
       [
         0.918835,

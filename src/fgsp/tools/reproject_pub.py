@@ -215,7 +215,7 @@ class ReprojectPub(Node):
                              self.corr_path_pub, corr_map, corr_traj)
             Logger.LogInfo(
                 f'Published corr map with {len(corr_map.points)} points.')
-            if self.enable_constraints:
+            if self.enable_constraints and self.constraints_pub.get_subscription_count() > 0:
                 self.publish_constraints(corr_traj)
 
     def publish_constraints(self, traj):

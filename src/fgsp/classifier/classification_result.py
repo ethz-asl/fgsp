@@ -178,13 +178,13 @@ class ClassificationResult(object):
         # Remove self and fix output.
         nn_dists, nn_indices = Utils.fix_nn_output(
             n_neighbors, cur_id, nn_dists, nn_indices)
-        mask = nn_dists >= 30
+        mask = nn_dists >= self.config.min_dist_large_constraints
         return nn_dists[mask], nn_indices[mask]
 
     def construct_mid_area_constraint(self, idx, relative_constraint, history):
         cur_opt = self.opt_nodes[idx]
         counter = 0
-        n_hop = 10
+        n_hop = self.config.n_hop_mid_constraints
         lower = idx - n_hop
         upper = idx + n_hop
         if lower >= 0:

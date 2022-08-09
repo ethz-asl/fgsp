@@ -139,6 +139,8 @@ class ClientConfig(BaseConfig):
         self.classifier = 'top'
         self.top_classifier_select_n = 10
         self.large_scale_partition_method = 'id'
+        self.n_hop_mid_constraints = 10
+        self.min_dist_large_constraints = 20
 
         # Graph construction
         self.construction_method = 'se3'
@@ -205,6 +207,10 @@ class ClientConfig(BaseConfig):
             "top_classifier_select_n", self.top_classifier_select_n)
         self.large_scale_partition_method = self.try_get_param(
             "large_scale_partition_method", self.large_scale_partition_method)
+        self.n_hop_mid_constraints = self.try_get_param(
+            "n_hop_mid_constraints", self.n_hop_mid_constraints)
+        self.min_dist_large_constraints = self.try_get_param(
+            "min_dist_large_constraints", self.min_dist_large_constraints)
 
         # Graph construction
         self.construction_method = self.try_get_param(

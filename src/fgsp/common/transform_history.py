@@ -48,6 +48,7 @@ class TransformHistory(object):
         res = res[0]
         self.children.pop(res)
         self.transforms.pop(res)
+        self.types.pop(res)
 
     def has_different_transform(self, child, T):
         if not self.has_child(child):

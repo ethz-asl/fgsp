@@ -167,7 +167,7 @@ class ClassificationResult(object):
         _, nn_indices = self.query_tree(submap_idx, tree)
         return self.partitions[nn_indices]
 
-    def query_tree(self, cur_id, tree, n_neighbors=40, p_norm=2, dist=70):
+    def query_tree(self, cur_id, tree, n_neighbors=30, p_norm=2, dist=50):
         cur_position = self.opt_nodes[self.partitions[cur_id]].position
         nn_dists, nn_indices = tree.query(
             cur_position,

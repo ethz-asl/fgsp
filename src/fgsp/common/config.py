@@ -140,7 +140,7 @@ class ClientConfig(BaseConfig):
         self.top_classifier_select_n = 10
         self.large_scale_partition_method = 'id'
         self.n_hop_mid_constraints = 10
-        self.min_dist_large_constraints = 20
+        self.min_dist_large_constraints = 20.0
 
         # Graph construction
         self.construction_method = 'se3'

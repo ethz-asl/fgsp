@@ -125,6 +125,7 @@ class GraphClient(Node):
 
     def traj_opt_callback(self, msg):
         if not (self.is_initialized and (self.config.enable_anchor_constraints or self.config.enable_relative_constraints)):
+            Logger.LogError('GraphClient: Dropped incoming opt message.')
             return
 
         keys = self.optimized_signal.convert_signal(msg)

@@ -138,7 +138,7 @@ class ClassificationResult(object):
                 history.add_record(target_idx, T_a_b, ConstraintType.LARGE)
                 counter = counter + 1
 
-        if idx != 0:
+        if len(submap_partitions) > 0 and idx != 0:
             target_idx = 1
             T_a_b = self.compute_relative_distance(
                 cur_opt, self.opt_nodes[target_idx])
@@ -163,6 +163,8 @@ class ClassificationResult(object):
     def lookup_spatially_close_submaps(self, submap_idx):
         submap_positions = [
             self.opt_nodes[i].position for i in self.partitions]
+        if len(submap_positions) == 0:
+            return []
         tree = spatial.KDTree(submap_positions)
         _, nn_indices = self.query_tree(submap_idx, tree)
         return self.partitions[nn_indices]

@@ -27,38 +27,42 @@ class Simulation(Node):
 
         self.server_traj = self.get_traj_file('server_file')
         self.robot_traj = self.get_traj_file('robot_file')
-        if self.server_traj is None or self.robot_traj is None:
-            Logger.LogError(
-                'Simulation: Not all trajectory files have been parsed. Aborting.!')
-            return
 
-        Logger.LogInfo(
-            f'Simulation: Server trajectory has {self.server_traj.num_poses} poses')
-        Logger.LogInfo(
-            f'Simulation: Robot trajectory has {self.robot_traj.num_poses} poses')
+        if self.server_traj is None and self.robot_traj is None:
+            Logger.LogError(
+                'Simulation: No trajectory file has been parsed. Aborting.!')
+            return
 
         self.odom_topic = self.get_param('odom_topic', '/odometry')
         self.monitor_topic = self.get_param('monitor_topic', '/monitor')
-        self.out_bag_file = self.get_param(
-            'out_bag_file', '/tmp/odom_and_monitor.bag')
         self.robot_name = self.get_param('robot_name', 'robot')
         self.map_frame = self.get_param('map_frame', 'map')
         self.child_frame = self.get_param('child_frame', 'base')
         self.graph_threshold_dist = self.get_param('graph_threshold_dist', 0.5)
+        self.out_bag_file = self.get_param(
+            'out_bag_file', '/tmp/odom_and_monitor.bag')
 
         Logger.LogInfo(
             f'Simulation: Writing bag file to: {self.out_bag_file}')
-        Logger.LogDebug(
-            f'Simulation: Server trajectory: {self.server_traj.get_infos()}')
-        Logger.LogDebug(
-            f'Simulation: Robot trajectory: {self.robot_traj.get_infos()}')
-
         ros2_bag_out = Rosbag2Writer(self.out_bag_file)
         ros2_bag_out.open()
 
-        ros_time_odom = self.write_odometry(self.robot_traj, ros2_bag_out)
-        ros_time_traj = self.write_server_trajectory(
-            self.server_traj, ros2_bag_out)
+        ros_time_odom = None
+        if self.robot_traj is not None:
+            Logger.LogInfo(
+                f'Simulation: Robot trajectory has {self.robot_traj.num_poses} poses')
+            Logger.LogDebug(
+                f'Simulation: Robot trajectory: {self.robot_traj.get_infos()}')
+            ros_time_odom = self.write_odometry(self.robot_traj, ros2_bag_out)
+
+        ros_time_traj = None
+        if self.server_traj is not None:
+            Logger.LogInfo(
+                f'Simulation: Server trajectory has {self.server_traj.num_poses} poses')
+            Logger.LogDebug(
+                f'Simulation: Server trajectory: {self.server_traj.get_infos()}')
+            ros_time_traj = self.write_server_trajectory(
+                self.server_traj, ros2_bag_out)
 
         self.write_delayed_msg(ros_time_odom, ros_time_traj, ros2_bag_out)
 
@@ -179,7 +183,7 @@ class Simulation(Node):
             f'Writing server trajectory to bag file to: {self.out_bag_file}')
         i = 0
         k = 0
-        update_every_n_poses = 5
+        update_every_n_poses = 10
         nodes = []
         last_pos = np.array([0, 0, 0])
         n_poses = len(server_traj.timestamps)
@@ -188,7 +192,7 @@ class Simulation(Node):
         for stamp, xyz, quat in zip(server_traj.timestamps, server_traj.positions_xyz,
                                     server_traj.orientations_quat_wxyz):
             dist = np.linalg.norm(xyz - last_pos)
-            if len(last_pos) > 0 and dist < self.graph_threshold_dist:
+            if self.graph_threshold_dist > 0.0 and len(last_pos) > 0 and dist < self.graph_threshold_dist:
                 continue
 
             last_pos = xyz
@@ -229,8 +233,13 @@ class Simulation(Node):
         from rosbags.typesys.types import (std_msgs__msg__Header as Header,
                                            std_msgs__msg__String as String,
                                            builtin_interfaces__msg__Time as Time)
+        if ros_time_odom is None:
+            max_time_s = ros_time_traj.sec
+        elif ros_time_traj is None:
+            max_time_s = ros_time_odom.sec
+        else:
+            max_time_s = max(ros_time_odom.sec, ros_time_traj.sec)
 
-        max_time_s = max(ros_time_odom.sec, ros_time_traj.sec)
         delay_s = 600
 
         str_msg = String(data=f'Delaying by {delay_s} seconds.')

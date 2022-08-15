@@ -21,8 +21,8 @@ graph_client:
     classifier: "simple" # "top" or "simple"
     top_classifier_select_n: 10
     large_scale_partition_method: "id" # 'id' or 'nth'
-    n_hop_mid_constraints: 7
-    min_dist_large_constraints: 1.0
+    n_hop_mid_constraints: 5
+    min_dist_large_constraints: 2.0
 
     # Graph configuration.
     construction_method: "se3" # "se3" or "so3" or "r3"
@@ -30,8 +30,8 @@ graph_client:
 
     # Div
     dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"
-    robot_name: "euroc_3" # cerberus, euroc_X
-    update_rate: 0.02
+    robot_name: "euroc_2" # cerberus, euroc_X
+    update_rate: 0.04
     enable_client_update: False
     enable_anchor_constraints: False
     enable_relative_constraints: True

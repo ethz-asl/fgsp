@@ -403,19 +403,20 @@ class GraphClient(Node):
         if self.config.stop_method == 'dirichlet':
             dirichlet_ratio = self.global_graph.compute_dirichlet_ratio(
                 x_est, x_opt)
-            if dirichlet_ratio <= self.config.tv_threshold:
+            if dirichlet_ratio <= self.config.stop_threshold:
                 return None
 
         if self.config.stop_method == 'tv':
             tv_ratio = self.global_graph.compute_total_variation_ratio(
                 x_est, x_opt)
-            if tv_ratio <= self.config.tv_threshold:
+            if tv_ratio <= self.config.stop_threshold:
                 return None
 
         if self.config.stop_method == 'alv':
             alv = self.global_graph.compute_average_local_variation(
                 x_opt, x_est)
-            if alv <= self.config.tv_threshold:
+            if alv <= self.config.stop_threshold:
+                Logger.LogError('---- STOPPING --------------------')
                 return None
 
         psi = self.eval.get_wavelets()

@@ -294,3 +294,15 @@ class GlobalGraph(BaseGraph):
         viz.visualize_adjacency()
 
         Logger.LogInfo('GlobalGraph: Visualized global graph.')
+
+    def compute_energy(self, x):
+        energy = 0
+        p = 2
+        largest_ev = np.amax(np.abs(self.G.U))
+        adj_norm = 1/largest_ev * self.adj
+        for i in range(0, self.G.N):
+            adj_variation = 0
+            for j in range(0, self.G.N):
+                adj_variation += adj_norm[i, j] * x[j]
+            energy += np.abs(x[i] - adj_variation) ** p
+        return 1/p * energy

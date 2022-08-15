@@ -295,7 +295,7 @@ class GlobalGraph(BaseGraph):
 
         Logger.LogInfo('GlobalGraph: Visualized global graph.')
 
-    def compute_energy(self, x):
+    def compute_total_variation(self, x):
         energy = 0
         p = 2
         largest_ev = np.amax(np.abs(self.G.U))
@@ -306,3 +306,15 @@ class GlobalGraph(BaseGraph):
                 adj_variation += adj_norm[i, j] * x[j]
             energy += np.abs(x[i] - adj_variation) ** p
         return 1/p * energy
+
+    def compute_local_variation(self, x1, x2):
+        energy = 0
+        p = 1
+        largest_ev = np.amax(np.abs(self.G.U))
+        adj_norm = 1/largest_ev * self.adj
+        for i in range(0, self.G.N):
+            adj_variation = 0
+            for j in range(0, self.G.N):
+                adj_variation += adj_norm[i, j] * np.abs(x1[j] - x2[j])
+            energy += np.abs((x1[i] - x2[i]) - adj_variation)
+        return energy / self.G.N

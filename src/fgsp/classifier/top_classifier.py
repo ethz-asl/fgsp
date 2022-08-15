@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import numpy as np
+from src.fgsp.common.logger import Logger
 
 
 class TopClassifier(object):
@@ -13,10 +14,10 @@ class TopClassifier(object):
         n_nodes = data.shape[0]
         labels = [None] * n_nodes
 
-        np.set_printoptions(suppress=True)
-        print('--- DATA ---------------------------------')
-        print(data)
-        print('------------------------------------------')
+        Logger.LogDebug(f'TopClassifier: data shape is {data.shape}')
+        Logger.LogDebug('--- DATA ---------------------------------')
+        Logger.LogDebug(data)
+        Logger.LogDebug('------------------------------------------')
 
         top_n = min(self.top_n, n_nodes)
 
@@ -34,9 +35,9 @@ class TopClassifier(object):
                 labels[row_idx] = []
             labels[row_idx].append(col_idx + 1)
 
-        print('--- LABELS ---------------------------------')
-        print(labels)
-        print('------------------------------------------')
+        Logger.LogDebug('--- LABELS ---------------------------------')
+        Logger.LogDebug(labels)
+        Logger.LogDebug('------------------------------------------')
 
         return labels
 

@@ -294,7 +294,7 @@ class GraphClient(Node):
             return False
 
         labels = self.compute_all_labels(key, all_opt_nodes, all_est_nodes)
-        self.evaluate_and_publish_features(labels)
+        # self.evaluate_and_publish_features(labels)
 
         # Check if we the robot identified a degeneracy in its state.
         # Publish an anchor node curing the affected areas.
@@ -399,6 +399,10 @@ class GraphClient(Node):
         self.record_all_signals(x_est, x_opt)
         self.record_synchronized_trajectories(self.signal.compute_trajectory(
             all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
+
+        e_est = self.global_graph.G.dirichlet_energy(x_est)
+        e_opt = self.global_graph.G.dirichlet_energy(x_opt)
+        Logger.LogWarn(f'GraphClient: Dirichlet energy ratio: {e_est / e_opt}')
 
         psi = self.eval.get_wavelets()
         robot_psi = self.robot_eval.get_wavelets()

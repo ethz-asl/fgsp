@@ -400,16 +400,23 @@ class GraphClient(Node):
         self.record_synchronized_trajectories(self.signal.compute_trajectory(
             all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
 
-        e_est = self.global_graph.G.dirichlet_energy(x_est)
-        e_opt = self.global_graph.G.dirichlet_energy(x_opt)
-        Logger.LogWarn(f'GraphClient: Dirichlet energy ratio: {e_est / e_opt}')
+        if self.config.stop_method == 'dirichlet':
+            dirichlet_ratio = self.global_graph.compute_dirichlet_ratio(
+                x_est, x_opt)
+            if dirichlet_ratio <= self.config.tv_threshold:
+                return None
 
-        e_est = self.global_graph.compute_total_variation(x_est)
-        e_opt = self.global_graph.compute_total_variation(x_opt)
-        Logger.LogWarn(f'GraphClient: graph energy ratio: {e_est / e_opt}')
+        if self.config.stop_method == 'tv':
+            tv_ratio = self.global_graph.compute_total_variation_ratio(
+                x_est, x_opt)
+            if tv_ratio <= self.config.tv_threshold:
+                return None
 
-        e_lv = self.global_graph.compute_local_variation(x_opt, x_est)
-        Logger.LogWarn(f'GraphClient: local variation: {e_lv}')
+        if self.config.stop_method == 'alv':
+            alv = self.global_graph.compute_average_local_variation(
+                x_opt, x_est)
+            if alv <= self.config.tv_threshold:
+                return None
 
         psi = self.eval.get_wavelets()
         robot_psi = self.robot_eval.get_wavelets()

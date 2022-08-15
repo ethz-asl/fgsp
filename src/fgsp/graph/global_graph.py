@@ -295,6 +295,16 @@ class GlobalGraph(BaseGraph):
 
         Logger.LogInfo('GlobalGraph: Visualized global graph.')
 
+    def compute_dirichlet_ratio(self, x1, x2):
+        e1 = self.global_graph.G.dirichlet_energy(x1)
+        e2 = self.global_graph.G.dirichlet_energy(x2)
+        return e1 / e2
+
+    def compute_total_variation_ratio(self, x1, x2):
+        e1 = self.global_graph.G.total_variation_energy(x1)
+        e2 = self.global_graph.G.total_variation_energy(x2)
+        return e1 / e2
+
     def compute_total_variation(self, x):
         energy = 0
         p = 2
@@ -307,9 +317,8 @@ class GlobalGraph(BaseGraph):
             energy += np.abs(x[i] - adj_variation) ** p
         return 1/p * energy
 
-    def compute_local_variation(self, x1, x2):
+    def compute_average_local_variation(self, x1, x2):
         energy = 0
-        p = 1
         largest_ev = np.amax(np.abs(self.G.U))
         adj_norm = 1/largest_ev * self.adj
         for i in range(0, self.G.N):

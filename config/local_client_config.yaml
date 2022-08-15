@@ -23,6 +23,8 @@ graph_client:
     large_scale_partition_method: "id" # 'id' or 'nth'
     n_hop_mid_constraints: 7
     min_dist_large_constraints: 10.0
+    stop_method: "none" # "none", "dirichlet", "tv", "alv"
+    stop_threshold: 0.1
 
     # Graph configuration.
     construction_method: "se3" # "se3" or "so3" or "r3"

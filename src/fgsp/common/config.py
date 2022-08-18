@@ -110,7 +110,7 @@ class MonitorConfig(BaseConfig):
 
 
 class ClientConfig(BaseConfig):
-    def __init__(self, node):
+    def __init__(self, node=None):
         super().__init__(node)
 
         # general config

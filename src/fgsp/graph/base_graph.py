@@ -9,6 +9,7 @@ from multiprocessing import Pool
 
 from src.fgsp.common.utils import Utils
 from src.fgsp.common.logger import Logger
+from src.fgsp.common.config import ClientConfig
 
 
 def process_poses(poses, tree, w_func, i):
@@ -65,6 +66,8 @@ def compute_se3_weights(poses_lhs, poses_rhs):
 
 class BaseGraph(object):
     def __init__(self, config):
+        if config is None:
+            config = ClientConfig()
         self.config = config
         self.is_built = False
         self.graph_seq = -1
@@ -90,22 +93,24 @@ class BaseGraph(object):
 
     def create_adjacency_from_poses(self, poses):
         n_coords = poses.shape[0]
+        n_dims = poses.shape[1]
         adj = np.zeros((n_coords, n_coords))
         tree = spatial.KDTree(poses[:, 0:3])
 
         indices = np.arange(0, n_coords)
 
-        if self.config.construction_method == 'se3':
+        if self.config.construction_method == 'se3' and n_dims == 7:
             func = partial(process_poses, poses, tree, compute_se3_weights)
-        elif self.config.construction_method == 'so3':
+        elif self.config.construction_method == 'so3' and n_dims == 7:
             func = partial(process_poses, poses, tree, compute_so3_weights)
         elif self.config.construction_method == 'r3':
             func = partial(process_poses, poses, tree,
                            compute_distance_weights)
         else:
             Logger.LogError(
-                f'Unknown construction method: {self.config.construction_method}. Using default SE(3).')
-            func = partial(process_poses, poses, tree, compute_se3_weights)
+                f'Unknown construction method or not enough dimensions. Using position only.')
+            func = partial(process_poses, poses, tree,
+                           compute_distance_weights)
 
         n_cores = multiprocessing.cpu_count()
         with Pool(n_cores) as p:

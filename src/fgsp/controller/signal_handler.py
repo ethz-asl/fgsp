@@ -164,7 +164,10 @@ class SignalHandler(object):
         ts.nanosec = nsec
 
         position = pose[2:5]
-        orientation = pose[5:9]
+        if pose.shape[0] > 5:
+            orientation = pose[5:9]
+        else:
+            orientation = [0, 0, 0, 1]
         degenerate = False
 
         signal = SignalNode()

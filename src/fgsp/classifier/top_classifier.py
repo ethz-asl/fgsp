@@ -28,8 +28,8 @@ class TopClassifier(object):
             row_idx = xy_indices[0][i]
             col_idx = xy_indices[1][i]
 
-            if data[row_idx, col_idx] < self.threshold:
-                continue
+            # if data[row_idx, col_idx] < self.threshold:
+            # continue
 
             if labels[row_idx] == None:
                 labels[row_idx] = []

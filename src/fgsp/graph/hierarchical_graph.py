@@ -16,7 +16,7 @@ class HierarchicalGraph(BaseGraph):
         self.coords = [None]
         self.indices = [None]
         self.idx = 0
-        self.node_threshold = 100
+        self.node_threshold = self.config.graph_hierarchies_node_threshold
         Logger.LogInfo(
             f'HierarchicalGraph: Initialized with a threshold of {self.node_threshold}.')
 
@@ -54,14 +54,17 @@ class HierarchicalGraph(BaseGraph):
         self.adj[self.idx] = self.create_adjacency_from_poses(
             self.coords[self.idx])
         self.build_graph()
+        self.build_hierarchies()
 
     def build_hierarchies(self):
         while self.build_hierarchy():
             pass
 
     def build_hierarchy(self):
+        if not self.is_built:
+            return False
         current_n = self.G[self.idx].N
-        if current_n < self.node_threshold:
+        if current_n <= self.node_threshold:
             return False
         self.coords.append(None)
         self.adj.append(None)
@@ -69,10 +72,11 @@ class HierarchicalGraph(BaseGraph):
         self.indices.append(None)
 
         indices = self.reduce_every_other(self.coords[self.idx])
+        print(f'got the indices {indices}')
         G_next = reduction.kron_reduction(self.G[self.idx], indices)
 
         self.idx = self.idx + 1
-        self.indices[self.idx] = indices
+        self.indices[self.idx] = self.indices[self.idx - 1][indices]
         self.G[self.idx] = G_next
         self.adj[self.idx] = G_next.W.toarray()
         self.coords[self.idx] = self.coords[self.idx - 1][indices]

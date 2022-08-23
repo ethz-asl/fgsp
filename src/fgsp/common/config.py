@@ -147,6 +147,7 @@ class ClientConfig(BaseConfig):
         # Graph construction
         self.construction_method = 'se3'
         self.use_graph_hierarchies = False
+        self.graph_hierarchies_node_threshold = 100
 
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
@@ -222,6 +223,8 @@ class ClientConfig(BaseConfig):
             "construction_method", self.construction_method)
         self.use_graph_hierarchies = self.try_get_param(
             "use_graph_hierarchies", self.use_graph_hierarchies)
+        self.graph_hierarchies_node_threshold = self.try_get_param(
+            "graph_hierarchies_node_threshold", self.graph_hierarchies_node_threshold)
 
         # input
         self.opt_graph_topic = self.try_get_param(

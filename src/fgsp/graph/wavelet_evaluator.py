@@ -95,9 +95,21 @@ class WaveletEvaluator(object):
                 # self.feature_names[1]: [np.sum(D[0, 2:4])],
                 # self.feature_names[2]: [np.sum(D[0, 4:6])],
 
-                self.feature_names[0]: [np.sum(D[0, 0])],
-                self.feature_names[1]: [np.sum(D[0, 1])],
-                self.feature_names[2]: [np.sum(D[0, 2])],
+                # self.feature_names[0]: [np.sum(D[0, 0:3])],
+                # self.feature_names[1]: [np.sum(D[0, 3:6])],
+                # self.feature_names[2]: [np.sum(D[0, 6:9])],
+
+                # self.feature_names[0]: [np.sum(D[0, 0:4])],
+                # self.feature_names[1]: [np.sum(D[0, 4:8])],
+                # self.feature_names[2]: [np.sum(D[0, 8:12])],
+
+                self.feature_names[0]: [np.sum(D[0, 0:5])],
+                self.feature_names[1]: [np.sum(D[0, 5:10])],
+                self.feature_names[2]: [np.sum(D[0, 10:15])],
+
+                # self.feature_names[0]: [np.sum(D[0, 0])],
+                # self.feature_names[1]: [np.sum(D[0, 1])],
+                # self.feature_names[2]: [np.sum(D[0, 2])],
             })
             all_data = pandas.concat([all_data, data])
         return np.nan_to_num(all_data)

@@ -1,22 +1,23 @@
 #! /usr/bin/env python3
 
 import numpy as np
+from src.fgsp.common.logger import Logger
 
 
 class TopClassifier(object):
 
     def __init__(self, top_n=5):
         self.top_n = top_n
-        self.threshold = 0.15
+        self.threshold = 0.2
 
     def classify(self, data):
         n_nodes = data.shape[0]
         labels = [None] * n_nodes
 
-        np.set_printoptions(suppress=True)
-        print('--- DATA ---------------------------------')
-        print(data)
-        print('------------------------------------------')
+        Logger.LogDebug(f'TopClassifier: data shape is {data.shape}')
+        Logger.LogDebug('--- DATA ---------------------------------')
+        Logger.LogDebug(data)
+        Logger.LogDebug('------------------------------------------')
 
         top_n = min(self.top_n, n_nodes)
 
@@ -27,16 +28,16 @@ class TopClassifier(object):
             row_idx = xy_indices[0][i]
             col_idx = xy_indices[1][i]
 
-            if data[row_idx, col_idx] < self.threshold:
-                continue
+            # if data[row_idx, col_idx] < self.threshold:
+            # continue
 
             if labels[row_idx] == None:
                 labels[row_idx] = []
             labels[row_idx].append(col_idx + 1)
 
-        print('--- LABELS ---------------------------------')
-        print(labels)
-        print('------------------------------------------')
+        Logger.LogDebug('--- LABELS ---------------------------------')
+        Logger.LogDebug(labels)
+        Logger.LogDebug('------------------------------------------')
 
         return labels
 

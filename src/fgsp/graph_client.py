@@ -62,17 +62,14 @@ class GraphClient(Node):
         # Handlers and evaluators.
         if self.config.use_graph_hierarchies:
             self.global_graph = HierarchicalGraph(self.config)
-            self.robot_graph = HierarchicalGraph(self.config)
         else:
             self.global_graph = GlobalGraph(self.config, reduced=False)
-            self.robot_graph = GlobalGraph(self.config, reduced=False)
 
         self.latest_traj_msg = None
         self.signal = SignalHandler(self.config)
         self.optimized_signal = SignalHandler(self.config)
         self.synchronizer = SignalSynchronizer(self.config)
         self.eval = WaveletEvaluator()
-        self.robot_eval = WaveletEvaluator()
         self.commander = CommandPost(self.config)
 
         if self.config.classifier == 'top':
@@ -92,7 +89,6 @@ class GraphClient(Node):
 
         self.mutex.release()
         self.is_initialized = True
-
         self.timer = self.create_timer(1 / self.config.rate, self.update)
 
     def create_data_export_folder(self):
@@ -235,11 +231,8 @@ class GraphClient(Node):
         if src == 'opt':
             self.global_graph.write_graph_to_disk(
                 graph_coords_file, graph_adj_file)
-        elif src == 'est':
-            self.robot_graph.write_graph_to_disk(
-                graph_coords_file, graph_adj_file)
         Logger.LogWarn(
-            f'GraphClient: for {src} we have {x.shape} and {self.robot_graph.get_coords().shape}')
+            f'GraphClient: for {src} we have {x.shape} and {self.global_graph.get_coords().shape}')
 
     def record_traj_for_key(self, traj, src):
         filename = self.config.dataroot + \
@@ -320,9 +313,6 @@ class GraphClient(Node):
             [np.array(Utils.ros_time_msg_to_ns(x.ts)) for x in all_est_nodes])
         poses = np.column_stack([positions, orientations, timestamps])
 
-        self.robot_graph.build_from_poses(poses)
-        # self.robot_graph.reduce_graph_using_indices(est_idx)
-
         # TODO(lbern): fix this temporary test
         # Due to the reduction we rebuild here.
         positions = np.array([np.array(x.position) for x in all_opt_nodes])
@@ -335,11 +325,9 @@ class GraphClient(Node):
 
         if self.config.use_graph_hierarchies:
             self.global_graph.build_hierarchies()
-            self.robot_graph.build_hierarchies()
 
         if self.config.client_mode == 'multiscale':
             self.eval.compute_wavelets(self.global_graph.get_graph())
-            self.robot_eval.compute_wavelets(self.robot_graph.get_graph())
         return (all_opt_nodes, all_est_nodes)
 
     def check_for_degeneracy(self, all_opt_nodes, all_est_nodes):
@@ -388,20 +376,37 @@ class GraphClient(Node):
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
 
         if self.config.use_graph_hierarchies:
-            robot_indices = self.robot_graph.get_indices()
-            server_indices = self.global_graph.get_indices()
+            indices = self.global_graph.get_indices()
             # all_est_nodes = [all_est_nodes[i] for i in robot_indices]
             # all_opt_nodes = [all_opt_nodes[i] for i in server_indices]
 
-            x_est = self.signal.marginalize_signal(x_est, robot_indices)
-            x_opt = self.signal.marginalize_signal(x_opt, server_indices)
+            x_est = self.signal.marginalize_signal(x_est, indices)
+            x_opt = self.signal.marginalize_signal(x_opt, indices)
 
         self.record_all_signals(x_est, x_opt)
         self.record_synchronized_trajectories(self.signal.compute_trajectory(
             all_est_nodes), self.optimized_signal.compute_trajectory(all_opt_nodes))
 
+        if self.config.stop_method == 'dirichlet':
+            dirichlet_ratio = self.global_graph.compute_dirichlet_ratio(
+                x_est, x_opt)
+            if dirichlet_ratio <= self.config.stop_threshold:
+                return None
+
+        if self.config.stop_method == 'tv':
+            tv_ratio = self.global_graph.compute_total_variation_ratio(
+                x_est, x_opt)
+            if tv_ratio <= self.config.stop_threshold:
+                return None
+
+        if self.config.stop_method == 'alv':
+            alv = self.global_graph.compute_average_local_variation(
+                x_opt, x_est)
+            if alv <= self.config.stop_threshold:
+                Logger.LogError('---- STOPPING --------------------')
+                return None
+
         psi = self.eval.get_wavelets()
-        robot_psi = self.robot_eval.get_wavelets()
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
             Logger.LogWarn(
@@ -413,22 +418,17 @@ class GraphClient(Node):
             psi = self.eval.get_wavelets()
             n_dim = psi.shape[0]
 
-        if n_dim != robot_psi.shape[0] or psi.shape[1] != robot_psi.shape[1]:
-            Logger.LogWarn(
-                f'GraphClient: Optimized wavelet does not match robot wavelet: {psi.shape} vs. {robot_psi.shape}')
-            return None
-
         Logger.LogInfo('Computing features.')
         # Compute all the wavelet coefficients.
         # We will filter them later per submap.
-        W_est = self.robot_eval.compute_wavelet_coeffs(x_est)
+        W_est = self.eval.compute_wavelet_coeffs(x_est)
         W_opt = self.eval.compute_wavelet_coeffs(x_opt)
         features = self.eval.compute_features(W_opt, W_est)
         self.record_features(features)
 
         labels = self.classifier.classify(features)
         if self.config.use_graph_hierarchies:
-            return HierarchicalResult(self.config, key, all_opt_nodes, features, labels, self.robot_graph.get_indices())
+            return HierarchicalResult(self.config, key, all_opt_nodes, features, labels, self.global_graph.get_indices())
         else:
             return ClassificationResult(self.config, key, all_opt_nodes, features, labels)
 

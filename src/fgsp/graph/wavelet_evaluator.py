@@ -21,14 +21,26 @@ class SubmapState(Enum):
 class WaveletEvaluator(object):
 
     def __init__(self, n_scales=6):
+        assert n_scales >= 3, 'n_scales must be at least 3.'
         self.n_scales = n_scales
         self.psi = None
         self.G = None
         self.feature_names = ['Euclidean_L', 'Euclidean_B', 'Euclidean_H', 'Correlation_L', 'Correlation_B',
                               'Correlation_H', 'Manhattan_L', 'Manhattan_B', 'Manhattan_H', 'Chebyshev_L', 'Chebyshev_B', 'Chebyshev_H']
+        self.ranges = self.compute_constraint_ranges()
+        Logger.LogInfo(
+            f'WaveletEvaluator: Created with ranges: {self.ranges}.')
 
     def set_scales(self, n_scales):
         self.n_scales = n_scales
+
+    def compute_constraint_ranges(self):
+        step_size = self.n_scales // 3
+        ranges = np.arange(0, self.n_scales, step_size)
+        low_scale_range = np.arange(ranges[0], ranges[1], dtype=int)
+        mid_scale_range = np.arange(ranges[1], ranges[2], dtype=int)
+        large_scale_range = np.arange(ranges[2], self.n_scales, dtype=int)
+        return [low_scale_range, mid_scale_range, large_scale_range]
 
     def get_wavelets(self):
         return self.psi
@@ -91,9 +103,25 @@ class WaveletEvaluator(object):
             D = self.compute_distances_1D(
                 submap_coeffs_1[i, :], submap_coeffs_2[i, :])
             data = pandas.DataFrame({
-                self.feature_names[0]: [np.sum(D[0, 0:2])],
-                self.feature_names[1]: [np.sum(D[0, 2:4])],
-                self.feature_names[2]: [np.sum(D[0, 4:6])],
+                # self.feature_names[0]: [np.sum(D[0, 0:2])],
+                # self.feature_names[1]: [np.sum(D[0, 2:4])],
+                # self.feature_names[2]: [np.sum(D[0, 4:6])],
+
+                # self.feature_names[0]: [np.sum(D[0, 0:3])],
+                # self.feature_names[1]: [np.sum(D[0, 3:6])],
+                # self.feature_names[2]: [np.sum(D[0, 6:9])],
+
+                # self.feature_names[0]: [np.sum(D[0, 0:4])],
+                # self.feature_names[1]: [np.sum(D[0, 4:8])],
+                # self.feature_names[2]: [np.sum(D[0, 8:12])],
+
+                self.feature_names[0]: [np.sum(D[0, self.ranges[0]])],
+                self.feature_names[1]: [np.sum(D[0, self.ranges[1]])],
+                self.feature_names[2]: [np.sum(D[0, self.ranges[2]])],
+
+                # self.feature_names[0]: [np.sum(D[0, 0])],
+                # self.feature_names[1]: [np.sum(D[0, 1])],
+                # self.feature_names[2]: [np.sum(D[0, 2])],
             })
             all_data = pandas.concat([all_data, data])
         return np.nan_to_num(all_data)

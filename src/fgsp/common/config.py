@@ -110,7 +110,7 @@ class MonitorConfig(BaseConfig):
 
 
 class ClientConfig(BaseConfig):
-    def __init__(self, node):
+    def __init__(self, node=None):
         super().__init__(node)
 
         # general config
@@ -141,10 +141,13 @@ class ClientConfig(BaseConfig):
         self.large_scale_partition_method = 'id'
         self.n_hop_mid_constraints = 10
         self.min_dist_large_constraints = 20.0
+        self.stop_method = 'none'
+        self.stop_threshold = 0.0
 
         # Graph construction
         self.construction_method = 'se3'
         self.use_graph_hierarchies = False
+        self.graph_hierarchies_node_threshold = 100
 
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
@@ -211,12 +214,17 @@ class ClientConfig(BaseConfig):
             "n_hop_mid_constraints", self.n_hop_mid_constraints)
         self.min_dist_large_constraints = self.try_get_param(
             "min_dist_large_constraints", self.min_dist_large_constraints)
+        self.stop_method = self.try_get_param("stop_method", self.stop_method)
+        self.stop_threshold = self.try_get_param(
+            "stop_threshold", self.stop_threshold)
 
         # Graph construction
         self.construction_method = self.try_get_param(
             "construction_method", self.construction_method)
         self.use_graph_hierarchies = self.try_get_param(
             "use_graph_hierarchies", self.use_graph_hierarchies)
+        self.graph_hierarchies_node_threshold = self.try_get_param(
+            "graph_hierarchies_node_threshold", self.graph_hierarchies_node_threshold)
 
         # input
         self.opt_graph_topic = self.try_get_param(

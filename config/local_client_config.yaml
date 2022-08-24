@@ -19,7 +19,7 @@ graph_client:
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
     classifier: "top" # "top" or "simple"
-    top_classifier_select_n: 30
+    top_classifier_select_n: 10
     large_scale_partition_method: "id" # 'id' or 'nth'
     n_hop_mid_constraints: 7
     min_dist_large_constraints: 10.0

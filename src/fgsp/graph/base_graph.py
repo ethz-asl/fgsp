@@ -99,16 +99,16 @@ class BaseGraph(object):
 
         indices = np.arange(0, n_coords)
 
-        if self.config.construction_method == 'se3' and n_dims == 7:
+        if self.config.construction_method == 'se3' and n_dims >= 7:
             func = partial(process_poses, poses, tree, compute_se3_weights)
-        elif self.config.construction_method == 'so3' and n_dims == 7:
+        elif self.config.construction_method == 'so3' and n_dims >= 7:
             func = partial(process_poses, poses, tree, compute_so3_weights)
         elif self.config.construction_method == 'r3':
             func = partial(process_poses, poses, tree,
                            compute_distance_weights)
         else:
             Logger.LogError(
-                f'Unknown construction method or not enough dimensions. Using position only.')
+                f'Unknown construction method ({self.config.construction_method}) or not enough dimensions ({n_dims}) . Using position only.')
             func = partial(process_poses, poses, tree,
                            compute_distance_weights)
 

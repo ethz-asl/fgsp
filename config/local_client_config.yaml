@@ -32,7 +32,7 @@ graph_client:
 
     # Div
     dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"
-    robot_name: "anymal_1" # cerberus, euroc_X
+    robot_name: "anymal_5" # cerberus, euroc_X
     update_rate: 0.05
     enable_client_update: False
     enable_anchor_constraints: False

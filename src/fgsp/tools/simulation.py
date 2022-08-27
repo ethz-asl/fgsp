@@ -192,8 +192,10 @@ class Simulation(Node):
         for stamp, xyz, quat in zip(server_traj.timestamps, server_traj.positions_xyz,
                                     server_traj.orientations_quat_wxyz):
             dist = np.linalg.norm(xyz - last_pos)
-            if self.graph_threshold_dist > 0.0 and len(last_pos) > 0 and dist < self.graph_threshold_dist:
-                continue
+            if i != n_poses - 1:
+                if self.graph_threshold_dist > 0.0 and len(last_pos) > 0 and dist < self.graph_threshold_dist:
+                    i = i + 1
+                    continue
 
             last_pos = xyz
             sec = int(stamp // 1)

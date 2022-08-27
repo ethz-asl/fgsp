@@ -112,7 +112,7 @@ class BaseGraph(object):
             func = partial(process_poses, poses, tree,
                            compute_distance_weights)
 
-        n_cores = multiprocessing.cpu_count()
+        n_cores = multiprocessing.cpu_count() if self.config.use_parallel_construction else 1
         with Pool(n_cores) as p:
             for idx, (nn_indices, weights) in zip(indices, p.map(func, indices)):
                 for nn_i, w in zip(nn_indices, weights):

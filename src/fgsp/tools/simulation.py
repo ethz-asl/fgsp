@@ -185,19 +185,24 @@ class Simulation(Node):
         k = 0
         update_every_n_poses = 10
         nodes = []
-        last_pos = np.array([0, 0, 0])
         n_poses = len(server_traj.timestamps)
+        last_pos = np.array([])
+        last_idx = n_poses - 1
+        dist = 0.0
         Logger.LogDebug(
             f'Using a threshold of {self.graph_threshold_dist}m for distance.')
         for stamp, xyz, quat in zip(server_traj.timestamps, server_traj.positions_xyz,
                                     server_traj.orientations_quat_wxyz):
-            dist = np.linalg.norm(xyz - last_pos)
-            if i != n_poses - 1:
-                if self.graph_threshold_dist > 0.0 and len(last_pos) > 0 and dist < self.graph_threshold_dist:
-                    i = i + 1
+            i += 1
+            if i > 1 and i != last_idx:
+                dist += np.linalg.norm(xyz - last_pos)
+                if self.graph_threshold_dist > 0.0 and dist < self.graph_threshold_dist:
+                    print(
+                        f'Skipping pose {i} with distance {dist} < {self.graph_threshold_dist}')
                     continue
 
-            last_pos = xyz
+            dist = 0.0
+            last_pos = np.copy(xyz)
             sec = int(stamp // 1)
             nanosec = int((stamp - sec) * 1e9)
             ros_time = Time(sec, nanosec)
@@ -211,14 +216,13 @@ class Simulation(Node):
             node = TrajectoryNode(self.robot_name, k, pose_stamped, 0.0)
             nodes.append(node)
 
-            if (i > 0 and i % update_every_n_poses == 0) or i == n_poses - 1:
+            if i == 1 or i % update_every_n_poses == 0 or i == last_idx:
                 k = k + 1
                 traj_msg = Trajectory(header, nodes)
                 serialized_msg = serialize_cdr(traj_msg, msg_type)
                 ros2_bag_out.write(connection, int(
                     stamp * 1e9), serialized_msg)
-
-            i = i + 1
+                print(f'Wrote pose {i} of {n_poses} with current dist {dist}')
 
         for i in range(0, 10):
             ros2_bag_out.write(connection, int(

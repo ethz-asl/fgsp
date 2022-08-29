@@ -72,7 +72,6 @@ class HierarchicalGraph(BaseGraph):
         self.indices.append(None)
 
         indices = self.reduce_every_other(self.coords[self.idx])
-        print(f'indices: {indices}')
         G_next = reduction.kron_reduction(self.G[self.idx], indices)
 
         self.idx = self.idx + 1

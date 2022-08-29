@@ -118,6 +118,7 @@ class BaseGraph(object):
                 for nn_i, w in zip(nn_indices, weights):
                     if nn_i != idx:
                         adj[idx, nn_i] = w
+                        adj[nn_i, idx] = w
 
         adj[adj < 0] = 0
         assert np.all(adj >= 0)

@@ -147,6 +147,7 @@ class ClientConfig(BaseConfig):
         # Graph construction
         self.construction_method = 'se3'
         self.use_graph_hierarchies = False
+        self.max_graph_levels = 1
         self.graph_hierarchies_node_threshold = 100
         self.use_parallel_construction = True
 
@@ -224,6 +225,8 @@ class ClientConfig(BaseConfig):
             "construction_method", self.construction_method)
         self.use_graph_hierarchies = self.try_get_param(
             "use_graph_hierarchies", self.use_graph_hierarchies)
+        self.max_graph_levels = self.try_get_param(
+            "max_graph_levels", self.max_graph_levels)
         self.graph_hierarchies_node_threshold = self.try_get_param(
             "graph_hierarchies_node_threshold", self.graph_hierarchies_node_threshold)
         self.use_parallel_construction = self.try_get_param(

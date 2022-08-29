@@ -28,8 +28,9 @@ graph_client:
 
     # Graph configuration.
     construction_method: "se3" # "se3" or "so3" or "r3"
-    use_graph_hierarchies: False
-    graph_hierarchies_node_threshold: 100
+    use_graph_hierarchies: true
+    max_graph_levels: 2
+    graph_hierarchies_node_threshold: 1
     use_parallel_construction: False
 
     # Div

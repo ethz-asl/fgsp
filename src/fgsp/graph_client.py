@@ -379,9 +379,9 @@ class GraphClient(Node):
             indices = self.global_graph.get_indices()
             # all_est_nodes = [all_est_nodes[i] for i in robot_indices]
             # all_opt_nodes = [all_opt_nodes[i] for i in server_indices]
-
-            x_est = self.signal.marginalize_signal(x_est, indices)
-            x_opt = self.signal.marginalize_signal(x_opt, indices)
+            n_nodes = len(all_est_nodes)
+            x_est = self.signal.marginalize_signal(x_est, indices, n_nodes)
+            x_opt = self.signal.marginalize_signal(x_opt, indices, n_nodes)
 
         self.record_all_signals(x_est, x_opt)
         self.record_synchronized_trajectories(self.signal.compute_trajectory(

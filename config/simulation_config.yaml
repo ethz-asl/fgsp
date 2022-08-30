@@ -18,7 +18,7 @@ simulation:
     robot_name: "anymal_2"
     map_frame: "map"
     child_frame: "base"
-    graph_threshold_dist: 5.0
+    graph_threshold_dist: 20.0
 
     odom_topic: "/odometry"
     monitor_topic: "/graph_monitor/sparse_graph/trajectory"

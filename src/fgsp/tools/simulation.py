@@ -220,7 +220,6 @@ class Simulation(Node):
                 serialized_msg = serialize_cdr(traj_msg, msg_type)
                 ros2_bag_out.write(connection, int(
                     stamp * 1e9), serialized_msg)
-                print(f'Wrote pose {i} of {n_poses} with current dist {dist}')
 
         for i in range(0, 10):
             ros2_bag_out.write(connection, int(

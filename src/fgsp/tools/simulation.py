@@ -197,8 +197,6 @@ class Simulation(Node):
             if i > 1 and i != last_idx:
                 dist += np.linalg.norm(xyz - last_pos)
                 if self.graph_threshold_dist > 0.0 and dist < self.graph_threshold_dist:
-                    print(
-                        f'Skipping pose {i} with distance {dist} < {self.graph_threshold_dist}')
                     continue
 
             dist = 0.0

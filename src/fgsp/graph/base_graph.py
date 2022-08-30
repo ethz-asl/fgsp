@@ -120,7 +120,7 @@ class BaseGraph(object):
                         adj[idx, nn_i] = w
                         adj[nn_i, idx] = w
 
-        adj[adj < 0] = 0
+        adj = np.absolute(adj)
         assert np.all(adj >= 0)
         return adj
 

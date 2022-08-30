@@ -53,7 +53,9 @@ class HierarchicalGraph(BaseGraph):
         self.coords[self.idx] = poses
         self.adj[self.idx] = self.create_adjacency_from_poses(
             self.coords[self.idx])
+        print(f'Building Graph')
         self.build_graph()
+        print(f'Building Hierarchies')
         self.build_hierarchies()
 
     def build_hierarchies(self):
@@ -72,6 +74,7 @@ class HierarchicalGraph(BaseGraph):
         self.indices.append(None)
 
         indices = self.reduce_every_other(self.coords[self.idx])
+        print(f'Graph is directed {self.G[self.idx].is_directed()}')
         G_next = reduction.kron_reduction(self.G[self.idx], indices)
 
         self.idx = self.idx + 1

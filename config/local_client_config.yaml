@@ -29,13 +29,13 @@ graph_client:
     # Graph configuration.
     construction_method: "se3" # "se3" or "so3" or "r3"
     use_graph_hierarchies: true
-    max_graph_levels: 2
+    max_graph_levels: 4
     graph_hierarchies_node_threshold: 1
     use_parallel_construction: False
 
     # Div
     dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"
-    robot_name: "anymal_5" # cerberus, euroc_X
+    robot_name: "anymal_2" # cerberus, euroc_X, anymal_X
     update_rate: 0.05
     enable_client_update: False
     enable_anchor_constraints: False

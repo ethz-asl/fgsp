@@ -9,13 +9,13 @@ simulation:
     # robot_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/euroc/MH_01_02__02/onboard.npy"
     # server_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/euroc/MH_01_02__02/server.csv"
 
-    robot_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/hagerbach/anymal_2/onboard.csv"
-    server_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/hagerbach/anymal_2/gt.csv"
+    robot_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/hagerbach/anymal_1/onboard.csv"
+    server_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/hagerbach/anymal_1/gt.csv"
 
     # robot_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/euroc/MH_04_05__05/onboard.npy"
     # server_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/euroc/MH_04_05__05/server.csv"
 
-    robot_name: "anymal_2"
+    robot_name: "anymal_1"
     map_frame: "map"
     child_frame: "base"
     graph_threshold_dist: 20.0

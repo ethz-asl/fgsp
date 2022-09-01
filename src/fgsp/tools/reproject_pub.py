@@ -314,16 +314,33 @@ class ReprojectPub(Node):
             header, FIELDS_XYZ, map.points)
         map_pub.publish(map_ros)
 
-        self.create_sphere_pub(traj)
+        self.create_sphere_pub(traj, 0)
 
         path_msg = self.create_path_msg(traj)
         path_pub.publish(path_msg)
 
-    def create_sphere_pub(self, traj):
+    def get_level_color(self, idx):
+        max_idx = 6
+        norm_idx = idx % max_idx
+        if norm_idx == 0:
+            return [0.95, 0.05, 0.05]
+        elif norm_idx == 1:
+            return [0.05, 0.95, 0.05]
+        elif norm_idx == 2:
+            return [0.05, 0.05, 0.95]
+        elif norm_idx == 3:
+            return [0.95, 0.05, 0.95]
+        elif norm_idx == 4:
+            return [0.95, 0.95, 0.05]
+        elif norm_idx == 5:
+            return [0.05, 0.95, 0.95]
+        return [0.0, 0.0, 0.0]
+
+    def create_sphere_pub(self, traj, level):
         n_poses = traj.shape[0]
         for i in range(n_poses):
             xyz = traj[i, 1:4]
-            color = [0.0, 0.0, 0.0]
+            color = self.get_level_color(level)
             self.vis_helper.add_graph_coordinate(xyz, color)
 
         self.vis_helper.visualize_coords()

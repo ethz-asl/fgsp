@@ -13,6 +13,8 @@ reproject_viz:
     enable_est: False
     enable_corr: True
 
+    hierarchy_levels: 1
+
     compute_splines: False
     spline_points: 10
     spline_low_height: 1

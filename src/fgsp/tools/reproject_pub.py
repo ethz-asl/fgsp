@@ -41,6 +41,13 @@ class ReprojectPub(Node):
         Logger.Verbosity = 7
         self.dataroot = self.try_get_param('dataroot', './')
 
+        # Configuration
+        self.T_O_L = np.array(self.try_get_param(
+            'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
+        self.voxel_size = 0.1
+        self.hierarchy_levels = self.try_get_param('hierarchy_levels', 0)
+        self.vis_helper = Visualizer()
+
         # GT Publisher
         self.enable_gt = self.try_get_param('enable_gt', False)
         if self.enable_gt:
@@ -63,7 +70,6 @@ class ReprojectPub(Node):
             self.create_constraints_pub()
             self.comms = Comms()
             self.comms.node = self
-            self.vis_helper = Visualizer()
             self.compute_splines = self.try_get_param('compute_splines', False)
             if self.compute_splines:
                 self.spline_points = self.try_get_param('spline_points', 10)
@@ -78,11 +84,6 @@ class ReprojectPub(Node):
         Logger.LogDebug(f'Enable EST: {self.enable_est}')
         Logger.LogDebug(f'Enable CORR: {self.enable_corr}')
         Logger.LogDebug(f'Enable CONSTR: {self.enable_constraints}')
-
-        # Configuration
-        self.T_O_L = np.array(self.try_get_param(
-            'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
-        self.voxel_size = 0.1
 
         # Cloud subscriber
         cloud_topic = self.try_get_param('cloud_in', '/cloud')
@@ -313,8 +314,19 @@ class ReprojectPub(Node):
             header, FIELDS_XYZ, map.points)
         map_pub.publish(map_ros)
 
+        self.create_sphere_pub(traj)
+
         path_msg = self.create_path_msg(traj)
         path_pub.publish(path_msg)
+
+    def create_sphere_pub(self, traj):
+        n_poses = traj.shape[0]
+        for i in range(n_poses):
+            xyz = traj[i, 1:4]
+            color = [0.0, 0.0, 0.0]
+            self.vis_helper.add_graph_coordinate(xyz, color)
+
+        self.vis_helper.visualize_coords()
 
     def create_path_msg(self, trajectory):
         path_msg = Path()

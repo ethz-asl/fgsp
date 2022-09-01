@@ -379,9 +379,9 @@ class GraphClient(Node):
             indices = self.global_graph.get_indices()
             # all_est_nodes = [all_est_nodes[i] for i in robot_indices]
             # all_opt_nodes = [all_opt_nodes[i] for i in server_indices]
-
-            x_est = self.signal.marginalize_signal(x_est, indices)
-            x_opt = self.signal.marginalize_signal(x_opt, indices)
+            n_nodes = len(all_est_nodes)
+            x_est = self.signal.marginalize_signal(x_est, indices, n_nodes)
+            x_opt = self.signal.marginalize_signal(x_opt, indices, n_nodes)
 
         self.record_all_signals(x_est, x_opt)
         self.record_synchronized_trajectories(self.signal.compute_trajectory(
@@ -410,13 +410,8 @@ class GraphClient(Node):
         n_dim = psi.shape[0]
         if n_dim != x_est.shape[0] or n_dim != x_opt.shape[0]:
             Logger.LogWarn(
-                f'GraphClient We have a size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}. Trying to fix it.')
-
-            positions = np.array([np.array(x.position) for x in all_opt_nodes])
-            self.global_graph.build_from_poses(positions)
-            self.eval.compute_wavelets(self.global_graph.get_graph())
-            psi = self.eval.get_wavelets()
-            n_dim = psi.shape[0]
+                f'GraphClient We have a size mismatch: {n_dim} vs. {x_est.shape[0]} vs. {x_opt.shape[0]}.')
+            return None
 
         Logger.LogInfo('Computing features.')
         # Compute all the wavelet coefficients.

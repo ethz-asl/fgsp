@@ -19,18 +19,22 @@ class ClassificationResult(object):
         self.opt_nodes = opt_nodes
         self.n_nodes = len(opt_nodes)
         self.features = features
-        self.labels = self.check_and_fix_labels(labels)
         self.history = None
         self.partitions = self.partition_nodes(
             self.config.large_scale_partition_method)
         self.ts_partitions = self.get_ts_from_nodes(self.partitions)
+        self.labels, n_labels = self.check_and_fix_labels(labels)
+        print(f'ClassificationResults: Got {n_labels} labels')
 
     def check_and_fix_labels(self, labels):
         n_nodes = len(labels)
+        n_labels = 0
         for i in range(0, n_nodes):
             if labels[i] is None:
                 labels[i] = []
-        return labels
+            else:
+                n_labels += len(labels[i])
+        return labels, n_labels
 
     def partition_nodes(self, method='nth'):
         if method == 'nth':
@@ -170,6 +174,9 @@ class ClassificationResult(object):
         return self.partitions[nn_indices]
 
     def query_tree(self, cur_id, tree, n_neighbors=30, p_norm=2, dist=50):
+        if cur_id >= len(self.partitions):
+            return [], []
+
         cur_position = self.opt_nodes[self.partitions[cur_id]].position
         nn_dists, nn_indices = tree.query(
             cur_position,

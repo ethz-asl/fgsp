@@ -230,6 +230,10 @@ class ReprojectPub(Node):
                 f'Published corr map with {len(corr_map.points)} points.')
             if self.enable_constraints and self.constraints_pub.get_subscription_count() > 0:
                 self.publish_constraints(corr_traj)
+            if self.enable_graph:
+                idx = self.lookup_closest_ts_idx(
+                    self.graph_coords[:, 0], self.corr_traj[corr_idx, 0])
+                self.create_sphere_pub(self.graph_coords[0:idx], 0)
 
     def publish_constraints(self, traj):
         if len(traj) == 0:
@@ -325,8 +329,6 @@ class ReprojectPub(Node):
         map_ros = point_cloud2.create_cloud(
             header, FIELDS_XYZ, map.points)
         map_pub.publish(map_ros)
-
-        self.create_sphere_pub(traj, 0)
 
         path_msg = self.create_path_msg(traj)
         path_pub.publish(path_msg)

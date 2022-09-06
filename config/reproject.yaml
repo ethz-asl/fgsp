@@ -12,8 +12,10 @@ reproject_viz:
     enable_gt: True
     enable_est: False
     enable_corr: True
+    enable_graph: True
 
     hierarchy_levels: 1
+    graph_coords_file: "data/opt_graph_coords.npy"
 
     compute_splines: False
     spline_points: 10

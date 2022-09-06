@@ -58,6 +58,10 @@ class ReprojectPub(Node):
         if self.enable_est:
             self.create_est_pub()
 
+        self.enable_graph = self.try_get_param('enable_graph', False)
+        if self.enable_graph:
+            self.create_graph_pub()
+
         # Corr Publisher
         self.enable_corr = self.try_get_param('enable_corr', False)
         if self.enable_corr:
@@ -141,6 +145,16 @@ class ReprojectPub(Node):
             PointCloud2, 'corr_map_cloud', 10)
         self.corr_path_pub = self.create_publisher(Path, 'corr_trajectory', 10)
 
+    def create_graph_pub(self):
+        self.graph_coords = self.read_traj_file('graph_coords_file')
+        n_coords = self.graph_coords.shape[0]
+        if (n_coords == 0):
+            Logger.LogError(
+                'Error occurred while reading the graph coords file.')
+            self.enable_graph = False
+            return
+        Logger.LogInfo(f'Read {n_coords} graph coords.')
+
     def create_constraints_pub(self):
         self.ts_constraint_map = self.read_constraints_file(
             self.constraints_file)
@@ -155,8 +169,6 @@ class ReprojectPub(Node):
             self.enable_constraints = False
             return
         Logger.LogInfo(f'Read {n_constraints} constraints.')
-
-        print(f':constraints {self.ts_constraint_map}')
 
         self.constraint_markers = MarkerArray()
         self.constraints_pub = self.create_publisher(
@@ -436,7 +448,6 @@ class ReprojectPub(Node):
             robot_traj = file_interface.read_tum_trajectory_file(filename)
             return np.column_stack((robot_traj.timestamps, robot_traj.positions_xyz,
                                     robot_traj.orientations_quat_wxyz))
-
         else:
             Logger.LogError(f'ReprojectPub: File does not exist!')
             return np.array([])
@@ -445,7 +456,7 @@ class ReprojectPub(Node):
         filename = os.path.join(self.dataroot, filename)
         Logger.LogDebug(f'ReprojectPub: Reading file {filename}.')
         if exists(filename):
-            return self.convert_to_traj(np.load(filename))
+            return np.load(filename)
         else:
             Logger.LogError(f'ReprojectPub: File does not exist!')
             return np.array([])

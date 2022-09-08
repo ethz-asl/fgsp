@@ -153,6 +153,10 @@ class ReprojectPub(Node):
                 'Error occurred while reading the graph coords file.')
             self.enable_graph = False
             return
+        for i in range(0, n_coords):
+            self.graph_coords[i, 7] = Utils.ts_ns_to_seconds(
+                self.graph_coords[i, 7])
+
         Logger.LogInfo(f'Read {n_coords} graph coords.')
 
     def create_constraints_pub(self):
@@ -205,37 +209,44 @@ class ReprojectPub(Node):
         if self.enable_gt and self.should_publish(self.gt_map_pub, self.gt_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             gt_map, gt_idx = self.accumulate_cloud(self.gt_traj, ts_cloud_map)
-            self.publish_map(self.gt_map_pub, self.gt_path_pub,
-                             gt_map, self.gt_traj[0:gt_idx+1, :])
-            Logger.LogInfo(
-                f'Published gt map with {len(gt_map.points)} points.')
-            if self.enable_graph:
-                idx = self.lookup_closest_position_idx(
-                    self.graph_coords, self.gt_traj[gt_idx, 1:4])
-                if idx >= 0:
-                    print(f'Publishing graph to {idx}')
-                    self.create_sphere_pub(self.graph_coords[0:idx], 0)
+            if gt_idx >= 0:
+                self.publish_map(self.gt_map_pub, self.gt_path_pub,
+                                 gt_map, self.gt_traj[0:gt_idx+1, :])
+                Logger.LogInfo(
+                    f'Published gt map with {len(gt_map.points)} points.')
+                if self.enable_graph:
+                    print(
+                        f'Comparing times: {self.graph_coords[0, 7]} and {self.gt_traj[gt_idx, 0]}')
+                    idx = self.lookup_closest_ts_idx(
+                        self.graph_coords[:, 7], self.gt_traj[gt_idx, 0], eps=1.5)
+                    print(f'gt_idx: {gt_idx}, idx: {idx}')
+                    if idx >= 0:
+                        print(f'Publishing graph to {idx}')
+                        self.create_sphere_pub(
+                            self.graph_coords[0:idx, 0:3], 0)
 
         if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             est_map, est_idx = self.accumulate_cloud(
                 self.est_traj, ts_cloud_map)
-            self.publish_map(self.est_map_pub, self.est_path_pub,
-                             est_map, self.est_traj[0:est_idx+1, :])
-            Logger.LogInfo(
-                f'Published est map with {len(est_map.points)} points.')
+            if est_idx >= 0:
+                self.publish_map(self.est_map_pub, self.est_path_pub,
+                                 est_map, self.est_traj[0:est_idx+1, :])
+                Logger.LogInfo(
+                    f'Published est map with {len(est_map.points)} points.')
 
         if self.enable_corr and self.should_publish(self.corr_map_pub, self.corr_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             corr_map, corr_idx = self.accumulate_cloud(
                 self.corr_traj, ts_cloud_map)
-            corr_traj = self.corr_traj[0:corr_idx+1, :]
-            self.publish_map(self.corr_map_pub,
-                             self.corr_path_pub, corr_map, corr_traj)
-            Logger.LogInfo(
-                f'Published corr map with {len(corr_map.points)} points.')
-            if self.enable_constraints and self.constraints_pub.get_subscription_count() > 0:
-                self.publish_constraints(corr_traj)
+            if corr_idx >= 0:
+                corr_traj = self.corr_traj[0:corr_idx+1, :]
+                self.publish_map(self.corr_map_pub,
+                                 self.corr_path_pub, corr_map, corr_traj)
+                Logger.LogInfo(
+                    f'Published corr map with {len(corr_map.points)} points.')
+                if self.enable_constraints and self.constraints_pub.get_subscription_count() > 0:
+                    self.publish_constraints(corr_traj)
 
     def publish_constraints(self, traj):
         if len(traj) == 0:
@@ -355,7 +366,7 @@ class ReprojectPub(Node):
     def create_sphere_pub(self, traj, level):
         n_poses = traj.shape[0]
         for i in range(n_poses):
-            xyz = traj[i, 1:4]
+            xyz = traj[i, :]
             color = self.get_level_color(level)
             self.vis_helper.add_graph_coordinate(xyz, color)
 
@@ -410,10 +421,10 @@ class ReprojectPub(Node):
         pcd = pcd.voxel_down_sample(voxel_size=self.voxel_size)
         return pcd
 
-    def lookup_closest_ts_idx(self, timestamps_s, ts_s):
+    def lookup_closest_ts_idx(self, timestamps_s, ts_s, eps=1e-4):
         diff_timestamps = np.abs(timestamps_s - ts_s)
         minval = np.amin(diff_timestamps)
-        if (minval > 1e-4):
+        if (minval > eps):
             return -1
 
         return np.where(diff_timestamps == minval)[0][0]

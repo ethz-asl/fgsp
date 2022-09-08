@@ -371,10 +371,10 @@ class ReprojectPub(Node):
 
     def create_sphere_pub(self, traj, levels):
         n_poses = traj.shape[0]
-        z_offset = 5.0
         for level in range(levels):
-            level_z = np.array([0, 0, level * z_offset])
-            for i in range(n_poses):
+            level_z = np.array([0, 0, level * self.z_offset])
+            step = level + 1
+            for i in range(0, n_poses, step):
                 xyz = traj[i, :] + level_z
                 color = self.get_level_color(level)
                 self.vis_helper.add_graph_coordinate(xyz, color)

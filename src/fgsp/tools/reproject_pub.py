@@ -209,6 +209,12 @@ class ReprojectPub(Node):
                              gt_map, self.gt_traj[0:gt_idx+1, :])
             Logger.LogInfo(
                 f'Published gt map with {len(gt_map.points)} points.')
+            if self.enable_graph:
+                idx = self.lookup_closest_position_idx(
+                    self.graph_coords, self.gt_traj[gt_idx, 1:4])
+                if idx >= 0:
+                    print(f'Publishing graph to {idx}')
+                    self.create_sphere_pub(self.graph_coords[0:idx], 0)
 
         if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
@@ -230,10 +236,6 @@ class ReprojectPub(Node):
                 f'Published corr map with {len(corr_map.points)} points.')
             if self.enable_constraints and self.constraints_pub.get_subscription_count() > 0:
                 self.publish_constraints(corr_traj)
-            if self.enable_graph:
-                idx = self.lookup_closest_ts_idx(
-                    self.graph_coords[:, 0], self.corr_traj[corr_idx, 0])
-                self.create_sphere_pub(self.graph_coords[0:idx], 0)
 
     def publish_constraints(self, traj):
         if len(traj) == 0:
@@ -415,6 +417,15 @@ class ReprojectPub(Node):
             return -1
 
         return np.where(diff_timestamps == minval)[0][0]
+
+    def lookup_closest_position_idx(self, coords, position):
+        diff_positions = np.linalg.norm(coords[:, 0:3] - position, axis=1)
+        minval = np.amin(diff_positions)
+        print(f'minval: {minval}')
+        if (minval > 0.1):
+            return -1
+
+        return np.where(diff_positions == minval)[0][0]
 
     def transform_pose_to_sensor_frame(self, pose):
         qxyzw = pose[[5, 6, 7, 4]]

@@ -14,8 +14,9 @@ reproject_viz:
     enable_corr: True
     enable_graph: True
 
-    hierarchy_levels: 1
     graph_coords_file: "data/opt_graph_coords.npy"
+    hierarchy_levels: 1
+    z_offset: 5.0
 
     compute_splines: False
     spline_points: 10

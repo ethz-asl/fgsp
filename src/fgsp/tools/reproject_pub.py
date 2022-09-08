@@ -45,7 +45,6 @@ class ReprojectPub(Node):
         self.T_O_L = np.array(self.try_get_param(
             'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
         self.voxel_size = 0.1
-        self.hierarchy_levels = self.try_get_param('hierarchy_levels', 0)
         self.vis_helper = Visualizer()
 
         # GT Publisher
@@ -156,8 +155,15 @@ class ReprojectPub(Node):
         for i in range(0, n_coords):
             self.graph_coords[i, 7] = Utils.ts_ns_to_seconds(
                 self.graph_coords[i, 7])
+        self.hierarchy_levels = self.try_get_param('hierarchy_levels', 1)
+        self.z_offset = self.try_get_param('z_offset', 5.0)
 
         Logger.LogInfo(f'Read {n_coords} graph coords.')
+        if self.hierarchy_levels < 1:
+            Logger.LogError(
+                'The number of hierarchy levels must be at least 1.')
+            self.enable_graph = False
+            return
 
     def create_constraints_pub(self):
         self.ts_constraint_map = self.read_constraints_file(
@@ -223,7 +229,7 @@ class ReprojectPub(Node):
                     if idx >= 0:
                         print(f'Publishing graph to {idx}')
                         self.create_sphere_pub(
-                            self.graph_coords[0:idx, 0:3], 0)
+                            self.graph_coords[0:idx, 0:3], self.hierarchy_levels)
 
         if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
@@ -363,12 +369,15 @@ class ReprojectPub(Node):
             return [0.05, 0.95, 0.95]
         return [0.0, 0.0, 0.0]
 
-    def create_sphere_pub(self, traj, level):
+    def create_sphere_pub(self, traj, levels):
         n_poses = traj.shape[0]
-        for i in range(n_poses):
-            xyz = traj[i, :]
-            color = self.get_level_color(level)
-            self.vis_helper.add_graph_coordinate(xyz, color)
+        z_offset = 5.0
+        for level in range(levels):
+            level_z = np.array([0, 0, level * z_offset])
+            for i in range(n_poses):
+                xyz = traj[i, :] + level_z
+                color = self.get_level_color(level)
+                self.vis_helper.add_graph_coordinate(xyz, color)
 
         self.vis_helper.visualize_coords()
 

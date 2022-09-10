@@ -146,6 +146,7 @@ class ReprojectPub(Node):
 
     def create_graph_pub(self):
         self.graph_coords = self.read_traj_file('graph_coords_file')
+        self.graph_coords = self.graph_coords[:, [7, 0, 1, 2, 3, 4, 5, 6]]
         n_coords = self.graph_coords.shape[0]
         if (n_coords == 0):
             Logger.LogError(
@@ -153,10 +154,12 @@ class ReprojectPub(Node):
             self.enable_graph = False
             return
         for i in range(0, n_coords):
-            self.graph_coords[i, 7] = Utils.ts_ns_to_seconds(
-                self.graph_coords[i, 7])
+            self.graph_coords[i, 0] = Utils.ts_ns_to_seconds(
+                self.graph_coords[i, 0])
         self.hierarchy_levels = self.try_get_param('hierarchy_levels', 1)
         self.z_offset = self.try_get_param('z_offset', 5.0)
+        self.graph_map_pub = self.create_publisher(
+            PointCloud2, 'graph_map_cloud', 10)
 
         Logger.LogInfo(f'Read {n_coords} graph coords.')
         if self.hierarchy_levels < 1:
@@ -203,8 +206,12 @@ class ReprojectPub(Node):
         return poses
 
     def should_publish(self, map_pub, traj_pub):
-        has_map_subs = map_pub.get_subscription_count() > 0
-        has_traj_subs = traj_pub.get_subscription_count() > 0
+        has_map_subs = True
+        has_traj_subs = True
+        if (map_pub is not None):
+            has_map_subs = map_pub.get_subscription_count() > 0
+        if (traj_pub is not None):
+            has_traj_subs = traj_pub.get_subscription_count() > 0
         return has_map_subs & has_traj_subs
 
     def publish_all_maps(self):
@@ -220,16 +227,18 @@ class ReprojectPub(Node):
                                  gt_map, self.gt_traj[0:gt_idx+1, :])
                 Logger.LogInfo(
                     f'Published gt map with {len(gt_map.points)} points.')
-                if self.enable_graph:
-                    print(
-                        f'Comparing times: {self.graph_coords[0, 7]} and {self.gt_traj[gt_idx, 0]}')
-                    idx = self.lookup_closest_ts_idx(
-                        self.graph_coords[:, 7], self.gt_traj[gt_idx, 0], eps=1.5)
-                    print(f'gt_idx: {gt_idx}, idx: {idx}')
-                    if idx >= 0:
-                        print(f'Publishing graph to {idx}')
-                        self.create_sphere_pub(
-                            self.graph_coords[0:idx, 0:3], self.hierarchy_levels)
+        if self.enable_graph and self.should_publish(self.graph_map_pub, None):
+            ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
+            graph_map, graph_idx = self.accumulate_cloud(
+                self.graph_coords, ts_cloud_map)
+            print(f'graph_idx: {graph_idx}')
+            if graph_idx >= 0:
+                print(f'Publishing graph to {graph_idx}')
+                self.publish_map(self.gt_map_pub, None, graph_map, None)
+                self.create_sphere_pub(
+                    self.graph_coords[0:graph_idx, 1:4], self.hierarchy_levels)
+                Logger.LogInfo(
+                    f'Published graph map with {len(est_map.points)} points.')
 
         if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
@@ -344,13 +353,15 @@ class ReprojectPub(Node):
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = 'map'
-        map = map.voxel_down_sample(voxel_size=self.voxel_size)
-        map_ros = point_cloud2.create_cloud(
-            header, FIELDS_XYZ, map.points)
-        map_pub.publish(map_ros)
+        if map_pub is not None and map is not None:
+            map = map.voxel_down_sample(voxel_size=self.voxel_size)
+            map_ros = point_cloud2.create_cloud(
+                header, FIELDS_XYZ, map.points)
+            map_pub.publish(map_ros)
 
-        path_msg = self.create_path_msg(traj)
-        path_pub.publish(path_msg)
+        if path_pub is not None and traj is not None:
+            path_msg = self.create_path_msg(traj)
+            path_pub.publish(path_msg)
 
     def get_level_color(self, idx):
         max_idx = 6

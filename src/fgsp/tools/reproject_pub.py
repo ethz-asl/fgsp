@@ -238,7 +238,7 @@ class ReprojectPub(Node):
                 self.create_sphere_pub(
                     self.graph_coords[0:graph_idx, 1:4], self.hierarchy_levels)
                 Logger.LogInfo(
-                    f'Published graph map with {len(est_map.points)} points.')
+                    f'Published graph map with {len(graph_map.points)} points.')
 
         if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)

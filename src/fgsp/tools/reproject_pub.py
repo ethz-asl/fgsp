@@ -239,7 +239,7 @@ class ReprojectPub(Node):
                 cur_coords = self.graph_coords[indices, :]
 
                 graph_map, graph_idx = self.accumulate_cloud(
-                    cur_coords, ts_cloud_map, 0.5)
+                    cur_coords, ts_cloud_map, 0.5, lvl)
 
                 if graph_idx >= 0:
                     print(f'Publishing graph to {graph_idx}')
@@ -427,7 +427,7 @@ class ReprojectPub(Node):
         cloud = self.parse_cloud(cloud_msg)
         self.ts_cloud_map[ts_s] = cloud
 
-    def accumulate_cloud(self, trajectory, ts_cloud_map, eps=1e-4):
+    def accumulate_cloud(self, trajectory, ts_cloud_map, eps=1e-4, level=0):
         map = o3d.geometry.PointCloud()
         idx = -1
         for ts_s, cloud in ts_cloud_map.items():
@@ -436,6 +436,7 @@ class ReprojectPub(Node):
                 continue
 
             T_M_L = self.transform_pose_to_sensor_frame(trajectory[idx, :])
+            T_M_L[2, 3] += level * self.z_offset
             cloud = cloud.transform(T_M_L)
             map += cloud
 

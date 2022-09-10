@@ -230,11 +230,11 @@ class ReprojectPub(Node):
         if self.enable_graph and self.should_publish(self.graph_map_pub, None):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             graph_map, graph_idx = self.accumulate_cloud(
-                self.graph_coords, ts_cloud_map)
+                self.graph_coords, ts_cloud_map, 0.5)
             print(f'graph_idx: {graph_idx}')
             if graph_idx >= 0:
                 print(f'Publishing graph to {graph_idx}')
-                self.publish_map(self.gt_map_pub, None, graph_map, None)
+                self.publish_map(self.graph_map_pub, None, graph_map, None)
                 self.create_sphere_pub(
                     self.graph_coords[0:graph_idx, 1:4], self.hierarchy_levels)
                 Logger.LogInfo(
@@ -420,11 +420,11 @@ class ReprojectPub(Node):
         cloud = self.parse_cloud(cloud_msg)
         self.ts_cloud_map[ts_s] = cloud
 
-    def accumulate_cloud(self, trajectory, ts_cloud_map):
+    def accumulate_cloud(self, trajectory, ts_cloud_map, eps=1e-4):
         map = o3d.geometry.PointCloud()
         idx = -1
         for ts_s, cloud in ts_cloud_map.items():
-            idx = self.lookup_closest_ts_idx(trajectory[:, 0], ts_s)
+            idx = self.lookup_closest_ts_idx(trajectory[:, 0], ts_s, eps)
             if idx < 0:
                 continue
 

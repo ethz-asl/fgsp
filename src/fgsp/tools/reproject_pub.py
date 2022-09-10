@@ -158,8 +158,10 @@ class ReprojectPub(Node):
                 self.graph_coords[i, 0])
         self.hierarchy_levels = self.try_get_param('hierarchy_levels', 1)
         self.z_offset = self.try_get_param('z_offset', 5.0)
-        self.graph_map_pub = self.create_publisher(
-            PointCloud2, 'graph_map_cloud', 10)
+        self.graph_map_pub = [None] * self.hierarchy_levels
+        for i in range(self.hierarchy_levels):
+            self.graph_map_pub[i] = self.create_publisher(
+                PointCloud2, f'graph_map_cloud_{i}', 10)
 
         Logger.LogInfo(f'Read {n_coords} graph coords.')
         if self.hierarchy_levels < 1:
@@ -227,18 +229,26 @@ class ReprojectPub(Node):
                                  gt_map, self.gt_traj[0:gt_idx+1, :])
                 Logger.LogInfo(
                     f'Published gt map with {len(gt_map.points)} points.')
-        if self.enable_graph and self.should_publish(self.graph_map_pub, None):
-            ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
-            graph_map, graph_idx = self.accumulate_cloud(
-                self.graph_coords, ts_cloud_map, 0.5)
-            print(f'graph_idx: {graph_idx}')
-            if graph_idx >= 0:
-                print(f'Publishing graph to {graph_idx}')
-                self.publish_map(self.graph_map_pub, None, graph_map, None)
-                self.create_sphere_pub(
-                    self.graph_coords[0:graph_idx, 1:4], self.hierarchy_levels)
-                Logger.LogInfo(
-                    f'Published graph map with {len(graph_map.points)} points.')
+        if self.enable_graph:
+            for lvl in range(self.hierarchy_levels):
+                if not self.should_publish(self.graph_map_pub[lvl], None):
+                    continue
+                ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
+
+                indices = np.arange(0, self.graph_coords.shape[0], lvl + 1)
+                cur_coords = self.graph_coords[indices, :]
+
+                graph_map, graph_idx = self.accumulate_cloud(
+                    cur_coords, ts_cloud_map, 0.5)
+
+                if graph_idx >= 0:
+                    print(f'Publishing graph to {graph_idx}')
+                    self.publish_map(
+                        self.graph_map_pub[lvl], None, graph_map, None)
+                    self.create_sphere_pub(cur_coords[0:graph_idx, 1:4], lvl)
+                    Logger.LogInfo(
+                        f'Published graph map with {len(graph_map.points)} points.')
+            self.vis_helper.visualize_coords()
 
         if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
@@ -380,17 +390,14 @@ class ReprojectPub(Node):
             return [0.05, 0.95, 0.95]
         return [0.0, 0.0, 0.0]
 
-    def create_sphere_pub(self, traj, levels):
+    def create_sphere_pub(self, traj, level):
         n_poses = traj.shape[0]
-        for level in range(levels):
-            level_z = np.array([0, 0, level * self.z_offset])
-            step = level + 1
-            for i in range(0, n_poses, step):
-                xyz = traj[i, :] + level_z
-                color = self.get_level_color(level)
-                self.vis_helper.add_graph_coordinate(xyz, color)
-
-        self.vis_helper.visualize_coords()
+        level_z = np.array([0, 0, level * self.z_offset])
+        step = level + 1
+        for i in range(0, n_poses, step):
+            xyz = traj[i, :] + level_z
+            color = self.get_level_color(level)
+            self.vis_helper.add_graph_coordinate(xyz, color)
 
     def create_path_msg(self, trajectory):
         path_msg = Path()
@@ -516,6 +523,9 @@ class ReprojectPub(Node):
         else:
             Logger.LogError(f'ReprojectPub: Constraints file does not exist!')
         return dict
+
+    def publish_map_for_level(self):
+        pass
 
 
 def main(args=None):

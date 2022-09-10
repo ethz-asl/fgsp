@@ -41,6 +41,12 @@ class ReprojectPub(Node):
         Logger.Verbosity = 7
         self.dataroot = self.try_get_param('dataroot', './')
 
+        # Configuration
+        self.T_O_L = np.array(self.try_get_param(
+            'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
+        self.voxel_size = 0.1
+        self.vis_helper = Visualizer()
+
         # GT Publisher
         self.enable_gt = self.try_get_param('enable_gt', False)
         if self.enable_gt:
@@ -50,6 +56,10 @@ class ReprojectPub(Node):
         self.enable_est = self.try_get_param('enable_est', False)
         if self.enable_est:
             self.create_est_pub()
+
+        self.enable_graph = self.try_get_param('enable_graph', False)
+        if self.enable_graph:
+            self.create_graph_pub()
 
         # Corr Publisher
         self.enable_corr = self.try_get_param('enable_corr', False)
@@ -63,7 +73,6 @@ class ReprojectPub(Node):
             self.create_constraints_pub()
             self.comms = Comms()
             self.comms.node = self
-            self.vis_helper = Visualizer()
             self.compute_splines = self.try_get_param('compute_splines', False)
             if self.compute_splines:
                 self.spline_points = self.try_get_param('spline_points', 10)
@@ -78,11 +87,6 @@ class ReprojectPub(Node):
         Logger.LogDebug(f'Enable EST: {self.enable_est}')
         Logger.LogDebug(f'Enable CORR: {self.enable_corr}')
         Logger.LogDebug(f'Enable CONSTR: {self.enable_constraints}')
-
-        # Configuration
-        self.T_O_L = np.array(self.try_get_param(
-            'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
-        self.voxel_size = 0.1
 
         # Cloud subscriber
         cloud_topic = self.try_get_param('cloud_in', '/cloud')
@@ -140,6 +144,32 @@ class ReprojectPub(Node):
             PointCloud2, 'corr_map_cloud', 10)
         self.corr_path_pub = self.create_publisher(Path, 'corr_trajectory', 10)
 
+    def create_graph_pub(self):
+        self.graph_coords = self.read_traj_file('graph_coords_file')
+        self.graph_coords = self.graph_coords[:, [7, 0, 1, 2, 3, 4, 5, 6]]
+        n_coords = self.graph_coords.shape[0]
+        if (n_coords == 0):
+            Logger.LogError(
+                'Error occurred while reading the graph coords file.')
+            self.enable_graph = False
+            return
+        for i in range(0, n_coords):
+            self.graph_coords[i, 0] = Utils.ts_ns_to_seconds(
+                self.graph_coords[i, 0])
+        self.hierarchy_levels = self.try_get_param('hierarchy_levels', 1)
+        self.z_offset = self.try_get_param('z_offset', 5.0)
+        self.graph_map_pub = [None] * self.hierarchy_levels
+        for i in range(self.hierarchy_levels):
+            self.graph_map_pub[i] = self.create_publisher(
+                PointCloud2, f'graph_map_cloud_{i}', 10)
+
+        Logger.LogInfo(f'Read {n_coords} graph coords.')
+        if self.hierarchy_levels < 1:
+            Logger.LogError(
+                'The number of hierarchy levels must be at least 1.')
+            self.enable_graph = False
+            return
+
     def create_constraints_pub(self):
         self.ts_constraint_map = self.read_constraints_file(
             self.constraints_file)
@@ -154,8 +184,6 @@ class ReprojectPub(Node):
             self.enable_constraints = False
             return
         Logger.LogInfo(f'Read {n_constraints} constraints.')
-
-        print(f':constraints {self.ts_constraint_map}')
 
         self.constraint_markers = MarkerArray()
         self.constraints_pub = self.create_publisher(
@@ -180,8 +208,12 @@ class ReprojectPub(Node):
         return poses
 
     def should_publish(self, map_pub, traj_pub):
-        has_map_subs = map_pub.get_subscription_count() > 0
-        has_traj_subs = traj_pub.get_subscription_count() > 0
+        has_map_subs = True
+        has_traj_subs = True
+        if (map_pub is not None):
+            has_map_subs = map_pub.get_subscription_count() > 0
+        if (traj_pub is not None):
+            has_traj_subs = traj_pub.get_subscription_count() > 0
         return has_map_subs & has_traj_subs
 
     def publish_all_maps(self):
@@ -192,31 +224,54 @@ class ReprojectPub(Node):
         if self.enable_gt and self.should_publish(self.gt_map_pub, self.gt_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             gt_map, gt_idx = self.accumulate_cloud(self.gt_traj, ts_cloud_map)
-            self.publish_map(self.gt_map_pub, self.gt_path_pub,
-                             gt_map, self.gt_traj[0:gt_idx+1, :])
-            Logger.LogInfo(
-                f'Published gt map with {len(gt_map.points)} points.')
+            if gt_idx >= 0:
+                self.publish_map(self.gt_map_pub, self.gt_path_pub,
+                                 gt_map, self.gt_traj[0:gt_idx+1, :])
+                Logger.LogInfo(
+                    f'Published gt map with {len(gt_map.points)} points.')
+        if self.enable_graph:
+            for lvl in range(self.hierarchy_levels):
+                if not self.should_publish(self.graph_map_pub[lvl], None):
+                    continue
+                ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
+
+                indices = np.arange(0, self.graph_coords.shape[0], lvl + 1)
+                cur_coords = self.graph_coords[indices, :]
+
+                graph_map, graph_idx = self.accumulate_cloud(
+                    cur_coords, ts_cloud_map, 0.5, lvl)
+
+                if graph_idx >= 0:
+                    print(f'Publishing graph to {graph_idx}')
+                    self.publish_map(
+                        self.graph_map_pub[lvl], None, graph_map, None)
+                    self.create_sphere_pub(cur_coords[0:graph_idx, 1:4], lvl)
+                    Logger.LogInfo(
+                        f'Published graph map with {len(graph_map.points)} points.')
+            self.vis_helper.visualize_coords()
 
         if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             est_map, est_idx = self.accumulate_cloud(
                 self.est_traj, ts_cloud_map)
-            self.publish_map(self.est_map_pub, self.est_path_pub,
-                             est_map, self.est_traj[0:est_idx+1, :])
-            Logger.LogInfo(
-                f'Published est map with {len(est_map.points)} points.')
+            if est_idx >= 0:
+                self.publish_map(self.est_map_pub, self.est_path_pub,
+                                 est_map, self.est_traj[0:est_idx+1, :])
+                Logger.LogInfo(
+                    f'Published est map with {len(est_map.points)} points.')
 
         if self.enable_corr and self.should_publish(self.corr_map_pub, self.corr_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
             corr_map, corr_idx = self.accumulate_cloud(
                 self.corr_traj, ts_cloud_map)
-            corr_traj = self.corr_traj[0:corr_idx+1, :]
-            self.publish_map(self.corr_map_pub,
-                             self.corr_path_pub, corr_map, corr_traj)
-            Logger.LogInfo(
-                f'Published corr map with {len(corr_map.points)} points.')
-            if self.enable_constraints and self.constraints_pub.get_subscription_count() > 0:
-                self.publish_constraints(corr_traj)
+            if corr_idx >= 0:
+                corr_traj = self.corr_traj[0:corr_idx+1, :]
+                self.publish_map(self.corr_map_pub,
+                                 self.corr_path_pub, corr_map, corr_traj)
+                Logger.LogInfo(
+                    f'Published corr map with {len(corr_map.points)} points.')
+                if self.enable_constraints and self.constraints_pub.get_subscription_count() > 0:
+                    self.publish_constraints(corr_traj)
 
     def publish_constraints(self, traj):
         if len(traj) == 0:
@@ -308,13 +363,41 @@ class ReprojectPub(Node):
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = 'map'
-        map = map.voxel_down_sample(voxel_size=self.voxel_size)
-        map_ros = point_cloud2.create_cloud(
-            header, FIELDS_XYZ, map.points)
-        map_pub.publish(map_ros)
+        if map_pub is not None and map is not None:
+            map = map.voxel_down_sample(voxel_size=self.voxel_size)
+            map_ros = point_cloud2.create_cloud(
+                header, FIELDS_XYZ, map.points)
+            map_pub.publish(map_ros)
 
-        path_msg = self.create_path_msg(traj)
-        path_pub.publish(path_msg)
+        if path_pub is not None and traj is not None:
+            path_msg = self.create_path_msg(traj)
+            path_pub.publish(path_msg)
+
+    def get_level_color(self, idx):
+        max_idx = 6
+        norm_idx = idx % max_idx
+        if norm_idx == 0:
+            return [0.95, 0.05, 0.05]
+        elif norm_idx == 1:
+            return [0.05, 0.95, 0.05]
+        elif norm_idx == 2:
+            return [0.05, 0.05, 0.95]
+        elif norm_idx == 3:
+            return [0.95, 0.05, 0.95]
+        elif norm_idx == 4:
+            return [0.95, 0.95, 0.05]
+        elif norm_idx == 5:
+            return [0.05, 0.95, 0.95]
+        return [0.0, 0.0, 0.0]
+
+    def create_sphere_pub(self, traj, level):
+        n_poses = traj.shape[0]
+        level_z = np.array([0, 0, level * self.z_offset])
+        step = level + 1
+        for i in range(0, n_poses, step):
+            xyz = traj[i, :] + level_z
+            color = self.get_level_color(level)
+            self.vis_helper.add_graph_coordinate(xyz, color)
 
     def create_path_msg(self, trajectory):
         path_msg = Path()
@@ -344,15 +427,16 @@ class ReprojectPub(Node):
         cloud = self.parse_cloud(cloud_msg)
         self.ts_cloud_map[ts_s] = cloud
 
-    def accumulate_cloud(self, trajectory, ts_cloud_map):
+    def accumulate_cloud(self, trajectory, ts_cloud_map, eps=1e-4, level=0):
         map = o3d.geometry.PointCloud()
         idx = -1
         for ts_s, cloud in ts_cloud_map.items():
-            idx = self.lookup_closest_ts_idx(trajectory[:, 0], ts_s)
+            idx = self.lookup_closest_ts_idx(trajectory[:, 0], ts_s, eps)
             if idx < 0:
                 continue
 
             T_M_L = self.transform_pose_to_sensor_frame(trajectory[idx, :])
+            T_M_L[2, 3] += level * self.z_offset
             cloud = cloud.transform(T_M_L)
             map += cloud
 
@@ -365,13 +449,22 @@ class ReprojectPub(Node):
         pcd = pcd.voxel_down_sample(voxel_size=self.voxel_size)
         return pcd
 
-    def lookup_closest_ts_idx(self, timestamps_s, ts_s):
+    def lookup_closest_ts_idx(self, timestamps_s, ts_s, eps=1e-4):
         diff_timestamps = np.abs(timestamps_s - ts_s)
         minval = np.amin(diff_timestamps)
-        if (minval > 1e-4):
+        if (minval > eps):
             return -1
 
         return np.where(diff_timestamps == minval)[0][0]
+
+    def lookup_closest_position_idx(self, coords, position):
+        diff_positions = np.linalg.norm(coords[:, 0:3] - position, axis=1)
+        minval = np.amin(diff_positions)
+        print(f'minval: {minval}')
+        if (minval > 0.1):
+            return -1
+
+        return np.where(diff_positions == minval)[0][0]
 
     def transform_pose_to_sensor_frame(self, pose):
         qxyzw = pose[[5, 6, 7, 4]]
@@ -407,7 +500,6 @@ class ReprojectPub(Node):
             robot_traj = file_interface.read_tum_trajectory_file(filename)
             return np.column_stack((robot_traj.timestamps, robot_traj.positions_xyz,
                                     robot_traj.orientations_quat_wxyz))
-
         else:
             Logger.LogError(f'ReprojectPub: File does not exist!')
             return np.array([])
@@ -416,7 +508,7 @@ class ReprojectPub(Node):
         filename = os.path.join(self.dataroot, filename)
         Logger.LogDebug(f'ReprojectPub: Reading file {filename}.')
         if exists(filename):
-            return self.convert_to_traj(np.load(filename))
+            return np.load(filename)
         else:
             Logger.LogError(f'ReprojectPub: File does not exist!')
             return np.array([])
@@ -432,6 +524,9 @@ class ReprojectPub(Node):
         else:
             Logger.LogError(f'ReprojectPub: Constraints file does not exist!')
         return dict
+
+    def publish_map_for_level(self):
+        pass
 
 
 def main(args=None):

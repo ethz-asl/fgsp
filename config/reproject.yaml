@@ -1,19 +1,24 @@
 reproject_viz:
   ros__parameters:
-    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/se3_r3_comparison_h_floor/"
+    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/hagerbach/anymal_1/"
     gt_traj_file: "gt.csv"
     est_traj_file: "onboard.csv"
-    corr_traj_file: "so3_top10.csv"
+    corr_traj_file: "corrected_hierarchy_3.csv"
     constraints_file: "opt_labels.dat"
     connections_file: "opt_connections.dat"
 
     cloud_in: "/point_cloud_filter/lidar/point_cloud_filtered"
 
-    enable_gt: true
-    enable_est: true
-    enable_corr: true
+    enable_gt: True
+    enable_est: False
+    enable_corr: True
+    enable_graph: True
 
-    compute_splines: true
+    graph_coords_file: "data/opt_graph_coords.npy"
+    hierarchy_levels: 3
+    z_offset: 10.0
+
+    compute_splines: False
     spline_points: 10
     spline_low_height: 1
     spline_mid_height: 4

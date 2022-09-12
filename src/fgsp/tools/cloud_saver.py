@@ -33,6 +33,7 @@ class CloudSaver(Node):
 
     def cloud_callback(self, msg):
         cloud = np.array(list(point_cloud2.read_points(msg, skip_nans=True)))
+        cloud = np.reshape(cloud, (-1, 3))
         np.save(self.export_path, cloud)
         Logger.LogInfo(f'CloudSaver: Saved cloud to {self.export_path}')
 

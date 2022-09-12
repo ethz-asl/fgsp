@@ -34,6 +34,9 @@ class CloudPublisher(Node):
         Logger.LogInfo(f'CloudPublisher: Publishing to {self.cloud_topic}')
         Logger.LogInfo(
             'CloudPublisher: Initializing done. Publishing clouds...')
+        rate = self.get_param('rate', 0.1)
+        self.timer = self.create_timer(
+            1 / rate, self.publish_clouds)
 
     def get_param(self, key, default):
         self.declare_parameter(key, default)
@@ -45,12 +48,14 @@ class CloudPublisher(Node):
         for cloud_npy in in_clouds:
             path = f'{self.input_path}/{cloud_npy}'
             cloud = np.load(path)
-            print(f'CloudPublisher: Read {cloud.shape[0]} points from {path}')
+            Logger.LogInfo(
+                f'CloudPublisher: Read {cloud.shape} points from {path}')
             parsed_clouds.append(cloud)
 
         return parsed_clouds
 
     def voxel_down_sample(self, cloud, voxel_size=0.1):
+        print(f'cloud: {cloud.shape}')
         pcd = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(cloud))
         pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
         return pcd.points
@@ -63,6 +68,7 @@ class CloudPublisher(Node):
             cloud = self.voxel_down_sample(self.clouds[i])
             msg = point_cloud2.create_cloud_xyz32(header, cloud)
             self.cloud_pubs[i].publish(msg)
+        Logger.LogInfo(f'Published {self.n_clouds} clouds')
 
 
 def main(args=None):

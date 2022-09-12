@@ -1,22 +1,14 @@
 #! /usr/bin/env python3
 
-from os.path import exists
-
-import rclpy
-import pathlib
-from rclpy.node import Node
-from evo.tools import file_interface
-from evo.core.trajectory import PoseTrajectory3D
-from maplab_msgs.msg import Graph, Trajectory, SubmapConstraint
-
 import numpy as np
 
-from rosbags.serde import serialize_cdr
-from rosbags.rosbag2 import Writer as Rosbag2Writer
-from rosbags.typesys import get_types_from_msg, register_types
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import PointCloud2
+from sensor_msgs_py import point_cloud2
+
 
 from src.fgsp.common.logger import Logger
-from src.fgsp.controller.signal_handler import SignalHandler
 
 
 class CloudSaver(Node):
@@ -25,14 +17,24 @@ class CloudSaver(Node):
         Logger.Verbosity = 5
         Logger.LogInfo('CloudSaver: Initializing...')
 
-        self.cloud_topic = self.get_param('odom_topic', '/point_cloud')
-        self.export_path = self.get_param('monitor_topic', '/tmp/cloud.npy')
+        self.cloud_topic = self.get_param('cloud_topic', '/point_cloud')
+        self.export_path = self.get_param('export_path', '/tmp/cloud.npy')
 
-        Logger.LogInfo('Simulation: Initializing done.')
+        self.cloud_sub = self.create_subscription(
+            PointCloud2, self.cloud_topic, self.cloud_callback, 10)
+
+        Logger.LogInfo(f'CloudSaver: Subscribed to {self.cloud_topic}')
+        Logger.LogInfo(f'CloudSaver: Writing cloud to {self.export_path}')
+        Logger.LogInfo('CloudSaver: Initializing done. Waiting for clouds...')
 
     def get_param(self, key, default):
         self.declare_parameter(key, default)
         return self.get_parameter(key).value
+
+    def cloud_callback(self, msg):
+        cloud = np.array(list(point_cloud2.read_points(msg, skip_nans=True)))
+        np.save(self.export_path, cloud)
+        Logger.LogInfo(f'CloudSaver: Saved cloud to {self.export_path}')
 
 
 def main(args=None):

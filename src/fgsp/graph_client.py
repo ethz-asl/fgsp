@@ -81,6 +81,8 @@ class GraphClient(Node):
             Logger.LogError(
                 f'Unknown classifier type: {self.config.classifier}')
             self.mutex.release()
+            self.destroy_node()
+            rclpy.shutdown()
             return
 
         # Key management to keep track of the received messages.

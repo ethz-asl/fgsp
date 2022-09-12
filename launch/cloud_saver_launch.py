@@ -14,6 +14,8 @@ def generate_launch_description():
         'cloud_saver_config.yaml'
     )
 
+    print(f'config poitns to {config}')
+
     simulation_node = Node(
         package="fgsp",
         executable="cloud_saver",

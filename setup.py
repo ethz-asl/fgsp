@@ -31,6 +31,7 @@ setup(
             'simulation = src.fgsp.tools.simulation:main',
             'reproject_pub = src.fgsp.tools.reproject_pub:main',
             'cloud_saver = src.fgsp.tools.cloud_saver:main',
+            'cloud_publisher = src.fgsp.tools.cloud_publisher:main',
         ],
     },
 )

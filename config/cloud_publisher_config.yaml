@@ -1,4 +1,4 @@
 cloud_publisher:
   ros__parameters:
     cloud_topic: "/ply_cloud"
-    input_path: "/tmp/clouds"
+    input_path: "/media/berlukas/Data/data/cdpgo/v2/hagerbach/"

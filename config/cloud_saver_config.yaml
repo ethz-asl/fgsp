@@ -1,4 +1,4 @@
 cloud_saver:
   ros__parameters:
-    cloud_topic: "/point_cloud_filter/lidar/point_cloud_filtered"
+    cloud_topic: "/gt_map_cloud"
     export_path: "/tmp/cloud.npy"

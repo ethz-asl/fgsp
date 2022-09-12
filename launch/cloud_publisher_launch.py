@@ -11,12 +11,12 @@ def generate_launch_description():
     config = os.path.join(
         get_package_share_directory('fgsp'),
         'config',
-        'cloud_saver_config.yaml'
+        'cloud_publisher_config.yaml'
     )
 
     simulation_node = Node(
         package="fgsp",
-        executable="cloud_saver",
+        executable="cloud_publisher",
         output={'full': 'screen'},
         emulate_tty=True,
         parameters=[config]

@@ -30,6 +30,7 @@ setup(
             'graph_client = src.fgsp.graph_client:main',
             'simulation = src.fgsp.tools.simulation:main',
             'reproject_pub = src.fgsp.tools.reproject_pub:main',
+            'cloud_saver = src.fgsp.tools.cloud_saver:main',
         ],
     },
 )

@@ -19,6 +19,11 @@ class CloudSaver(Node):
 
         self.cloud_topic = self.get_param('cloud_topic', '/point_cloud')
         self.export_path = self.get_param('export_path', '/tmp/cloud.npy')
+        self.should_store_sequentially = self.get_param('sequential', 'False')
+        if self.should_store_sequentially:
+            self.n_clouds = 0
+            self.export_path = self.export_path.replace(
+                '.npy', '_{n_clouds}.npy')
 
         self.cloud_sub = self.create_subscription(
             PointCloud2, self.cloud_topic, self.cloud_callback, 10)
@@ -34,7 +39,11 @@ class CloudSaver(Node):
     def cloud_callback(self, msg):
         cloud = np.array(list(point_cloud2.read_points(msg, skip_nans=True)))
         cloud = np.reshape(cloud, (-1, 3))
-        np.save(self.export_path, cloud)
+        if self.should_store_sequentially:
+            np.save(self.export_path.format(n_clouds=self.n_clouds), cloud)
+            self.n_clouds += 1
+        else:
+            np.save(self.export_path, cloud)
         Logger.LogInfo(f'CloudSaver: Saved cloud to {self.export_path}')
 
 

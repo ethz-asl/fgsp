@@ -2,3 +2,4 @@ cloud_saver:
   ros__parameters:
     cloud_topic: "/gt_map_cloud"
     export_path: "/tmp/cloud.npy"
+    sequential: True

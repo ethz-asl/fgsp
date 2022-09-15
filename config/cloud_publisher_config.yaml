@@ -3,3 +3,4 @@ cloud_publisher:
     cloud_topic: "/ply_cloud"
     input_path: "/media/berlukas/Data/data/cdpgo/v2/hagerbach/"
     rate: 0.1
+    use_voxel_grid: False

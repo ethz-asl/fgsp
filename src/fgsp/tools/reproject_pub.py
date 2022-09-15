@@ -52,6 +52,7 @@ class ReprojectPub(Node):
             self.create_est_pub()
 
         self.enable_graph = self.try_get_param('enable_graph', False)
+        self.z_offset = 1
         if self.enable_graph:
             self.create_graph_pub()
 

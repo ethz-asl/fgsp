@@ -21,7 +21,13 @@ class CloudPublisher(Node):
         Logger.LogInfo('CloudPublisher: Initializing...')
 
         self.cloud_topic = self.get_param('cloud_topic', '/point_cloud')
-        self.input_path = self.get_param('input_path', '/tmp/cloud.npy')
+        self.use_voxel_grid = self.get_param('use_voxel_grid', False)
+        self.input_path = self.get_param('input_path', '')
+        if (self.input_path == '' or not os.path.exists(self.input_path)):
+            Logger.LogError(
+                f'CloudPublisher: Invalid input path: {self.input_path}')
+            rclpy.shutdown()
+            return
 
         self.clouds = self.read_clouds()
         self.n_clouds = len(self.clouds)
@@ -58,14 +64,16 @@ class CloudPublisher(Node):
         print(f'cloud: {cloud.shape}')
         pcd = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(cloud))
         pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
-        return pcd.points
+        return np.array(pcd.points)
 
     def publish_clouds(self):
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = 'map'
         for i in range(self.n_clouds):
-            cloud = self.voxel_down_sample(self.clouds[i])
+            cloud = self.clouds[i]
+            if (self.use_voxel_grid):
+                cloud = self.voxel_down_sample(cloud)
             msg = point_cloud2.create_cloud_xyz32(header, cloud)
             self.cloud_pubs[i].publish(msg)
         Logger.LogInfo(f'Published {self.n_clouds} clouds')

@@ -25,6 +25,10 @@ class CloudSaver(Node):
             self.export_path = self.export_path.replace(
                 '.npy', '_{n_clouds}.npy')
 
+        self.field_names = ['x', 'y', 'z']
+        if self.get_param('extract_intensity', False):
+            self.field_names.append("intensity")
+
         self.cloud_sub = self.create_subscription(
             PointCloud2, self.cloud_topic, self.cloud_callback, 10)
 
@@ -38,8 +42,9 @@ class CloudSaver(Node):
 
     def cloud_callback(self, msg):
         cloud = point_cloud2.read_points_numpy(
-            msg, field_names=['x', 'y', 'z', "intensity"], skip_nans=True, reshape_organized_cloud=False)
-        cloud = np.reshape(cloud, (-1, 4))
+            msg, field_names=self.field_names, skip_nans=True, reshape_organized_cloud=False)
+        n_dims = len(self.field_names)
+        cloud = np.reshape(cloud, (-1, n_dims))
 
         export_path = self.export_path
         if self.should_store_sequentially:

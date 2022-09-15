@@ -1,5 +1,6 @@
 cloud_saver:
   ros__parameters:
-    cloud_topic: "/rslidar_points"
-    export_path: "/tmp/rslidar/cloud.npy"
-    sequential: True
+    cloud_topic: "/gt_map_cloud"
+    export_path: "/tmp/cloud.npy"
+    extract_intensity: False
+    sequential: False

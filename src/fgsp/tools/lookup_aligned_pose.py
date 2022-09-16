@@ -61,11 +61,16 @@ class LookupAlignedPose(Node):
         input_traj = self.read_csv_file(input_file)
         align_traj = self.read_csv_file(align_file)
 
+        print(
+            f'Found {input_traj.num_poses} and {align_traj.num_poses} poses for input and align file, respectively.')
+
         align_traj, input_traj = sync.associate_trajectories(
             align_traj, input_traj, max_diff=0.1)
 
         input_traj.align(align_traj, correct_scale=False,
                          correct_only_scale=False, n=-1)
+
+        print(f'Aligned {input_traj.num_poses} synchronized poses.')
         return input_traj
 
     def read_csv_file(self, filename):

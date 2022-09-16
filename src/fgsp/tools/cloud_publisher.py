@@ -31,6 +31,9 @@ class CloudPublisher(Node):
 
         self.clouds = self.read_clouds()
         self.n_clouds = len(self.clouds)
+        if (self.n_clouds == 0):
+            return
+
         self.cloud_pubs = [None] * self.n_clouds
         for i in range(self.n_clouds):
             self.cloud_pubs[i] = self.create_publisher(
@@ -51,6 +54,10 @@ class CloudPublisher(Node):
     def read_clouds(self):
         in_clouds = os.listdir(self.input_path)
         parsed_clouds = []
+        if (len(in_clouds) == 0):
+            Logger.LogError(
+                f'CloudPublisher: No clouds found in {self.input_path}')
+            return parsed_clouds
         for cloud_npy in in_clouds:
             path = f'{self.input_path}/{cloud_npy}'
             cloud = np.load(path)

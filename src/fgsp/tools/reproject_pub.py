@@ -85,6 +85,8 @@ class ReprojectPub(Node):
 
         # Cloud subscriber
         cloud_topic = self.try_get_param('cloud_in', '/cloud')
+        self.skip_every_nth = self.try_get_param('skip_every_nth', -1)
+        self.cloud_counter = 0
         self.cloud_sub = self.create_subscription(
             PointCloud2, cloud_topic, self.cloud_callback, 10)
         self.ts_cloud_map = {}
@@ -417,6 +419,10 @@ class ReprojectPub(Node):
         return path_msg
 
     def cloud_callback(self, cloud_msg):
+        self.cloud_counter += 1
+        if (self.cloud_counter % self.skip_every_nth) != 0:
+            return
+
         ts_s = Utils.ros_time_msg_to_s(cloud_msg.header.stamp)
         cloud = self.parse_cloud(cloud_msg)
         self.ts_cloud_map[ts_s] = cloud

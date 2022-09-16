@@ -28,12 +28,6 @@ from src.fgsp.common.logger import Logger
 from src.fgsp.common.visualizer import Visualizer
 from src.fgsp.common.transform_history import ConstraintType
 
-FIELDS_XYZ = [
-    PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
-    PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
-    PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
-]
-
 
 class ReprojectPub(Node):
     def __init__(self):
@@ -58,6 +52,7 @@ class ReprojectPub(Node):
             self.create_est_pub()
 
         self.enable_graph = self.try_get_param('enable_graph', False)
+        self.z_offset = 1
         if self.enable_graph:
             self.create_graph_pub()
 
@@ -365,8 +360,7 @@ class ReprojectPub(Node):
         header.frame_id = 'map'
         if map_pub is not None and map is not None:
             map = map.voxel_down_sample(voxel_size=self.voxel_size)
-            map_ros = point_cloud2.create_cloud(
-                header, FIELDS_XYZ, map.points)
+            map_ros = point_cloud2.create_cloud_xyz32(header, map.points)
             map_pub.publish(map_ros)
 
         if path_pub is not None and traj is not None:
@@ -446,7 +440,6 @@ class ReprojectPub(Node):
         cloud = point_cloud2.read_points_numpy(
             cloud_msg, field_names=['x', 'y', 'z'], skip_nans=True, reshape_organized_cloud=True)
         pcd = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(cloud))
-        pcd = pcd.voxel_down_sample(voxel_size=self.voxel_size)
         return pcd
 
     def lookup_closest_ts_idx(self, timestamps_s, ts_s, eps=1e-4):

@@ -1,5 +1,5 @@
 lookup_aligned_pose:
   ros__parameters:
     input_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/darpa_finals/anymal_4/compslam.csv"
-    align_to_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/darpa_finals/anymal_4/poses.csv"
+    align_to_file: "/media/berlukas/Data/data/datasets/fgsp/results/v2/darpa_finals/anymal_4/gt.csv"
     timestamp_ns: 1632430069236635742

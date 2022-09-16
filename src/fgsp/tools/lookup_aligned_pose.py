@@ -9,6 +9,9 @@ from sensor_msgs.msg import PointCloud2
 from sensor_msgs_py import point_cloud2
 from evo.tools import file_interface
 from evo.core import sync
+from evo.core import metrics
+from evo.tools import plot
+import matplotlib.pyplot as plt
 
 
 from src.fgsp.common.logger import Logger
@@ -36,10 +39,15 @@ class LookupAlignedPose(Node):
             'LookupAlingedPose: Initializing done. Processing data...')
         input_traj = self.synchronize_and_align(input_file, align_file)
         pose = self.lookup_aligned_pose(input_traj, lookup_ts_ns)
-        self.print_pose(pose)
+        if pose is None:
+            Logger.LogError('LookupAlignedPose: Could not find matching pose.')
+        else:
+            self.print_pose(pose)
 
     def print_pose(self, pose):
-        Logger.LogInfo(f'LookupAlignedPose: Pose: {pose}')
+        Logger.LogInfo(f'LookupAlignedPose: Pose:')
+        Logger.LogInfo(f'LookupAlignedPose: xyz: {pose[1:4]}')
+        Logger.LogInfo(f'LookupAlignedPose: wxyz: {pose[4:8]}')
 
     def lookup_aligned_pose(self, input_traj, lookup_ts_ns):
         k_ns_per_s = 1e9
@@ -47,9 +55,13 @@ class LookupAlignedPose(Node):
         idx = self.lookup_closest_ts_idx(input_traj.timestamps, lookup_ts_s)
         if idx < 0:
             return None
-        return input_traj.poses[idx]
 
-    def lookup_closest_ts_idx(self, timestamps_s, ts_s, eps=1e-4):
+        return np.array((input_traj.timestamps[idx], *input_traj.positions_xyz[idx, :],
+                         *input_traj.orientations_quat_wxyz[idx, :]))
+
+    def lookup_closest_ts_idx(self, timestamps_s, ts_s, eps=1e-2):
+        print(f'Looking for closest timestamp to {ts_s}...')
+        print(f'first then ts {timestamps_s[0]}')
         diff_timestamps = np.abs(timestamps_s - ts_s)
         minval = np.amin(diff_timestamps)
         if (minval > eps):
@@ -67,13 +79,47 @@ class LookupAlignedPose(Node):
         align_traj, input_traj = sync.associate_trajectories(
             align_traj, input_traj, max_diff=0.1)
 
-        input_traj.align(align_traj, correct_scale=False,
-                         correct_only_scale=False, n=-1)
+        alignment = input_traj.align(align_traj, correct_scale=False,
+                                     correct_only_scale=False, n=1000)
+        print('--- Alignement -----------------')
+        print('Rotation:')
+        print(alignment[0])
+        print('Translation:')
+        print(alignment[1])
+        print('Scale:')
+        print(alignment[2])
+
+        # self.evaluate(align_traj, input_traj, True)
 
         print(f'Aligned {input_traj.num_poses} synchronized poses.')
         return input_traj
 
+    def perform_evaluation(self, data):
+        pose_relation = metrics.PoseRelation.translation_part
+        ape_metric_trans = metrics.APE(pose_relation)
+        ape_metric_trans.process_data(data)
+        ape_stats_trans = ape_metric_trans.get_all_statistics()
+        print('--- APE ---------------------------')
+        print(ape_stats_trans)
+        return ape_stats_trans, ape_metric_trans
+
+    def plot_trajectories(self, data, ape_metric, ape_stats):
+        fig = plt.figure(figsize=(8, 6), dpi=160)
+        traj_by_label = {
+            "estimate": data[1],
+            "reference": data[0]
+        }
+        plot.trajectories(fig, traj_by_label, plot.PlotMode.xy)
+        plt.show()
+
+    def evaluate(self, gt_traj, est_traj, should_plot):
+        data = (gt_traj, est_traj)
+        stats, metric = self.perform_evaluation(data)
+        if should_plot:
+            self.plot_trajectories(data, metric, stats)
+
     def read_csv_file(self, filename):
+        Logger.LogDebug(f'LookupAlignedPose: Reading file {filename}')
         if os.path.exists(filename):
             return file_interface.read_tum_trajectory_file(filename)
         else:
@@ -84,24 +130,10 @@ class LookupAlignedPose(Node):
         self.declare_parameter(key, default)
         return self.get_parameter(key).value
 
-    def cloud_callback(self, msg):
-        cloud = point_cloud2.read_points_numpy(
-            msg, field_names=self.field_names, skip_nans=True, reshape_organized_cloud=False)
-        n_dims = len(self.field_names)
-        cloud = np.reshape(cloud, (-1, n_dims))
-
-        export_path = self.export_path
-        if self.should_store_sequentially:
-            export_path = self.export_path.format(n_clouds=self.n_clouds)
-            self.n_clouds += 1
-        np.save(export_path, cloud)
-        Logger.LogInfo(f'CloudSaver: Saved cloud to {export_path}')
-
 
 def main(args=None):
     rclpy.init(args=args)
     lookup = LookupAlignedPose()
-    rclpy.spin(lookup)
     lookup.destroy_node()
     rclpy.shutdown()
 

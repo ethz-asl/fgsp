@@ -1,0 +1,81 @@
+objects:
+  - type: vent
+    position: [16.312, 12.424, -0.507]
+  - type: vent
+    position: [5.691, 31.078, -0.467]
+  - type: gas
+    position: [2.365, 41.498, -2.636]
+  - type: cube
+    position: [-2.779, 40.716, 0.015]
+  - type: gas
+    position: [-12.428, 38.415, -2.642]
+  - type: vent
+    position: [-6.200, 57.564, -0.769]
+  - type: backpack
+    position: [-8.249, 67.032, -3.073]
+  - type: backpack
+    position: [2.733, 82.562, -3.225]
+  - type: backpack
+    position: [23.250, 76.367, 0.735]
+  - type: vent
+    position: [35.466, 76.766, -0.149]
+  - type: cell_phone
+    position: [28.716, 56.422, 0.396]
+  - type: gas
+    position: [25.247, 49.573, -2.636]
+  - type: survivor
+    position: [22.830, 43.323, -2.132]
+  - type: fire_extinguisher
+    position: [21.302, 21.275, -1.779]
+  - type: survivor
+    position: [26.412, 27.885, -2.804]
+  - type: drill
+    position: [37.586, 28.319, -3.330]
+  - type: cube
+    position: [38.475, 35.244, -2.831]
+  - type: fire_extinguisher
+    position: [32.304, 37.460, -2.221]
+  - type: backpack
+    position: [37.282, 47.555, -2.462]
+  - type: fire_extinguisher
+    position: [41.835, 44.808, -2.334]
+  - type: drill
+    position: [32.279, 62.883, -3.400]
+  - type: fire_extinguisher
+    position: [24.110, 73.428, -2.567]
+  - type: cell_phone
+    position: [26.317, 78.550, -3.434]
+  - type: drill
+    position: [44.827, 77.094, -3.647]
+  - type: drill
+    position: [21.450, 2.903, -2.064]
+  - type: backpack
+    position: [29.217, 5.221, -2.283]
+  - type: rope
+    position: [41.178, -1.821, -1.455]
+  - type: helmet
+    position: [43.848, -18.020, -1.940]
+  - type: cell_phone
+    position: [38.384, 16.876, -1.032]
+  - type: helmet
+    position: [42.219, 31.199, -2.881]
+  - type: cube
+    position: [45.606, 42.438, -0.943]
+  - type: rope
+    position: [55.554, 45.340, -2.267]
+  - type: helmet
+    position: [50.708, 63.537, -3.006]
+  - type: helmet
+    position: [58.785, 89.678, -3.046]
+  - type: survivor
+    position: [67.591, 64.533, -2.128]
+  - type: rope
+    position: [63.110, 81.295, -3.227]
+  - type: cell_phone
+    position: [56.409, 107.671, -3.996]
+  - type: rope
+    position: [62.419, 108.100, -1.968]
+  - type: rope
+    position: [68.968, 102.119, -3.579]
+  - type: helmet
+    position: [60.583, 140.839, -0.512]

@@ -7,10 +7,10 @@ Panels:
         - /Global Options1
         - /Onboard1
         - /Viz1
-        - /Viz1/Hierarchies1/Map 01/Status1
         - /Viz1/Hierarchies1/Map 21
         - /Viz1/Hierarchies1/Graph_Coords1
-        - /Viz1/Clouds1
+        - /Viz1/Artifacts1
+        - /Viz1/Artifacts1/Status1
       Splitter Ratio: 0.5415730476379395
     Tree Height: 719
   - Class: rviz_common/Selection
@@ -30,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ReprojectedCloud
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -655,6 +655,18 @@ Visualization Manager:
               Value: true
           Enabled: true
           Name: Clouds
+        - Class: rviz_default_plugins/MarkerArray
+          Enabled: true
+          Name: Artifacts
+          Namespaces:
+            {}
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /artifacts
+          Value: true
       Enabled: true
       Name: Viz
   Enabled: true
@@ -703,25 +715,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 238.8386688232422
+      Distance: 157.98098754882812
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 71.08051300048828
-        Y: -3.2666943073272705
-        Z: -19.803377151489258
+        X: 11.824444770812988
+        Y: 5.6798930168151855
+        Z: 1.6945266723632812
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2097965478897095
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.353572368621826
+      Yaw: 5.858575344085693
     Saved: ~
 Window Geometry:
   Displays:
@@ -739,5 +751,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1868
-  X: 3892
-  Y: 27
+  X: 1613
+  Y: 356

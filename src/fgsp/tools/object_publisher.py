@@ -41,6 +41,7 @@ class ObjectPublisher(Node):
     def publish_artifacts(self, artifacts):
         markers = self.create_artifacts(artifacts)
         self.artifact_pub.publish(markers)
+        Logger.LogInfo(f'Published {len(markers.markers)} artifacts')
 
     def create_artifacts(self, artifacts):
         if artifacts is None and not isinstance(artifacts, list):
@@ -76,7 +77,7 @@ class ObjectPublisher(Node):
         cube.pose.orientation.w = 1.0
 
         cube.color = color
-        cube.scale.x = cube.scale.y = cube.scale.z = 3.0
+        cube.scale.x = cube.scale.y = cube.scale.z = 1.0
 
         cube.type = Marker.CUBE
         cube.frame_locked = True

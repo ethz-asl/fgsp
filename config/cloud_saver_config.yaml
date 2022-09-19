@@ -1,6 +1,6 @@
 cloud_saver:
   ros__parameters:
-    cloud_topic: "/gt_map_cloud"
+    cloud_topic: "/graph_map_cloud_1"
     export_path: "/tmp/cloud.npy"
     extract_intensity: False
     sequential: False

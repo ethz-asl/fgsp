@@ -22,6 +22,7 @@ class CloudPublisher(Node):
 
         self.cloud_topic = self.get_param('cloud_topic', '/point_cloud')
         self.use_voxel_grid = self.get_param('use_voxel_grid', False)
+        self.voxel_size = self.get_param('voxel_size', 0.1)
         self.input_path = self.get_param('input_path', '')
         if (self.input_path == '' or not os.path.exists(self.input_path)):
             Logger.LogError(
@@ -80,7 +81,7 @@ class CloudPublisher(Node):
         for i in range(self.n_clouds):
             cloud = self.clouds[i]
             if (self.use_voxel_grid):
-                cloud = self.voxel_down_sample(cloud)
+                cloud = self.voxel_down_sample(cloud, self.voxel_size)
             msg = point_cloud2.create_cloud_xyz32(header, cloud)
             self.cloud_pubs[i].publish(msg)
         Logger.LogInfo(f'Published {self.n_clouds} clouds')

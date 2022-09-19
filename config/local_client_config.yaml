@@ -19,7 +19,7 @@ graph_client:
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
     classifier: "top" # "top" or "simple"
-    top_classifier_select_n: 15
+    top_classifier_select_n: 1
     large_scale_partition_method: "id" # 'id' or 'nth'
     n_hop_mid_constraints: 10
     min_dist_large_constraints: 20.0
@@ -29,7 +29,7 @@ graph_client:
     # Graph configuration.
     construction_method: "se3" # "se3" or "so3" or "r3"
     use_graph_hierarchies: true
-    max_graph_levels: 2 # 2 means 1 level of hierarchy
+    max_graph_levels: 4 # 2 means 1 level of hierarchy
     graph_hierarchies_node_threshold: 1
     use_parallel_construction: False
 

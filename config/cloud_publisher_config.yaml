@@ -1,6 +1,7 @@
 cloud_publisher:
   ros__parameters:
     cloud_topic: "/ply_cloud"
-    input_path: "/media/berlukas/Data/data/datasets/fgsp/results/v2/hagerbach_img/"
+    input_path: "/media/berlukas/Data/data/datasets/fgsp/results/v2/hagerbach_img_hierarchies/"
     rate: 0.1
-    use_voxel_grid: False
+    use_voxel_grid: True
+    voxel_size: 0.15

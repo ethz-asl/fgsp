@@ -1,6 +1,6 @@
 reproject_viz:
   ros__parameters:
-    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/hagerbach/anymal_5/"
+    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/hagerbach/anymal_1/"
     gt_traj_file: "gt.csv"
     est_traj_file: "onboard.csv"
     corr_traj_file: "corrected_hierarchy_3.csv"
@@ -13,10 +13,10 @@ reproject_viz:
     enable_gt: True
     enable_est: False
     enable_corr: True
-    enable_graph: False
+    enable_graph: True
 
     graph_coords_file: "data/opt_graph_coords.npy"
-    hierarchy_levels: 1
+    hierarchy_levels: 3
     z_offset: 10.0
 
     compute_splines: False

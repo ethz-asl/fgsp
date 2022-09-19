@@ -1,0 +1,4 @@
+object_publisher:
+  ros__parameters:
+    marker_color: [0.7, 0.7, 0.0]
+    object_file: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp/config/objects.yaml"

@@ -32,6 +32,8 @@ setup(
             'reproject_pub = src.fgsp.tools.reproject_pub:main',
             'cloud_saver = src.fgsp.tools.cloud_saver:main',
             'cloud_publisher = src.fgsp.tools.cloud_publisher:main',
+            'lookup_aligned_pose = src.fgsp.tools.lookup_aligned_pose:main',
+            'object_publisher = src.fgsp.tools.object_publisher:main',
         ],
     },
 )

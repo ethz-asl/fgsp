@@ -14,13 +14,13 @@ def generate_launch_description():
         'cloud_saver_config.yaml'
     )
 
-    simulation_node = Node(
+    saver_node = Node(
         package="fgsp",
         executable="cloud_saver",
         output={'full': 'screen'},
         emulate_tty=True,
         parameters=[config]
     )
-    ld.add_action(simulation_node)
+    ld.add_action(saver_node)
 
     return ld

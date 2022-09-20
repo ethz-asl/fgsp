@@ -7,6 +7,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs_py import point_cloud2
+from nav_msgs.msg import Path
 from std_msgs.msg import Header
 import open3d as o3d
 
@@ -50,6 +51,17 @@ class CloudPublisher(Node):
                 self.cloud_pubs[i] = self.create_publisher(
                     PointCloud2, f'{self.cloud_topic}_{i}', 10)
 
+        if self.enable_paths:
+            self.paths = self.read_paths(self.path_input_path)
+            self.n_paths = len(self.paths)
+            if (self.n_paths == 0):
+                Logger.LogError('CloudPublisher: No poses found')
+
+            self.path_pubs = [None] * self.n_path
+            for i in range(self.n_paths):
+                self.path_pubs[i] = self.create_publisher(
+                    Path, f'{self.path_topic}_{i}', 10)
+
         Logger.LogInfo(
             f'CloudPublisher: Read clouds from {self.cloud_input_path}')
         Logger.LogInfo(
@@ -78,10 +90,24 @@ class CloudPublisher(Node):
             path = f'{input_path}/{cloud_npy}'
             cloud = np.load(path)
             Logger.LogInfo(
-                f'CloudPublisher: Read {cloud.shape} points from {path}')
+                f'CloudPublisher: Read {cloud.shape} points from {cloud_npy}')
             parsed_clouds.append(cloud)
 
         return parsed_clouds
+
+    def read_paths(self, input_path):
+        in_paths = os.listdir(input_path)
+        parsed_paths = []
+        if (len(in_paths) == 0):
+            Logger.LogError(
+                f'CloudPublisher: No paths found in {input_path}')
+        for path_npy in in_paths:
+            path = f'{input_path}/{path_npy}'
+            cloud = np.load(path)
+            Logger.LogInfo(
+                f'CloudPublisher: Read {cloud.shape[0]} poses from {path_npy}')
+            parsed_paths.append(cloud)
+        return parsed_paths
 
     def voxel_down_sample(self, cloud, voxel_size=0.1):
         print(f'cloud: {cloud.shape}')

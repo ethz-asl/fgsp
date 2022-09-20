@@ -1,0 +1,24 @@
+path_transformer:
+  ros__parameters:
+    input_path: "/media/berlukas/Data/data/datasets/fgsp/results/v2/darpa_finals/anymal_1/poses.csv"
+    export_path: "/tmp/transformed.npy"
+
+    T:
+      [
+        -0.049989,
+        -0.998612,
+        0.016563,
+        -2.587512,
+        0.998732,
+        -0.050080,
+        -0.005150,
+        -0.350150,
+        0.005972,
+        0.016285,
+        0.999850,
+        0.810845,
+        0.000000,
+        0.000000,
+        0.000000,
+        1.000000,
+      ]

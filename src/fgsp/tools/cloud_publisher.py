@@ -21,46 +21,61 @@ class CloudPublisher(Node):
         Logger.LogInfo('CloudPublisher: Initializing...')
 
         self.cloud_topic = self.get_param('cloud_topic', '/point_cloud')
+        self.cloud_input_path = self.get_param('cloud_input_path', '')
+        self.enable_clouds = True
+        if (self.cloud_input_path == '' or not os.path.exists(self.cloud_input_path)):
+            Logger.LogWarn(
+                f'CloudPublisher: Invalid input path: {self.cloud_input_path}')
+            self.enable_clouds = False
+
+        self.path_topic = self.get_param('path_topic', '/path')
+        self.path_input_path = self.get_param('path_input_path', '')
+        self.enable_paths = True
+        if (self.path_input_path == '' or not os.path.exists(self.path_input_path)):
+            Logger.LogWarn(
+                f'CloudPublisher: Invalid input path: {self.path_input_path}')
+            self.enable_paths = False
+
         self.use_voxel_grid = self.get_param('use_voxel_grid', False)
         self.voxel_size = self.get_param('voxel_size', 0.1)
-        self.input_path = self.get_param('input_path', '')
-        if (self.input_path == '' or not os.path.exists(self.input_path)):
-            Logger.LogError(
-                f'CloudPublisher: Invalid input path: {self.input_path}')
-            rclpy.shutdown()
-            return
 
-        self.clouds = self.read_clouds()
-        self.n_clouds = len(self.clouds)
-        if (self.n_clouds == 0):
-            return
+        if self.enable_clouds:
+            self.clouds = self.read_clouds(self.cloud_input_path)
+            self.n_clouds = len(self.clouds)
+            if (self.n_clouds == 0):
+                Logger.LogError('CloudPublisher: No clouds found')
 
-        self.cloud_pubs = [None] * self.n_clouds
-        for i in range(self.n_clouds):
-            self.cloud_pubs[i] = self.create_publisher(
-                PointCloud2, f'{self.cloud_topic}_{i}', 10)
+            self.cloud_pubs = [None] * self.n_clouds
+            for i in range(self.n_clouds):
+                self.cloud_pubs[i] = self.create_publisher(
+                    PointCloud2, f'{self.cloud_topic}_{i}', 10)
 
-        Logger.LogInfo(f'CloudPublisher: Read clouds from {self.input_path}')
-        Logger.LogInfo(f'CloudPublisher: Publishing to {self.cloud_topic}')
+        Logger.LogInfo(
+            f'CloudPublisher: Read clouds from {self.cloud_input_path}')
+        Logger.LogInfo(
+            f'pathPublisher: Read paths from {self.path_input_path}')
+        Logger.LogInfo(
+            f'CloudPublisher: Publishing to {self.cloud_topic} and {self.path_topic}')
         Logger.LogInfo(
             'CloudPublisher: Initializing done. Publishing clouds...')
+
         rate = self.get_param('rate', 0.1)
         self.timer = self.create_timer(
-            1 / rate, self.publish_clouds)
+            1 / rate, self.publish)
 
     def get_param(self, key, default):
         self.declare_parameter(key, default)
         return self.get_parameter(key).value
 
-    def read_clouds(self):
-        in_clouds = os.listdir(self.input_path)
+    def read_clouds(self, input_path):
+        in_clouds = os.listdir(input_path)
         parsed_clouds = []
         if (len(in_clouds) == 0):
             Logger.LogError(
-                f'CloudPublisher: No clouds found in {self.input_path}')
+                f'CloudPublisher: No clouds found in {input_path}')
             return parsed_clouds
         for cloud_npy in in_clouds:
-            path = f'{self.input_path}/{cloud_npy}'
+            path = f'{input_path}/{cloud_npy}'
             cloud = np.load(path)
             Logger.LogInfo(
                 f'CloudPublisher: Read {cloud.shape} points from {path}')
@@ -74,7 +89,7 @@ class CloudPublisher(Node):
         pcd = pcd.voxel_down_sample(voxel_size=voxel_size)
         return np.array(pcd.points)
 
-    def publish_clouds(self):
+    def publish(self):
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = 'map'

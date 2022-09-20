@@ -38,7 +38,7 @@ class ReprojectPub(Node):
         # Configuration
         self.T_O_L = np.array(self.try_get_param(
             'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
-        self.voxel_size = 0.1
+        self.voxel_size = self.try_get_param('voxel_size', 0.1)
         self.vis_helper = Visualizer()
 
         # GT Publisher

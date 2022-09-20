@@ -8,7 +8,8 @@ reproject_viz:
     connections_file: "opt_connections.dat"
 
     cloud_in: "/point_cloud_filter/lidar/point_cloud_filtered"
-    skip_every_nth: 4
+    skip_every_nth: 2
+    voxel_size: 0.2
 
     enable_gt: True
     enable_est: False

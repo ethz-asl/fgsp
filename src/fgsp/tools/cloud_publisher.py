@@ -158,7 +158,6 @@ class CloudPublisher(Node):
         for path_file in in_paths:
             full_path = f'{input_path}/{path_file}'
             ext = pathlib.Path(path_file).suffix
-            print(f'CloudPublisher: Reading {path_file} with extension {ext}')
             path = None
             if ext == '.csv':
                 path = self.parse_csv_path(full_path)
@@ -186,7 +185,7 @@ class CloudPublisher(Node):
                 cloud = self.clouds[i]
                 if (self.use_voxel_grid):
                     cloud = self.voxel_down_sample(cloud, self.voxel_size)
-                msg = point_cloud2.create_cloud_xyz32(header, cloud[:, 0:3])
+                msg = point_cloud2.create_cloud_xyz32(header, cloud)
                 self.cloud_pubs[i].publish(msg)
 
         if self.enable_paths:

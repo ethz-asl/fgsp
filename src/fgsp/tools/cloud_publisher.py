@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import os
+import pathlib
 import numpy as np
 
 import rclpy
@@ -11,7 +12,8 @@ from sensor_msgs_py import point_cloud2
 from nav_msgs.msg import Path
 from std_msgs.msg import Header
 import open3d as o3d
-
+from evo.tools import file_interface
+from plyfile import PlyData, PlyElement
 
 from src.fgsp.common.logger import Logger
 
@@ -80,6 +82,23 @@ class CloudPublisher(Node):
         self.declare_parameter(key, default)
         return self.get_parameter(key).value
 
+    def read_ply_cloud(self, full_path):
+        plydata = PlyData.read(full_path)
+        vertex = plydata['vertex']
+        x = vertex['x']
+        y = vertex['y']
+        z = vertex['z']
+        i = np.zeros_like(z)
+        if 'i' in vertex:
+            i = vertex['i']
+        elif 'intensity' in vertex:
+            i = vertex['intensity']
+
+        return np.column_stack((x, y, z, i))
+
+    def read_npy_cloud(self, full_path):
+        return np.load(full_path)
+
     def read_clouds(self, input_path):
         in_clouds = os.listdir(input_path)
         parsed_clouds = []
@@ -87,14 +106,32 @@ class CloudPublisher(Node):
             Logger.LogError(
                 f'CloudPublisher: No clouds found in {input_path}')
             return parsed_clouds
-        for cloud_npy in in_clouds:
-            path = f'{input_path}/{cloud_npy}'
-            cloud = np.load(path)
-            Logger.LogInfo(
-                f'CloudPublisher: Read {cloud.shape} points from {cloud_npy}')
-            parsed_clouds.append(cloud)
+        for cloud_file in in_clouds:
+            full_path = f'{input_path}/{cloud_file}'
+            ext = pathlib.Path(full_path).suffix
+
+            cloud = None
+            if ext == '.ply':
+                cloud = self.read_ply_cloud(full_path)
+            elif ext == '.npy':
+                cloud = self.read_npy_cloud(full_path)
+
+            if cloud is not None:
+                Logger.LogInfo(
+                    f'CloudPublisher: Read {cloud.shape} points from {cloud_file}')
+                parsed_clouds.append(cloud)
 
         return parsed_clouds
+
+    def parse_csv_path(self, full_path):
+        robot_traj = file_interface.read_tum_trajectory_file(full_path)
+        path = np.column_stack((robot_traj.timestamps, robot_traj.positions_xyz,
+                                robot_traj.orientations_quat_wxyz))
+        return self.parse_path(path)
+
+    def parse_npy_path(self, full_path):
+        path = np.load(full_path)
+        return self.parse_path(path)
 
     def parse_path(self, path):
         path_msg = Path()
@@ -118,12 +155,20 @@ class CloudPublisher(Node):
         if (len(in_paths) == 0):
             Logger.LogError(
                 f'CloudPublisher: No paths found in {input_path}')
-        for path_npy in in_paths:
-            full_path = f'{input_path}/{path_npy}'
-            path = self.parse_path(np.load(full_path))
-            Logger.LogInfo(
-                f'CloudPublisher: Read {len(path.poses)} poses from {path_npy}')
-            parsed_paths.append(path)
+        for path_file in in_paths:
+            full_path = f'{input_path}/{path_file}'
+            ext = pathlib.Path(path_file).suffix
+            print(f'CloudPublisher: Reading {path_file} with extension {ext}')
+            path = None
+            if ext == '.csv':
+                path = self.parse_csv_path(full_path)
+            elif ext == '.npy':
+                path = self.parse_npy_path(full_path)
+
+            if path is not None:
+                Logger.LogInfo(
+                    f'CloudPublisher: Read {len(path.poses)} poses from {path_file}')
+                parsed_paths.append(path)
         return parsed_paths
 
     def voxel_down_sample(self, cloud, voxel_size=0.1):
@@ -141,7 +186,7 @@ class CloudPublisher(Node):
                 cloud = self.clouds[i]
                 if (self.use_voxel_grid):
                     cloud = self.voxel_down_sample(cloud, self.voxel_size)
-                msg = point_cloud2.create_cloud_xyz32(header, cloud)
+                msg = point_cloud2.create_cloud_xyz32(header, cloud[:, 0:3])
                 self.cloud_pubs[i].publish(msg)
 
         if self.enable_paths:

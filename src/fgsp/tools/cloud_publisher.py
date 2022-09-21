@@ -13,7 +13,7 @@ from nav_msgs.msg import Path
 from std_msgs.msg import Header
 import open3d as o3d
 from evo.tools import file_interface
-
+from plyfile import PlyData, PlyElement
 
 from src.fgsp.common.logger import Logger
 
@@ -83,7 +83,18 @@ class CloudPublisher(Node):
         return self.get_parameter(key).value
 
     def read_ply_cloud(self, full_path):
-        pass
+        plydata = PlyData.read(full_path)
+        vertex = plydata['vertex']
+        x = vertex['x']
+        y = vertex['y']
+        z = vertex['z']
+        i = np.zeros_like(z)
+        if 'i' in vertex:
+            i = vertex['i']
+        elif 'intensity' in vertex:
+            i = vertex['intensity']
+
+        return np.column_stack((x, y, z, i))
 
     def read_npy_cloud(self, full_path):
         return np.load(full_path)
@@ -99,14 +110,16 @@ class CloudPublisher(Node):
             full_path = f'{input_path}/{cloud_file}'
             ext = pathlib.Path(full_path).suffix
 
-            if ext == '.csv':
+            cloud = None
+            if ext == '.ply':
                 cloud = self.read_ply_cloud(full_path)
             elif ext == '.npy':
                 cloud = self.read_npy_cloud(full_path)
 
-            Logger.LogInfo(
-                f'CloudPublisher: Read {cloud.shape} points from {cloud_file}')
-            parsed_clouds.append(cloud)
+            if cloud is not None:
+                Logger.LogInfo(
+                    f'CloudPublisher: Read {cloud.shape} points from {cloud_file}')
+                parsed_clouds.append(cloud)
 
         return parsed_clouds
 
@@ -146,13 +159,16 @@ class CloudPublisher(Node):
             full_path = f'{input_path}/{path_file}'
             ext = pathlib.Path(path_file).suffix
             print(f'CloudPublisher: Reading {path_file} with extension {ext}')
+            path = None
             if ext == '.csv':
                 path = self.parse_csv_path(full_path)
             elif ext == '.npy':
                 path = self.parse_npy_path(full_path)
-            Logger.LogInfo(
-                f'CloudPublisher: Read {len(path.poses)} poses from {path_file}')
-            parsed_paths.append(path)
+
+            if path is not None:
+                Logger.LogInfo(
+                    f'CloudPublisher: Read {len(path.poses)} poses from {path_file}')
+                parsed_paths.append(path)
         return parsed_paths
 
     def voxel_down_sample(self, cloud, voxel_size=0.1):
@@ -170,7 +186,7 @@ class CloudPublisher(Node):
                 cloud = self.clouds[i]
                 if (self.use_voxel_grid):
                     cloud = self.voxel_down_sample(cloud, self.voxel_size)
-                msg = point_cloud2.create_cloud_xyz32(header, cloud)
+                msg = point_cloud2.create_cloud_xyz32(header, cloud[:, 0:3])
                 self.cloud_pubs[i].publish(msg)
 
         if self.enable_paths:

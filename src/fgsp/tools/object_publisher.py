@@ -77,7 +77,7 @@ class ObjectPublisher(Node):
         cube.pose.orientation.w = 1.0
 
         cube.color = color
-        cube.scale.x = cube.scale.y = cube.scale.z = 1.0
+        cube.scale.x = cube.scale.y = cube.scale.z = 0.5
 
         cube.type = Marker.CUBE
         cube.frame_locked = True

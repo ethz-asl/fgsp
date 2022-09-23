@@ -75,6 +75,9 @@ class Simulation(Node):
 
     def get_traj_file(self, traj_key):
         traj_file_path = self.get_param(traj_key, '')
+        if traj_file_path == '':
+            return None
+
         ext = pathlib.Path(traj_file_path).suffix
         if ext == '.csv':
             Logger.LogInfo('Simulation: Reading CSV file.')

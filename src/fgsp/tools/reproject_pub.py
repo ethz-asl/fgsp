@@ -65,6 +65,8 @@ class ReprojectPub(Node):
         self.connections_file = self.try_get_param('connections_file', '')
         self.enable_constraints = self.constraints_file != '' and self.connections_file != ''
         if self.enable_constraints:
+            self.constraint_ts_eps_s = self.try_get_param(
+                'constraint_ts_eps_s', 0.01)
             self.create_constraints_pub()
             self.comms = Comms()
             self.comms.node = self
@@ -277,7 +279,8 @@ class ReprojectPub(Node):
         self.constraint_markers.markers = []
         for ts_ns, labels in self.ts_constraint_map.items():
             ts_s = Utils.ts_ns_to_seconds(ts_ns)
-            idx = self.lookup_closest_ts_idx(traj[:, 0], ts_s)
+            idx = self.lookup_closest_ts_idx(
+                traj[:, 0], ts_s, self.constraint_ts_eps_s)
             if idx == -1:
                 continue
 
@@ -286,7 +289,8 @@ class ReprojectPub(Node):
                 label = labels[i]
                 child_ts_ns = self.ts_connections_map[ts_ns][i]
                 child_ts_s = Utils.ts_ns_to_seconds(child_ts_ns)
-                target_idx = self.lookup_closest_ts_idx(traj[:, 0], child_ts_s)
+                target_idx = self.lookup_closest_ts_idx(
+                    traj[:, 0], child_ts_s, self.constraint_ts_eps_s)
                 if target_idx == -1:
                     continue
 
@@ -301,6 +305,8 @@ class ReprojectPub(Node):
 
                 self.add_constraint_at(traj, idx, target_idx, label, color)
 
+        Logger.LogDebug(
+            f'Published {len(self.constraint_markers.markers)} constraints.')
         self.constraints_pub.publish(self.constraint_markers)
 
     def add_constraint_at(self, traj, idx_a, idx_b, label, color):

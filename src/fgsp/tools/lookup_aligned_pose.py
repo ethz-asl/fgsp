@@ -28,8 +28,12 @@ class LookupAlignedPose(Node):
 
         if (input_file == '' or not os.path.exists(input_file)):
             Logger.LogError('LookupAlignedPose: Invalid input file')
-        if (align_file == '' or not os.path.exists(align_file)):
-            Logger.LogError('LookupAlignedPose: Invalid align file')
+            return
+
+        should_align = align_file == '' or not os.path.exists(align_file)
+        if (should_align):
+            Logger.LogWarn(
+                'LookupAlignedPose: No alignement file provided or file does not exist.')
 
         lookup_ts_ns = self.get_param('timestamp_ns', 0)
         if (lookup_ts_ns == 0):
@@ -37,7 +41,8 @@ class LookupAlignedPose(Node):
 
         Logger.LogInfo(
             'LookupAlingedPose: Initializing done. Processing data...')
-        input_traj = self.synchronize_and_align(input_file, align_file)
+        input_traj = self.synchronize_and_align(
+            input_file, align_file, should_align)
         pose = self.lookup_aligned_pose(input_traj, lookup_ts_ns)
         if pose is None:
             Logger.LogError('LookupAlignedPose: Could not find matching pose.')
@@ -69,8 +74,11 @@ class LookupAlignedPose(Node):
 
         return np.where(diff_timestamps == minval)[0][0]
 
-    def synchronize_and_align(self, input_file, align_file):
+    def synchronize_and_align(self, input_file, align_file, should_align):
         input_traj = self.read_csv_file(input_file)
+        if should_align:
+            return input_traj
+
         align_traj = self.read_csv_file(align_file)
 
         print(

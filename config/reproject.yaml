@@ -1,6 +1,6 @@
 reproject_viz:
   ros__parameters:
-    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/darpa_finals/anymal_1/"
+    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/seemuehle_degen/anymal_2_1629377276317532160/"
     gt_traj_file: "gt.csv"
     est_traj_file: "compslam.csv"
     corr_traj_file: "poses.csv"
@@ -8,11 +8,11 @@ reproject_viz:
     connections_file: "opt_connections.dat"
 
     cloud_in: "/point_cloud_filter/lidar/point_cloud_filtered"
-    skip_every_nth: 4
+    skip_every_nth: 3
     voxel_size: 0.1
 
-    enable_gt: True
-    enable_est: False
+    enable_gt: False
+    enable_est: True
     enable_corr: True
     enable_graph: False
 
@@ -20,7 +20,8 @@ reproject_viz:
     hierarchy_levels: 3
     z_offset: 10.0
 
-    compute_splines: False
+    constraint_ts_eps_s: 0.04
+    compute_splines: True
     spline_points: 10
     spline_low_height: 1
     spline_mid_height: 4

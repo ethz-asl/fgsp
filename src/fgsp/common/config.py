@@ -133,6 +133,8 @@ class ClientConfig(BaseConfig):
         self.degenerate_window = 10
         self.synchronization_max_diff_s = 1.0
         self.verbosity = 1
+        self.warmup_nodes = 10
+        self.max_iterations = -1
 
         # constraint construction
         self.client_mode = 'multiscale'
@@ -204,6 +206,10 @@ class ClientConfig(BaseConfig):
         self.synchronization_max_diff_s = self.try_get_param(
             "synchronization_max_diff_s", self.synchronization_max_diff_s)
         self.verbosity = self.try_get_param("verbosity", self.verbosity)
+        self.warmup_nodes = self.try_get_param(
+            "warmup_nodes", self.warmup_nodes)
+        self.max_iterations = self.try_get_param(
+            "max_iterations", self.max_iterations)
 
         # constraint construction
         self.client_mode = self.try_get_param("client_mode", self.client_mode)

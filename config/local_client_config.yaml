@@ -27,7 +27,7 @@ graph_client:
     stop_threshold: 0.1
 
     # Graph configuration.
-    construction_method: "so3" # "se3" or "so3" or "r3"
+    construction_method: "se3" # "se3" or "so3" or "r3"
     use_graph_hierarchies: False
     max_graph_levels: 4 # 2 means 1 level of hierarchy
     graph_hierarchies_node_threshold: 1
@@ -52,6 +52,8 @@ graph_client:
     degenerate_window: 20
     synchronization_max_diff_s: 0.5
     verbosity: 7
+    warmup_nodes: 190
+    max_iterations: 1
 
     T_robot_server:
       [

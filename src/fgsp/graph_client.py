@@ -182,7 +182,7 @@ class GraphClient(Node):
             Logger.LogWarn(
                 f'GraphClient: Not enough nodes in the graph ({n_opt_nodes}/{self.config.warmup_nodes}).')
             return
-        if self.n_iterations >= self.config.max_iterations:
+        if self.config.max_iterations > 0 and self.n_iterations >= self.config.max_iterations:
             self.mutex.release()
             Logger.LogWarn(
                 f'GraphClient: Reached max number of iterations ({self.n_iterations}/{self.config.max_iterations}).')

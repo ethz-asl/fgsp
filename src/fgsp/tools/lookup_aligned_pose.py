@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import pathlib
 import numpy as np
 import os
 
@@ -11,6 +12,7 @@ from evo.tools import file_interface
 from evo.core import sync
 from evo.core import metrics
 from evo.tools import plot
+from evo.core.trajectory import PoseTrajectory3D
 import matplotlib.pyplot as plt
 
 
@@ -28,8 +30,12 @@ class LookupAlignedPose(Node):
 
         if (input_file == '' or not os.path.exists(input_file)):
             Logger.LogError('LookupAlignedPose: Invalid input file')
-        if (align_file == '' or not os.path.exists(align_file)):
-            Logger.LogError('LookupAlignedPose: Invalid align file')
+            return
+
+        should_align = align_file == '' or not os.path.exists(align_file)
+        if (should_align):
+            Logger.LogWarn(
+                'LookupAlignedPose: No alignement file provided or file does not exist.')
 
         lookup_ts_ns = self.get_param('timestamp_ns', 0)
         if (lookup_ts_ns == 0):
@@ -37,7 +43,8 @@ class LookupAlignedPose(Node):
 
         Logger.LogInfo(
             'LookupAlingedPose: Initializing done. Processing data...')
-        input_traj = self.synchronize_and_align(input_file, align_file)
+        input_traj = self.synchronize_and_align(
+            input_file, align_file, should_align)
         pose = self.lookup_aligned_pose(input_traj, lookup_ts_ns)
         if pose is None:
             Logger.LogError('LookupAlignedPose: Could not find matching pose.')
@@ -69,9 +76,12 @@ class LookupAlignedPose(Node):
 
         return np.where(diff_timestamps == minval)[0][0]
 
-    def synchronize_and_align(self, input_file, align_file):
-        input_traj = self.read_csv_file(input_file)
-        align_traj = self.read_csv_file(align_file)
+    def synchronize_and_align(self, input_file, align_file, should_align):
+        input_traj = self.read_file(input_file)
+        if should_align:
+            return input_traj
+
+        align_traj = self.read_file(align_file)
 
         print(
             f'Found {input_traj.num_poses} and {align_traj.num_poses} poses for input and align file, respectively.')
@@ -118,6 +128,15 @@ class LookupAlignedPose(Node):
         if should_plot:
             self.plot_trajectories(data, metric, stats)
 
+    def read_file(self, file):
+        ext = pathlib.Path(file).suffix
+        traj = None
+        if ext == '.csv':
+            traj = self.read_csv_file(file)
+        elif ext == '.npy':
+            traj = self.read_npy_file(file)
+        return traj
+
     def read_csv_file(self, filename):
         Logger.LogDebug(f'LookupAlignedPose: Reading file {filename}')
         if os.path.exists(filename):
@@ -125,6 +144,13 @@ class LookupAlignedPose(Node):
         else:
             Logger.LogError(f'LookupAlignedPose: File does not exist!')
             return np.array([])
+
+    def read_npy_file(self, filename):
+        trajectory = np.load(filename)
+        ts = trajectory[:, 0]
+        xyz = trajectory[:, 1:4]
+        wxyz = trajectory[:, 4:8]
+        return PoseTrajectory3D(positions_xyz=xyz, orientations_quat_wxyz=wxyz, timestamps=ts)
 
     def get_param(self, key, default):
         self.declare_parameter(key, default)

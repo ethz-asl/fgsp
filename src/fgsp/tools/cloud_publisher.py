@@ -185,7 +185,7 @@ class CloudPublisher(Node):
                 cloud = self.clouds[i]
                 if (self.use_voxel_grid):
                     cloud = self.voxel_down_sample(cloud, self.voxel_size)
-                msg = point_cloud2.create_cloud_xyz32(header, cloud)
+                msg = point_cloud2.create_cloud_xyz32(header, cloud[:, 0:3])
                 self.cloud_pubs[i].publish(msg)
 
         if self.enable_paths:

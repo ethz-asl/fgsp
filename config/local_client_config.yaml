@@ -20,7 +20,7 @@ graph_client:
     client_mode: "multiscale"
     classifier: "top" # "top" or "simple"
     top_classifier_select_n: 5
-    top_classifier_min_threshold: 0.2
+    top_classifier_min_threshold: 0.3
     large_scale_partition_method: "id" # 'id' or 'nth'
     n_hop_mid_constraints: 5
     min_dist_large_constraints: 20.0

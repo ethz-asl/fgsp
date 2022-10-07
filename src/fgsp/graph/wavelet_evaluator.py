@@ -56,7 +56,7 @@ class WaveletEvaluator(object):
         else:
             Logger.LogWarn(
                 f'WaveletEvaluator: Computing wavelets for nodes {node_range}.')
-        n = len(node_range)
+        n = G.N
 
         # Evalute filter bank on the frequencies (eigenvalues).
         f = g.evaluate(G.e)
@@ -66,7 +66,7 @@ class WaveletEvaluator(object):
 
         for i in node_range:
             # Create a Dirac centered at node i.
-            x = np.zeros((G.N, 1))
+            x = np.zeros((n, 1))
             x[i] = 1
 
             # Transform the signal to spectral domain.

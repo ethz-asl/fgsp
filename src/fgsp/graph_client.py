@@ -34,8 +34,7 @@ class GraphClient(Node):
         self.is_initialized = False
         self.initialize_logging = True
         self.is_updating = False
-        self.last_update_seq = -1
-        self.opt_node_threshold = 10
+        self.n_iterations = 0
         self.config = ClientConfig(self)
         self.config.init_from_config()
         Plotter.PlotClientBanner()
@@ -170,9 +169,23 @@ class GraphClient(Node):
         if (self.initialize_logging):
             self.create_data_export_folder()
             self.initialize_logging = False
+
         self.mutex.acquire()
         if self.is_updating:
             self.mutex.release()
+            return
+
+        n_opt_nodes = len(self.optimized_signal.get_all_nodes(self.config.robot_name)) if self.key_in_optimized_keys(
+            self.config.robot_name) else 0
+        if n_opt_nodes < self.config.warmup_nodes:
+            self.mutex.release()
+            Logger.LogWarn(
+                f'GraphClient: Not enough nodes in the graph ({n_opt_nodes}/{self.config.warmup_nodes}).')
+            return
+        if self.config.max_iterations > 0 and self.n_iterations >= self.config.max_iterations:
+            self.mutex.release()
+            Logger.LogWarn(
+                f'GraphClient: Reached max number of iterations ({self.n_iterations}/{self.config.max_iterations}).')
             return
         self.is_updating = True
         self.mutex.release()
@@ -199,9 +212,9 @@ class GraphClient(Node):
                 f'GraphClient: In detail relatives: {self.commander.small_constraint_counter} / {self.commander.mid_constraint_counter} / {self.commander.large_constraint_counter}')
             Logger.LogInfo(
                 f'GraphClient: In detail anchors: {self.commander.anchor_constraint_counter}')
+            self.n_iterations += 1
         self.mutex.acquire()
         self.is_updating = False
-        self.last_update_seq = self.global_graph.graph_seq
         self.mutex.release()
 
     def record_all_signals(self, x_est, x_opt):
@@ -274,8 +287,6 @@ class GraphClient(Node):
         n_opt_nodes = len(all_opt_nodes)
         print(
             f'We have {n_opt_nodes} opt nodes and {len(all_est_nodes)} est nodes.')
-        if n_opt_nodes < self.opt_node_threshold:
-            return False
 
         # Compute the features and publish the results.
         # This evaluates per node the scale of the difference

@@ -6,9 +6,9 @@ from src.fgsp.common.logger import Logger
 
 class TopClassifier(object):
 
-    def __init__(self, top_n=5):
-        self.top_n = top_n
-        self.threshold = 0.00001
+    def __init__(self, config):
+        self.top_n = config.top_classifier_select_n
+        self.threshold = config.top_classifier_min_threshold
 
     def classify(self, data):
         n_nodes = data.shape[0]

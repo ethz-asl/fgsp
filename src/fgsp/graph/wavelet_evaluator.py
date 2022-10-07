@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+from platform import node
 import numpy as np
 from pygsp import graphs, filters, reduction
 from enum import Enum
@@ -45,20 +46,27 @@ class WaveletEvaluator(object):
     def get_wavelets(self):
         return self.psi
 
-    def compute_wavelets(self, G):
+    def compute_wavelets(self, G, node_range=None):
         Logger.LogInfo(
             f'WaveletEvaluator: Computing wavelets for {self.n_scales} scales.')
         g = filters.Meyer(G, self.n_scales)
 
+        if node_range is None:
+            node_range = np.arange(0, G.N)
+        else:
+            Logger.LogWarn(
+                f'WaveletEvaluator: Computing wavelets for nodes {node_range}.')
+        n = G.N
+
         # Evalute filter bank on the frequencies (eigenvalues).
         f = g.evaluate(G.e)
         f = np.expand_dims(f.T, 1)
-        self.psi = np.zeros((G.N, G.N, self.n_scales))
+        self.psi = np.zeros((n, n, self.n_scales))
         self.G = G
 
-        for i in range(0, G.N):
+        for i in node_range:
             # Create a Dirac centered at node i.
-            x = np.zeros((G.N, 1))
+            x = np.zeros((n, 1))
             x[i] = 1
 
             # Transform the signal to spectral domain.
@@ -82,6 +90,7 @@ class WaveletEvaluator(object):
         n_values = x_signal.shape[0]
         n_dim = x_signal.shape[1] if len(x_signal.shape) >= 2 else 1
         W = np.zeros((n_values, self.n_scales, n_dim)).squeeze()
+
         for i in range(0, n_values):
             for j in range(0, self.n_scales):
                 W[i, j] = np.matmul(wavelet[i, :, j].transpose(), x_signal)

@@ -3,7 +3,7 @@
 from src.fgsp.classifier import ClassificationResult
 
 
-class HierarchicalResult(ClassificationResult):
+class DownstreamResult(ClassificationResult):
     def __init__(self, config, robot_name, opt_nodes, features, labels, indices):
         super().__init__(config, robot_name, opt_nodes, features, labels)
         self.indices = indices

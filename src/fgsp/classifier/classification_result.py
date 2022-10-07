@@ -23,8 +23,8 @@ class ClassificationResult(object):
         self.partitions = self.partition_nodes(
             self.config.large_scale_partition_method)
         self.ts_partitions = self.get_ts_from_nodes(self.partitions)
-        self.labels, n_labels = self.check_and_fix_labels(labels)
-        print(f'ClassificationResults: Got {n_labels} labels')
+        self.labels, self.n_labels = self.check_and_fix_labels(labels)
+        print(f'ClassificationResults: Got {self.n_labels} labels')
 
     def check_and_fix_labels(self, labels):
         n_nodes = len(labels)

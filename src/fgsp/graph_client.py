@@ -22,7 +22,8 @@ from src.fgsp.common.logger import Logger
 from src.fgsp.classifier.top_classifier import TopClassifier
 from src.fgsp.classifier.simple_classifier import SimpleClassifier
 from src.fgsp.classifier.classification_result import ClassificationResult
-from src.fgsp.classifier.hierarchical_result import HierarchicalResult
+from src.fgsp.classifier.downstream_result import DownstreamResult
+from src.fgsp.classifier.windowed_result import WindowedResult
 
 
 class GraphClient(Node):
@@ -72,8 +73,7 @@ class GraphClient(Node):
         self.commander = CommandPost(self.config)
 
         if self.config.classifier == 'top':
-            self.classifier = TopClassifier(
-                self.config.top_classifier_select_n)
+            self.classifier = TopClassifier(self.config)
         elif self.config.classifier == 'simple':
             self.classifier = SimpleClassifier()
         else:
@@ -436,7 +436,10 @@ class GraphClient(Node):
 
         labels = self.classifier.classify(features)
         if self.config.use_graph_hierarchies:
-            return HierarchicalResult(self.config, key, all_opt_nodes, features, labels, self.global_graph.get_indices())
+            if self.config.use_downstreaming:
+                return DownstreamResult(self.config, key, all_opt_nodes, features, labels, self.global_graph.get_indices())
+            else:
+                return WindowedResult(self.config, key, all_opt_nodes, all_est_nodes, features, labels, self.global_graph)
         else:
             return ClassificationResult(self.config, key, all_opt_nodes, features, labels)
 

@@ -140,6 +140,7 @@ class ClientConfig(BaseConfig):
         self.client_mode = 'multiscale'
         self.classifier = 'top'
         self.top_classifier_select_n = 10
+        self.top_classifier_min_threshold = 0.1
         self.large_scale_partition_method = 'id'
         self.n_hop_mid_constraints = 10
         self.min_dist_large_constraints = 20.0
@@ -150,6 +151,7 @@ class ClientConfig(BaseConfig):
         self.construction_method = 'se3'
         self.use_graph_hierarchies = False
         self.max_graph_levels = 1
+        self.use_downstreaming = False
         self.graph_hierarchies_node_threshold = 100
         self.use_parallel_construction = True
 
@@ -216,6 +218,8 @@ class ClientConfig(BaseConfig):
         self.classifier = self.try_get_param("classifier", self.classifier)
         self.top_classifier_select_n = self.try_get_param(
             "top_classifier_select_n", self.top_classifier_select_n)
+        self.top_classifier_min_threshold = self.try_get_param(
+            "top_classifier_min_threshold", self.top_classifier_min_threshold)
         self.large_scale_partition_method = self.try_get_param(
             "large_scale_partition_method", self.large_scale_partition_method)
         self.n_hop_mid_constraints = self.try_get_param(
@@ -233,6 +237,8 @@ class ClientConfig(BaseConfig):
             "use_graph_hierarchies", self.use_graph_hierarchies)
         self.max_graph_levels = self.try_get_param(
             "max_graph_levels", self.max_graph_levels)
+        self.use_downstreaming = self.try_get_param(
+            "use_downstreaming", self.use_downstreaming)
         self.graph_hierarchies_node_threshold = self.try_get_param(
             "graph_hierarchies_node_threshold", self.graph_hierarchies_node_threshold)
         self.use_parallel_construction = self.try_get_param(

@@ -19,7 +19,8 @@ graph_client:
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
     classifier: "top" # "top" or "simple"
-    top_classifier_select_n: 40
+    top_classifier_select_n: 5
+    top_classifier_min_threshold: 0.3
     large_scale_partition_method: "id" # 'id' or 'nth'
     n_hop_mid_constraints: 5
     min_dist_large_constraints: 20.0
@@ -27,9 +28,10 @@ graph_client:
     stop_threshold: 0.1
 
     # Graph configuration.
-    construction_method: "so3" # "se3" or "so3" or "r3"
-    use_graph_hierarchies: False
-    max_graph_levels: 4 # 2 means 1 level of hierarchy
+    construction_method: "se3" # "se3" or "so3" or "r3"
+    use_graph_hierarchies: True
+    max_graph_levels: 3 # 2 means 1 level of hierarchy
+    use_downstreaming: False
     graph_hierarchies_node_threshold: 1
     use_parallel_construction: False
 
@@ -52,8 +54,8 @@ graph_client:
     degenerate_window: 20
     synchronization_max_diff_s: 0.5
     verbosity: 7
-    warmup_nodes: 190
-    max_iterations: 1
+    warmup_nodes: 20
+    max_iterations: 50
 
     T_robot_server:
       [

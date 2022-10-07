@@ -82,14 +82,20 @@ class HierarchicalGraph(BaseGraph):
 
         return True
 
-    def get_graph(self):
-        return self.G[self.idx]
+    def get_graph(self, idx=-1):
+        if idx < 0:
+            idx = self.idx
+        return self.G[idx]
 
-    def get_coords(self):
-        return self.coords[self.idx]
+    def get_coords(self, idx=-1):
+        if idx < 0:
+            idx = self.idx
+        return self.coords[idx]
 
-    def get_indices(self):
-        return self.indices[self.idx]
+    def get_indices(self, idx=-1):
+        if idx < 0:
+            idx = self.idx
+        return self.indices[idx]
 
     def write_graph_to_disk(self, coords_file, adj_file):
         np.save(coords_file, self.coords[0])

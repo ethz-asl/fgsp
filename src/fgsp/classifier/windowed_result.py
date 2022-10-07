@@ -28,6 +28,11 @@ class WindowedResult(ClassificationResult):
         x_opt = signal.compute_signal(self.opt_nodes)
 
         downstream_labels = [None] * n_nodes
+        downstream_labels = [lbl if lbl is not None else []
+                             for lbl in downstream_labels]
+        if self.n_labels == 0:
+            return downstream_labels
+
         for idx in range(0, last_label):
             if len(labels[idx]) == 0:
                 continue
@@ -49,13 +54,8 @@ class WindowedResult(ClassificationResult):
         features = self.evaluate_node_range(node_range, x_est, x_opt)
         for lbl in labels[last_label]:
             max_n = node_range[np.argmax(features[node_range, lbl-1])]
-            if downstream_labels[max_n] is None:
-                downstream_labels[max_n] = [lbl]
-            else:
-                downstream_labels[max_n].append(lbl)
+            downstream_labels[max_n].append(lbl)
 
-        downstream_labels = [lbl if lbl is not None else []
-                             for lbl in downstream_labels]
         return downstream_labels
 
     def evaluate_node_range(self, node_range, x_est, x_opt):

@@ -73,8 +73,7 @@ class GraphClient(Node):
         self.commander = CommandPost(self.config)
 
         if self.config.classifier == 'top':
-            self.classifier = TopClassifier(
-                self.config.top_classifier_select_n)
+            self.classifier = TopClassifier(self.config)
         elif self.config.classifier == 'simple':
             self.classifier = SimpleClassifier()
         else:

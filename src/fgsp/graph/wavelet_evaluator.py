@@ -90,6 +90,9 @@ class WaveletEvaluator(object):
         n_values = x_signal.shape[0]
         n_dim = x_signal.shape[1] if len(x_signal.shape) >= 2 else 1
         W = np.zeros((n_values, self.n_scales, n_dim)).squeeze()
+
+        Logger.LogError(f'wavelet shape: {wavelet.shape}')
+        Logger.LogError(f'signal shape: {x_signal.shape}')
         for i in range(0, n_values):
             for j in range(0, self.n_scales):
                 W[i, j] = np.matmul(wavelet[i, :, j].transpose(), x_signal)

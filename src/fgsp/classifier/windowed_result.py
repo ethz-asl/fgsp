@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import numpy as np
 from src.fgsp.controller.signal_handler import SignalHandler
 from src.fgsp.graph.wavelet_evaluator import WaveletEvaluator
 from src.fgsp.classifier import ClassificationResult
@@ -8,6 +9,9 @@ from src.fgsp.classifier import ClassificationResult
 class WindowedResult(ClassificationResult):
     def __init__(self, config, robot_name, opt_nodes, est_nodes, features, labels, graph):
         super().__init__(config, robot_name, opt_nodes, features, labels)
+        assert config.use_graph_hierarchies
+        assert not config.use_downstreaming
+
         self.indices = graph.get_indices()
         self.graph = graph
         self.est_nodes = est_nodes
@@ -29,8 +33,10 @@ class WindowedResult(ClassificationResult):
             print(
                 f'Computing wavelets for {self.indices[idx]} to {self.indices[idx+1]}')
 
-            eval.compute_wavelets(self.graph.get_graph(),
-                                  self.indices[idx], self.indices[idx+1])
+            # Compute the windowed wavelets in the initial graph.
+            node_range = np.arange(self.indices[idx], self.indices[idx+1])
+            eval.compute_wavelets(self.graph.get_graph(0), node_range)
+
             W_est = eval.compute_wavelet_coeffs(x_est)
             W_opt = eval.compute_wavelet_coeffs(x_opt)
             features = eval.compute_features(W_opt, W_est)

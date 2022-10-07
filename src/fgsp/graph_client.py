@@ -385,6 +385,8 @@ class GraphClient(Node):
             return None
 
     def perform_multiscale_evaluation(self, key, all_opt_nodes, all_est_nodes):
+        Logger.LogError(f'opt nodes are {len(all_opt_nodes)}')
+        Logger.LogError(f'est nodes are {len(all_est_nodes)}')
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)
@@ -440,7 +442,7 @@ class GraphClient(Node):
             if self.config.use_downstreaming:
                 return DownstreamResult(self.config, key, all_opt_nodes, features, labels, self.global_graph.get_indices())
             else:
-                return WindowedResult(self.config, key, all_opt_nodes, features, labels, self.global_graph)
+                return WindowedResult(self.config, key, all_opt_nodes, all_est_nodes, features, labels, self.global_graph)
         else:
             return ClassificationResult(self.config, key, all_opt_nodes, features, labels)
 

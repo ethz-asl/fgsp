@@ -22,7 +22,7 @@ from src.fgsp.common.logger import Logger
 from src.fgsp.classifier.top_classifier import TopClassifier
 from src.fgsp.classifier.simple_classifier import SimpleClassifier
 from src.fgsp.classifier.classification_result import ClassificationResult
-from fgsp.classifier.downstream_result import HierarchicalResult
+from fgsp.classifier.downstream_result import DownstreamResult
 
 
 class GraphClient(Node):

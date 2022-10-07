@@ -30,6 +30,7 @@ graph_client:
     construction_method: "so3" # "se3" or "so3" or "r3"
     use_graph_hierarchies: False
     max_graph_levels: 4 # 2 means 1 level of hierarchy
+    use_downstreaming: False
     graph_hierarchies_node_threshold: 1
     use_parallel_construction: False
 

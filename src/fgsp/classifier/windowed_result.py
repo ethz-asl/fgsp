@@ -1,14 +1,14 @@
 #! /usr/bin/env python3
 
-from fgsp.controller.signal_handler import SignalHandler
+from src.fgsp.controller.signal_handler import SignalHandler
 from src.fgsp.graph.wavelet_evaluator import WaveletEvaluator
 from src.fgsp.classifier import ClassificationResult
 
 
 class WindowedResult(ClassificationResult):
-    def __init__(self, config, robot_name, opt_nodes, est_nodes, features, labels, indices, graph):
+    def __init__(self, config, robot_name, opt_nodes, est_nodes, features, labels, graph):
         super().__init__(config, robot_name, opt_nodes, features, labels)
-        self.indices = indices
+        self.indices = graph.get_indices()
         self.graph = graph
         self.est_nodes = est_nodes
         n_nodes = len(self.opt_nodes)

@@ -22,7 +22,7 @@ from src.fgsp.common.logger import Logger
 from src.fgsp.classifier.top_classifier import TopClassifier
 from src.fgsp.classifier.simple_classifier import SimpleClassifier
 from src.fgsp.classifier.classification_result import ClassificationResult
-from src.fgsp.classifier.hierarchical_result import HierarchicalResult
+from fgsp.classifier.downstream_result import HierarchicalResult
 
 
 class GraphClient(Node):
@@ -436,7 +436,7 @@ class GraphClient(Node):
 
         labels = self.classifier.classify(features)
         if self.config.use_graph_hierarchies:
-            return HierarchicalResult(self.config, key, all_opt_nodes, features, labels, self.global_graph.get_indices())
+            return DownstreamResult(self.config, key, all_opt_nodes, features, labels, self.global_graph.get_indices())
         else:
             return ClassificationResult(self.config, key, all_opt_nodes, features, labels)
 

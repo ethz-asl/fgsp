@@ -384,8 +384,6 @@ class GraphClient(Node):
             return None
 
     def perform_multiscale_evaluation(self, key, all_opt_nodes, all_est_nodes):
-        Logger.LogError(f'opt nodes are {len(all_opt_nodes)}')
-        Logger.LogError(f'est nodes are {len(all_est_nodes)}')
         # Compute the signal using the synchronized estimated nodes.
         x_est = self.signal.compute_signal(all_est_nodes)
         x_opt = self.optimized_signal.compute_signal(all_opt_nodes)

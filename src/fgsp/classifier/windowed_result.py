@@ -44,10 +44,7 @@ class WindowedResult(ClassificationResult):
 
             for lbl in labels[idx]:
                 max_n = node_range[np.argmax(features[node_range, lbl-1])]
-                if downstream_labels[max_n] is None:
-                    downstream_labels[max_n] = [lbl]
-                else:
-                    downstream_labels[max_n].append(lbl)
+                downstream_labels[max_n].append(lbl)
 
         # Fix remainder
         node_range = np.arange(self.indices[last_label], n_nodes, dtype=int)

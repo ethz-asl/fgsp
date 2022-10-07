@@ -30,22 +30,36 @@ class WindowedResult(ClassificationResult):
 
         downstream_labels = [None] * n_nodes
         for idx in range(0, last_label):
+            if len(labels[idx]) == 0:
+                continue
             print(
                 f'Computing wavelets for {self.indices[idx]} to {self.indices[idx+1]}')
 
             # Compute the windowed wavelets in the initial graph.
-            node_range = np.arange(self.indices[idx], self.indices[idx+1])
+            node_range = np.arange(
+                self.indices[idx], self.indices[idx+1], dtype=int)
             eval.compute_wavelets(self.graph.get_graph(0), node_range)
 
+            # Compute the windowed features for the windowed wavelets.
             W_est = eval.compute_wavelet_coeffs(x_est)
             W_opt = eval.compute_wavelet_coeffs(x_opt)
             features = eval.compute_features(W_opt, W_est)
-            print(f'=== Features ===== \n {features}')
 
-            # downstream_labels[i] = labels[idx]
+            print(f'Labels {labels[idx]}')
+
+            for lbl in labels[idx]:
+                print(f'current Label: {lbl}')
+                max_feature_idx = np.argmax(features[node_range, lbl-1])
+                max_n = node_range[max_feature_idx]
+                if downstream_labels[max_n] is None:
+                    downstream_labels[max_n] = [lbl]
+                else:
+                    downstream_labels[max_n].append(lbl)
 
         # Fix remainder
         # for i in range(self.indices[last_label], n_nodes):
             # downstream_labels[i] = labels[last_label]
+
+        print(f'Downstream labels: \n{downstream_labels}')
 
         return downstream_labels

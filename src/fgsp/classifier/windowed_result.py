@@ -56,8 +56,6 @@ class WindowedResult(ClassificationResult):
         return downstream_labels
 
     def evaluate_node_range(self, node_range, x_est, x_opt):
-        print(f'Computing wavelets for {node_range[0]} to {node_range[-1]}')
-
         # Compute the windowed wavelets in the initial graph.
         eval = WaveletEvaluator()
         eval.compute_wavelets(self.graph.get_graph(0), node_range)

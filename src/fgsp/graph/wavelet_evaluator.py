@@ -29,7 +29,7 @@ class WaveletEvaluator(object):
         self.feature_names = ['Euclidean_L', 'Euclidean_B', 'Euclidean_H', 'Correlation_L', 'Correlation_B',
                               'Correlation_H', 'Manhattan_L', 'Manhattan_B', 'Manhattan_H', 'Chebyshev_L', 'Chebyshev_B', 'Chebyshev_H']
         self.ranges = self.compute_constraint_ranges()
-        Logger.LogInfo(
+        Logger.LogDebug(
             f'WaveletEvaluator: Created with ranges: {self.ranges}.')
 
     def set_scales(self, n_scales):

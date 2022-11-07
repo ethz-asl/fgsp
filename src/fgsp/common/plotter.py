@@ -49,22 +49,10 @@ class Plotter(object):
         print('{color} --- General Configuration -------------------------------------------------- {end}'.format(color=font.BLUE, end=font.END))
         print('{bold} Update rate:{end} {val}hz'.format(
             bold=font.BOLD, end=font.END, val=1/config.rate))
-        print('{bold} Compute submap-to-submap constraints:{end} {val}'.format(
-            bold=font.BOLD, end=font.END, val=config.enable_submap_constraints))
         print('{bold} Reduce optimized graph using Kron:{end} {val}'.format(
             bold=font.BOLD, end=font.END, val=config.reduce_global_graph))
         print('{bold} Minimal node count in optimized graph:{end} {val}'.format(
             bold=font.BOLD, end=font.END, val=config.min_node_count))
-        print('{bold} Minimal submap count:{end} {val}'.format(
-            bold=font.BOLD, end=font.END, val=config.submap_min_count))
-        print('{bold} Submap pivot distance:{end} {val}'.format(
-            bold=font.BOLD, end=font.END, val=config.pivot_distance))
-        print('{bold} Submap k-nearest neighbors:{end} {val}'.format(bold=font.BOLD,
-              end=font.END, val=config.n_nearest_neighbors))
-        print('{bold} Submap visualize map:{end} {val}'.format(
-            bold=font.BOLD, end=font.END, val=config.enable_submap_map_publishing))
-        print('{bold} Submap compute LiDAR poses:{end} {val}'.format(
-            bold=font.BOLD, end=font.END, val=config.compute_poses_in_LiDAR))
         print('\n')
 
         print('{color} --- Subscriber Configuration (Input) --------------------------------------- {end}'.format(
@@ -85,8 +73,6 @@ class Plotter(object):
             bold=font.BOLD, end=font.END, val=config.out_graph_topic))
         print('{bold} Optimized trajectory topic:{end} {val}'.format(
             bold=font.BOLD, end=font.END, val=config.out_traj_opt_topic))
-        print('{bold} Optimized submap constraints topic:{end} {val}'.format(
-            bold=font.BOLD, end=font.END, val=config.submap_topic))
         print('\n')
 
     @staticmethod
@@ -98,8 +84,6 @@ class Plotter(object):
             bold=font.BOLD, end=font.END, val=config.dataroot))
         print('{bold} Robot name:{end} {val}'.format(
             bold=font.BOLD, end=font.END, val=config.robot_name))
-        print('{bold} Enable submap constraints:{end} {val}'.format(
-            bold=font.BOLD, end=font.END, val=config.enable_submap_constraints))
         print('{bold} Enable anchor constraints:{end} {val}'.format(
             bold=font.BOLD, end=font.END, val=config.enable_anchor_constraints))
         print('{bold} Enable signal recording:{end} {val}'.format(

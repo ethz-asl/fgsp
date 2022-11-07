@@ -306,11 +306,14 @@ class SignalHandler(object):
         for idx in range(1, n_indices):
             for i in range(indices[idx-1], indices[idx]):
                 marginalized[idx-1] += signal[i]
+                # marginalized[idx-1] = max(marginalized[idx-1], signal[i])
 
         # Marginalize remaining signals
         last_reduced_idx = n_indices - 1
         for i in range(indices[last_reduced_idx], n_nodes):
             marginalized[last_reduced_idx] += signal[i]
+            # marginalized[last_reduced_idx] = max(
+            # marginalized[last_reduced_idx], signal[i])
 
         return marginalized
 

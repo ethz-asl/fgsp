@@ -22,7 +22,6 @@ class MonitorConfig(BaseConfig):
         # general config
         self.rate = 0.1
         self.enable_graph_building = True
-        self.enable_submap_constraints = True
         self.min_node_count = 10
         self.submap_min_count = 3
         self.send_separate_traj_msgs = True
@@ -37,7 +36,6 @@ class MonitorConfig(BaseConfig):
         self.min_pivot_distance = 20.0
         self.n_nearest_neighbors = 50
         self.p_norm = 2
-        self.enable_submap_map_publishing = False
         self.compute_poses_in_LiDAR = False
 
         # input
@@ -49,20 +47,15 @@ class MonitorConfig(BaseConfig):
         # output
         self.out_graph_topic = '/graph_monitor/sparse_graph/graph'
         self.out_traj_opt_topic = '/graph_monitor/sparse_graph/trajectory'
-        self.submap_topic = '/graph_monitor/submaps'
         self.accumulated_map_topic = '/graph_monitor/map'
 
     def init_from_config(self):
         # general config
         self.rate = self.try_get_param("update_rate", self.rate)
-        self.enable_submap_constraints = self.try_get_param(
-            "enable_submap_constraints", self.enable_submap_constraints)
         self.enable_graph_building = self.try_get_param(
             "enable_graph_building", self.enable_graph_building)
         self.min_node_count = self.try_get_param(
             "min_node_count", self.min_node_count)
-        self.submap_min_count = self.try_get_param(
-            "submap_min_count", self.submap_min_count)
         self.send_separate_traj_msgs = self.try_get_param(
             "send_separate_traj_msgs", self.send_separate_traj_msgs)
 
@@ -73,20 +66,6 @@ class MonitorConfig(BaseConfig):
             "reduction_method", self.reduction_method)
         self.reduce_to_n_percent = self.try_get_param(
             "reduce_to_n_percent", self.reduce_to_n_percent)
-
-        # submap constraints
-        self.pivot_distance = self.try_get_param(
-            "submap_constraint_pivot_distance", self.pivot_distance)
-        self.min_pivot_distance = self.try_get_param(
-            "submap_constraint_min_distance", self.min_pivot_distance)
-        self.n_nearest_neighbors = self.try_get_param(
-            "submap_constraint_knn", self.n_nearest_neighbors)
-        self.p_norm = self.try_get_param(
-            "submap_constraint_p_norm", self.p_norm)
-        self.enable_submap_map_publishing = self.try_get_param(
-            "enable_submap_map_publishing", self.enable_submap_map_publishing)
-        self.compute_poses_in_LiDAR = self.try_get_param(
-            "submap_constraint_export_lidar_poses", self.compute_poses_in_LiDAR)
 
         # input
         self.in_graph_topic = self.try_get_param(
@@ -103,8 +82,6 @@ class MonitorConfig(BaseConfig):
             "out_graph_topic", self.out_graph_topic)
         self.out_traj_opt_topic = self.try_get_param(
             "out_traj_opt_topic", self.out_traj_opt_topic)
-        self.submap_topic = self.try_get_param(
-            "submap_constraint_topic", self.submap_topic)
         self.accumulated_map_topic = self.try_get_param(
             "accumulated_map_topic", self.accumulated_map_topic)
 
@@ -118,7 +95,6 @@ class ClientConfig(BaseConfig):
         self.dataroot = '/home/berlukas/Documents/workspace/fgsp_ws/src/fgsp'
         self.robot_name = 'cerberus'
         self.enable_client_update = True
-        self.enable_submap_constraints = True
         self.enable_anchor_constraints = False
         self.enable_relative_constraints = False
         self.enable_signal_recording = False
@@ -149,18 +125,18 @@ class ClientConfig(BaseConfig):
 
         # Graph construction
         self.construction_method = 'se3'
-        self.use_graph_hierarchies = False
-        self.max_graph_levels = 1
+        self.use_graph_hierarchies = True
+        self.max_graph_levels = 2
         self.use_downstreaming = False
         self.graph_hierarchies_node_threshold = 100
         self.use_parallel_construction = True
+        self.visualize_graph = False
 
         # input
         self.opt_graph_topic = "/graph_monitor/sparse_graph/graph"
         self.opt_traj_topic = "/graph_monitor/sparse_graph/trajectory"
         self.est_traj_topic = "/trajectory"
         self.est_traj_path_topic = "/incremental_trajectory"
-        self.submap_constraint_topic = "/graph_monitor/submaps"
 
         # output
         self.anchor_node_topic = "/graph_client/anchor_nodes"
@@ -178,8 +154,6 @@ class ClientConfig(BaseConfig):
         self.robot_name = self.try_get_param("robot_name", self.robot_name)
         self.enable_client_update = self.try_get_param(
             "enable_client_update", self.enable_client_update)
-        self.enable_submap_constraints = self.try_get_param(
-            "enable_submap_constraints", self.enable_submap_constraints)
         self.enable_anchor_constraints = self.try_get_param(
             "enable_anchor_constraints", self.enable_anchor_constraints)
         self.enable_relative_constraints = self.try_get_param(
@@ -243,6 +217,8 @@ class ClientConfig(BaseConfig):
             "graph_hierarchies_node_threshold", self.graph_hierarchies_node_threshold)
         self.use_parallel_construction = self.try_get_param(
             "use_parallel_construction", self.use_parallel_construction)
+        self.visualize_graph = self.try_get_param(
+            "visualize_graph", self.visualize_graph)
 
         # input
         self.opt_graph_topic = self.try_get_param(
@@ -253,8 +229,6 @@ class ClientConfig(BaseConfig):
             "est_traj_topic", self.est_traj_topic)
         self.est_traj_path_topic = self.try_get_param(
             "est_traj_path_topic", self.est_traj_path_topic)
-        self.submap_constraint_topic = self.try_get_param(
-            "opt_submap_constraint_topic", self.submap_constraint_topic)
 
         # output
         self.anchor_node_topic = self.try_get_param(

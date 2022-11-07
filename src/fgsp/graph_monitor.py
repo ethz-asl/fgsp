@@ -2,7 +2,7 @@
 
 import copy
 import time
-from maplab_msgs.msg import Graph, Trajectory, Submap, SubmapConstraint
+from maplab_msgs.msg import Graph, Trajectory
 from multiprocessing import Lock
 
 import rclpy
@@ -29,11 +29,6 @@ class GraphMonitor(Node):
         self.mutex = Lock()
         self.mutex.acquire()
         # Publishers and subscribers.
-        if self.config.enable_submap_constraints:
-            self.submap_sub = self.create_subscription(
-                Submap, self.config.opt_pc_topic, self.submap_callback, 10)
-            self.submap_pub = self.create_publisher(
-                SubmapConstraint, self.config.submap_topic, 10)
         if self.config.enable_graph_building:
             self.graph_sub = self.create_subscription(
                 Graph, self.config.in_graph_topic, self.graph_callback, 10)
@@ -51,8 +46,6 @@ class GraphMonitor(Node):
 
         # Key management to keep track of the received messages.
         self.optimized_keys = []
-        self.submaps = {}
-        self.submap_counter = {}
         self.is_initialized = True
         self.latest_opt_traj_msg = None
         self.mutex.release()

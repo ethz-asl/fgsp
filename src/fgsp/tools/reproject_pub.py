@@ -97,7 +97,8 @@ class ReprojectPub(Node):
         Logger.LogInfo('------------------------------------------------')
 
         # Updater
-        self.timer = self.create_timer(1, self.publish_all_maps)
+        upd_time_s = self.try_get_param('update_time_s', 1.0)
+        self.timer = self.create_timer(upd_time_s, self.publish_all_maps)
 
     def create_gt_pub(self):
         self.gt_traj = self.read_traj_file('gt_traj_file')
@@ -206,31 +207,47 @@ class ReprojectPub(Node):
 
         return poses
 
-    def should_publish(self, map_pub, traj_pub):
-        has_map_subs = True
-        has_traj_subs = True
+    def should_publish_map(self, map_pub, traj_pub):
+        has_map_subs = False
+        has_traj_subs = False
         if (map_pub is not None):
             has_map_subs = map_pub.get_subscription_count() > 0
         if (traj_pub is not None):
             has_traj_subs = traj_pub.get_subscription_count() > 0
         return has_map_subs & has_traj_subs
 
+    def should_publish_traj(self, traj_pub):
+        has_traj_subs = False
+        if (traj_pub is not None):
+            has_traj_subs = traj_pub.get_subscription_count() > 0
+        return has_traj_subs
+
     def publish_all_maps(self):
         if len(self.ts_cloud_map) == 0:
             Logger.LogWarn(f'Received no clouds yet.')
             return
 
-        if self.enable_gt and self.should_publish(self.gt_map_pub, self.gt_path_pub):
+        if self.enable_gt:
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
-            gt_map, gt_idx = self.accumulate_cloud(self.gt_traj, ts_cloud_map)
-            if gt_idx >= 0:
-                self.publish_map(self.gt_map_pub, self.gt_path_pub,
-                                 gt_map, self.gt_traj[0:gt_idx+1, :])
-                Logger.LogInfo(
-                    f'Published gt map with {len(gt_map.points)} points.')
+            if self.should_publish_map(self.gt_map_pub, self.gt_path_pub):
+                gt_map, gt_idx = self.accumulate_cloud(
+                    self.gt_traj, ts_cloud_map)
+                if gt_idx >= 0:
+                    self.publish_map(self.gt_map_pub, self.gt_path_pub,
+                                     gt_map, self.gt_traj[0:gt_idx+1, :])
+                    Logger.LogInfo(
+                        f'Published gt map with {len(gt_map.points)} points.')
+            elif self.should_publish_traj(self.gt_path_pub):
+                gt_idx = self.find_last_idx(self.gt_traj, ts_cloud_map)
+                if gt_idx >= 0:
+                    self.publish_map(None, self.gt_path_pub, None,
+                                     self.gt_traj[0:gt_idx+1, :])
+                    Logger.LogInfo(
+                        f'Published gt traj with {gt_idx+1} points.')
+
         if self.enable_graph:
             for lvl in range(self.hierarchy_levels):
-                if not self.should_publish(self.graph_map_pub[lvl], None):
+                if not self.should_publish_map(self.graph_map_pub[lvl], None):
                     continue
                 ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
 
@@ -249,28 +266,44 @@ class ReprojectPub(Node):
                         f'Published graph map with {len(graph_map.points)} points.')
             self.vis_helper.visualize_coords()
 
-        if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
+        if self.enable_est:
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
-            est_map, est_idx = self.accumulate_cloud(
-                self.est_traj, ts_cloud_map)
-            if est_idx >= 0:
-                self.publish_map(self.est_map_pub, self.est_path_pub,
-                                 est_map, self.est_traj[0:est_idx+1, :])
-                Logger.LogInfo(
-                    f'Published est map with {len(est_map.points)} points.')
+            if self.should_publish_map(self.est_map_pub, self.est_path_pub):
+                est_map, est_idx = self.accumulate_cloud(
+                    self.est_traj, ts_cloud_map)
+                if est_idx >= 0:
+                    self.publish_map(self.est_map_pub, self.est_path_pub,
+                                     est_map, self.est_traj[0:est_idx+1, :])
+                    Logger.LogInfo(
+                        f'Published est map with {len(est_map.points)} points.')
+            elif self.should_publish_traj(self.est_path_pub):
+                est_idx = self.find_last_idx(self.est_traj, ts_cloud_map)
+                if est_idx >= 0:
+                    self.publish_map(None, self.est_path_pub, None,
+                                     self.est_traj[0:est_idx+1, :])
+                    Logger.LogInfo(
+                        f'Published est traj with {est_idx+1} points.')
 
-        if self.enable_corr and self.should_publish(self.corr_map_pub, self.corr_path_pub):
+        if self.enable_corr:
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
-            corr_map, corr_idx = self.accumulate_cloud(
-                self.corr_traj, ts_cloud_map)
-            if corr_idx >= 0:
-                corr_traj = self.corr_traj[0:corr_idx+1, :]
-                self.publish_map(self.corr_map_pub,
-                                 self.corr_path_pub, corr_map, corr_traj)
-                Logger.LogInfo(
-                    f'Published corr map with {len(corr_map.points)} points.')
-                if self.enable_constraints and self.constraints_pub.get_subscription_count() > 0:
-                    self.publish_constraints(corr_traj)
+            if self.should_publish_map(self.corr_map_pub, self.corr_path_pub):
+                corr_map, corr_idx = self.accumulate_cloud(
+                    self.corr_traj, ts_cloud_map)
+                if corr_idx >= 0:
+                    corr_traj = self.corr_traj[0:corr_idx+1, :]
+                    self.publish_map(self.corr_map_pub,
+                                     self.corr_path_pub, corr_map, corr_traj)
+                    Logger.LogInfo(
+                        f'Published corr map with {len(corr_map.points)} points.')
+                    if self.enable_constraints and self.constraints_pub.get_subscription_count() > 0:
+                        self.publish_constraints(corr_traj)
+            elif self.should_publish_traj(self.corr_path_pub):
+                corr_idx = self.find_last_idx(self.corr_traj, ts_cloud_map)
+                if corr_idx >= 0:
+                    self.publish_map(None, self.corr_path_pub, None,
+                                     self.corr_traj[0:corr_idx+1, :])
+                    Logger.LogInfo(
+                        f'Published est traj with {corr_idx+1} points.')
 
     def publish_constraints(self, traj):
         if len(traj) == 0:
@@ -447,6 +480,11 @@ class ReprojectPub(Node):
             map += cloud
 
         return map, idx
+
+    def find_last_idx(self, trajectory, ts_cloud_map, eps=1e-4):
+        ts_s, _ = list(ts_cloud_map.items())[-1]
+        idx = self.lookup_closest_ts_idx(trajectory[:, 0], ts_s, eps)
+        return idx
 
     def parse_cloud(self, cloud_msg: PointCloud2):
         cloud = point_cloud2.read_points_numpy(

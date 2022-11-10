@@ -10,6 +10,7 @@ reproject_viz:
     cloud_in: "/point_cloud_filter/lidar/point_cloud_filtered"
     skip_every_nth: 3
     voxel_size: 0.1
+    update_time_s: 0.1
 
     enable_gt: False
     enable_est: True

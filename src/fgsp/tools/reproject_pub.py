@@ -97,7 +97,8 @@ class ReprojectPub(Node):
         Logger.LogInfo('------------------------------------------------')
 
         # Updater
-        self.timer = self.create_timer(1, self.publish_all_maps)
+        upd_time_s = self.try_get_param('update_time_s', 1.0)
+        self.timer = self.create_timer(upd_time_s, self.publish_all_maps)
 
     def create_gt_pub(self):
         self.gt_traj = self.read_traj_file('gt_traj_file')
@@ -228,6 +229,14 @@ class ReprojectPub(Node):
                                  gt_map, self.gt_traj[0:gt_idx+1, :])
                 Logger.LogInfo(
                     f'Published gt map with {len(gt_map.points)} points.')
+        elif self.enable_gt and self.gt_path_pub.get_subscription_count() > 0:
+            gt_idx = self.find_last_idx(self.gt_traj, ts_cloud_map)
+            if gt_idx >= 0:
+                self.publish_map(None, self.gt_path_pub, None,
+                                 self.gt_traj[0:gt_idx+1, :])
+                Logger.LogInfo(
+                    f'Published gt traj with {len(gt_idx+1)} points.')
+
         if self.enable_graph:
             for lvl in range(self.hierarchy_levels):
                 if not self.should_publish(self.graph_map_pub[lvl], None):
@@ -249,15 +258,23 @@ class ReprojectPub(Node):
                         f'Published graph map with {len(graph_map.points)} points.')
             self.vis_helper.visualize_coords()
 
-        if self.enable_est and self.should_publish(self.est_map_pub, self.est_path_pub):
+        if self.enable_est:
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
-            est_map, est_idx = self.accumulate_cloud(
-                self.est_traj, ts_cloud_map)
-            if est_idx >= 0:
-                self.publish_map(self.est_map_pub, self.est_path_pub,
-                                 est_map, self.est_traj[0:est_idx+1, :])
-                Logger.LogInfo(
-                    f'Published est map with {len(est_map.points)} points.')
+            if self.should_publish(self.est_map_pub, self.est_path_pub):
+                est_map, est_idx = self.accumulate_cloud(
+                    self.est_traj, ts_cloud_map)
+                if est_idx >= 0:
+                    self.publish_map(self.est_map_pub, self.est_path_pub,
+                                     est_map, self.est_traj[0:est_idx+1, :])
+                    Logger.LogInfo(
+                        f'Published est map with {len(est_map.points)} points.')
+            elif self.est_path_pub.get_subscription_count() > 0:
+                est_idx = self.find_last_idx(self.est_traj, ts_cloud_map)
+                if est_idx >= 0:
+                    self.publish_map(None, self.est_path_pub, None,
+                                     self.est_traj[0:est_idx+1, :])
+                    Logger.LogInfo(
+                        f'Published est traj with {est_idx+1} points.')
 
         if self.enable_corr and self.should_publish(self.corr_map_pub, self.corr_path_pub):
             ts_cloud_map = copy.deepcopy(self.ts_cloud_map)
@@ -447,6 +464,11 @@ class ReprojectPub(Node):
             map += cloud
 
         return map, idx
+
+    def find_last_idx(self, trajectory, ts_cloud_map, eps=1e-4):
+        ts_s, _ = list(ts_cloud_map.items())[-1]
+        idx = self.lookup_closest_ts_idx(trajectory[:, 0], ts_s, eps)
+        return idx
 
     def parse_cloud(self, cloud_msg: PointCloud2):
         cloud = point_cloud2.read_points_numpy(

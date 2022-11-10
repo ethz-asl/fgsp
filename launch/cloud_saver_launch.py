@@ -17,7 +17,7 @@ def generate_launch_description():
     saver_node = Node(
         package="fgsp",
         executable="cloud_saver",
-        output={'full': 'screen'},
+        output={'both': 'screen'},
         emulate_tty=True,
         parameters=[config]
     )

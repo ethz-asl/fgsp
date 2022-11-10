@@ -17,7 +17,7 @@ def generate_launch_description():
     publisher_node = Node(
         package="fgsp",
         executable="object_publisher",
-        output={'full': 'screen'},
+        output={'both': 'screen'},
         emulate_tty=True,
         parameters=[config]
     )

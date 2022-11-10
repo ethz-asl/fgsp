@@ -17,7 +17,7 @@ def generate_launch_description():
     lookup_node = Node(
         package="fgsp",
         executable="lookup_aligned_pose",
-        output={'full': 'screen'},
+        output={'both': 'screen'},
         emulate_tty=True,
         parameters=[config]
     )

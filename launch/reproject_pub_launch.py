@@ -18,7 +18,7 @@ def generate_launch_description():
     pub = Node(
         package="fgsp",
         executable="reproject_pub",
-        output={'full': 'screen'},
+        output={'both': 'screen'},
         emulate_tty=True,
         parameters=[config]
     )

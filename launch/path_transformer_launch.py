@@ -17,7 +17,7 @@ def generate_launch_description():
     transformer_node = Node(
         package="fgsp",
         executable="path_transformer",
-        output={'full': 'screen'},
+        output={'both': 'screen'},
         emulate_tty=True,
         parameters=[config]
     )

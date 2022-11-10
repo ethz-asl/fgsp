@@ -17,7 +17,7 @@ def generate_launch_description():
     simulation_node = Node(
         package="fgsp",
         executable="simulation",
-        output={'full': 'screen'},
+        output={'both': 'screen'},
         emulate_tty=True,
         parameters=[config]
     )

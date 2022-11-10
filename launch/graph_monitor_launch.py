@@ -17,7 +17,7 @@ def generate_launch_description():
     monitor_node = Node(
         package="fgsp",
         executable="graph_monitor",
-        output={'full': 'screen'},
+        output={'both': 'screen'},
         emulate_tty=True,
         parameters=[config, {'use_sim_time': True}]
     )

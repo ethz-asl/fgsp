@@ -20,11 +20,11 @@ class SimpleClassifier(object):
             local_labels = []
 
             if dists[0] > 0.005:
-                local_labels.append(1)
+                local_labels.append(3)
             if dists[1] > 0.002:
                 local_labels.append(2)
             if dists[2] > 0.001:
-                local_labels.append(3)
+                local_labels.append(1)
 
             Logger.LogDebug(f'WaveletEvaluator: dists are {dists}')
             Logger.LogDebug(

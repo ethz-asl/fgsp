@@ -18,18 +18,20 @@ graph_client:
 
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
+    wavelet_scales: 3
     classifier: "top" # "top" or "simple"
-    top_classifier_select_n: 15
-    top_classifier_min_threshold: 0.04
+    top_classifier_select_n: 5
+    top_classifier_min_threshold: 0.07
     large_scale_partition_method: "id" # 'id' or 'nth'
     n_hop_mid_constraints: 5
-    min_dist_large_constraints: 20.0
+    min_dist_large_constraints: 5.0
+    nn_neighbors: 10
     stop_method: "" # "", "dirichlet", "tv", "alv"
     stop_threshold: 0.1
 
     # Graph configuration.
     construction_method: "se3" # "se3" or "so3" or "r3"
-    use_graph_hierarchies: True
+    use_graph_hierarchies: False
     max_graph_levels: 2 # 2 means 1 level of hierarchy
     use_downstreaming: False
     graph_hierarchies_node_threshold: 1
@@ -38,7 +40,7 @@ graph_client:
 
     # Div
     dataroot: "/home/berlukas/Documents/workspace/ros2/fgsp_ws/src/fgsp"
-    robot_name: "euroc_1" # cerberus, euroc_X, anymal_X
+    robot_name: "cerberus" # cerberus, euroc_X, anymal_X
     update_rate: 0.05
     enable_client_update: False
     enable_anchor_constraints: False

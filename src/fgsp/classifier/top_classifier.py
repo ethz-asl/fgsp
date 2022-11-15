@@ -24,16 +24,22 @@ class TopClassifier(object):
         # Find top n entries in the data.
         xy_indices = np.unravel_index(np.argsort(
             data.ravel())[-top_n:], data.shape)
+        Logger.LogDebug('--- TOP N ---------------------------------')
         for i in range(0, top_n):
             row_idx = xy_indices[0][i]
             col_idx = xy_indices[1][i]
 
             if data[row_idx, col_idx] < self.threshold:
+                Logger.LogDebug(
+                    f'skip {data[row_idx, col_idx]} < {self.threshold}')
                 continue
+            else:
+                Logger.LogDebug(data[row_idx, col_idx])
 
             if labels[row_idx] == None:
                 labels[row_idx] = []
             labels[row_idx].append(col_idx + 1)
+        Logger.LogDebug('------------------------------------------')
 
         Logger.LogDebug('--- LABELS ---------------------------------')
         Logger.LogDebug(labels)

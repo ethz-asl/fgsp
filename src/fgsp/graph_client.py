@@ -69,7 +69,7 @@ class GraphClient(Node):
         self.signal = SignalHandler(self.config)
         self.optimized_signal = SignalHandler(self.config)
         self.synchronizer = SignalSynchronizer(self.config)
-        self.eval = WaveletEvaluator()
+        self.eval = WaveletEvaluator(self.config.wavelet_scales)
         self.commander = CommandPost(self.config)
 
         if self.config.classifier == 'top':

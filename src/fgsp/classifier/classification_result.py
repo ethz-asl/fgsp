@@ -102,7 +102,7 @@ class ClassificationResult(object):
         mid_relative_counter = 0
         large_relative_counter = 0
 
-        if 1 in local_labels:
+        if 3 in local_labels:
             relative_constraint, transform_history, n_added = self.construct_small_area_constraint(
                 idx, relative_constraint, transform_history)
             small_relative_counter = n_added
@@ -110,7 +110,8 @@ class ClassificationResult(object):
             relative_constraint, transform_history, n_added = self.construct_mid_area_constraint(
                 idx, relative_constraint, transform_history)
             mid_relative_counter = n_added
-        if 3 in local_labels:
+        if 1 in local_labels:
+            print(f'We have large area constraint at {idx}')
             relative_constraint, transform_history, n_added = self.construct_large_area_constraint(
                 idx, relative_constraint, transform_history)
             large_relative_counter = n_added
@@ -170,10 +171,11 @@ class ClassificationResult(object):
         if len(submap_positions) == 0:
             return []
         tree = spatial.KDTree(submap_positions)
-        _, nn_indices = self.query_tree(submap_idx, tree)
+        _, nn_indices = self.query_tree(
+            submap_idx, tree, self.config.nn_neighbors)
         return self.partitions[nn_indices]
 
-    def query_tree(self, cur_id, tree, n_neighbors=30, p_norm=2, dist=50):
+    def query_tree(self, cur_id, tree, n_neighbors=5, p_norm=2, dist=50):
         if cur_id >= len(self.partitions):
             return [], []
 

@@ -114,12 +114,14 @@ class ClientConfig(BaseConfig):
 
         # constraint construction
         self.client_mode = 'multiscale'
+        self.wavelet_scales = 6
         self.classifier = 'top'
         self.top_classifier_select_n = 10
         self.top_classifier_min_threshold = 0.1
         self.large_scale_partition_method = 'id'
         self.n_hop_mid_constraints = 10
         self.min_dist_large_constraints = 20.0
+        self.nn_neighbors = 3
         self.stop_method = 'none'
         self.stop_threshold = 0.0
 
@@ -189,6 +191,8 @@ class ClientConfig(BaseConfig):
 
         # constraint construction
         self.client_mode = self.try_get_param("client_mode", self.client_mode)
+        self.wavelet_scales = self.try_get_param(
+            "wavelet_scales", self.wavelet_scales)
         self.classifier = self.try_get_param("classifier", self.classifier)
         self.top_classifier_select_n = self.try_get_param(
             "top_classifier_select_n", self.top_classifier_select_n)
@@ -200,6 +204,8 @@ class ClientConfig(BaseConfig):
             "n_hop_mid_constraints", self.n_hop_mid_constraints)
         self.min_dist_large_constraints = self.try_get_param(
             "min_dist_large_constraints", self.min_dist_large_constraints)
+        self.nn_neighbors = self.try_get_param(
+            "nn_neighbors", self.nn_neighbors)
         self.stop_method = self.try_get_param("stop_method", self.stop_method)
         self.stop_threshold = self.try_get_param(
             "stop_threshold", self.stop_threshold)

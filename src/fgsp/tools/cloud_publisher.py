@@ -27,6 +27,7 @@ class CloudPublisher(Node):
         self.cloud_topic = self.get_param('cloud_topic', '/point_cloud')
         self.cloud_input_path = self.get_param('cloud_input_path', '')
         self.enable_clouds = True
+        self.n_clouds = 0
         if (self.cloud_input_path == '' or not os.path.exists(self.cloud_input_path)):
             Logger.LogWarn(
                 f'CloudPublisher: Invalid input path: {self.cloud_input_path}')
@@ -35,6 +36,7 @@ class CloudPublisher(Node):
         self.path_topic = self.get_param('path_topic', '/path')
         self.path_input_path = self.get_param('path_input_path', '')
         self.enable_paths = True
+        self.n_paths = 0
         if (self.path_input_path == '' or not os.path.exists(self.path_input_path)):
             Logger.LogWarn(
                 f'CloudPublisher: Invalid input path: {self.path_input_path}')

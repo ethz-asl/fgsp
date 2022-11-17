@@ -1,6 +1,6 @@
 reproject_viz:
   ros__parameters:
-    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/seemuehle_degen/anymal_2_1629377276317532160/"
+    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/h_floor_viz/"
     gt_traj_file: "gt.csv"
     est_traj_file: "compslam.csv"
     corr_traj_file: "poses.csv"
@@ -10,7 +10,10 @@ reproject_viz:
     cloud_in: "/point_cloud_filter/lidar/point_cloud_filtered"
     skip_every_nth: 3
     voxel_size: 0.1
-    update_time_s: 0.1
+    update_time_s: 1.0
+    publish_small_constraints: True
+    publish_mid_constraints: True
+    publish_large_constraints: True
 
     enable_gt: False
     enable_est: True

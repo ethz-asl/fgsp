@@ -143,7 +143,7 @@ class ClassificationResult(object):
                 history.add_record(target_idx, T_a_b, ConstraintType.LARGE)
                 counter = counter + 1
 
-        if len(submap_partitions) > 0 and idx != 0:
+        if self.config.large_scale_anchor and len(submap_partitions) > 0 and idx != 0:
             target_idx = 1
             T_a_b = self.compute_relative_distance(
                 cur_opt, self.opt_nodes[target_idx])

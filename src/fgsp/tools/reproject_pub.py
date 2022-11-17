@@ -40,6 +40,12 @@ class ReprojectPub(Node):
             'T_O_L', np.eye(4, 4).reshape(16).tolist())).reshape(4, 4)
         self.voxel_size = self.try_get_param('voxel_size', 0.1)
         self.vis_helper = Visualizer()
+        self.publish_small_constraints = self.try_get_param(
+            'publish_small_constraints', True)
+        self.publish_mid_constraints = self.try_get_param(
+            'publish_mid_constraints', True)
+        self.publish_large_constraints = self.try_get_param(
+            'publish_large_constraints', True)
 
         # GT Publisher
         self.enable_gt = self.try_get_param('enable_gt', False)
@@ -84,6 +90,14 @@ class ReprojectPub(Node):
         Logger.LogDebug(f'Enable EST: {self.enable_est}')
         Logger.LogDebug(f'Enable CORR: {self.enable_corr}')
         Logger.LogDebug(f'Enable CONSTR: {self.enable_constraints}')
+
+        if self.enable_constraints:
+            Logger.LogDebug(
+                f'Publishing small constraints: {self.publish_small_constraints}')
+            Logger.LogDebug(
+                f'Publishing mid constraints: {self.publish_mid_constraints}')
+            Logger.LogDebug(
+                f'Publishing large constraints: {self.publish_large_constraints}')
 
         # Cloud subscriber
         cloud_topic = self.try_get_param('cloud_in', '/cloud')

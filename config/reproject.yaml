@@ -1,6 +1,6 @@
 reproject_viz:
   ros__parameters:
-    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/h_floor_viz/"
+    dataroot: "/media/berlukas/Data/data/datasets/fgsp/results/v2/h_floor_vid2/"
     gt_traj_file: "gt.csv"
     est_traj_file: "compslam.csv"
     corr_traj_file: "poses.csv"

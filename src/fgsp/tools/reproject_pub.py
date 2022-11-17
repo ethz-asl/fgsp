@@ -334,22 +334,21 @@ class ReprojectPub(Node):
             n_labels = len(labels)
             for i in range(n_labels):
                 label = labels[i]
+                if label == ConstraintType.SMALL.value and self.publish_small_constraints:
+                    color = [0.9, 0.05, 0.05]
+                elif label == ConstraintType.MID.value and self.publish_mid_constraints:
+                    color = [0.05, 0.9, 0.05]
+                elif label == ConstraintType.LARGE.value and self.publish_large_constraints:
+                    color = [0.05, 0.05, 0.9]
+                else:
+                    continue
+
                 child_ts_ns = self.ts_connections_map[ts_ns][i]
                 child_ts_s = Utils.ts_ns_to_seconds(child_ts_ns)
                 target_idx = self.lookup_closest_ts_idx(
                     traj[:, 0], child_ts_s, self.constraint_ts_eps_s)
                 if target_idx == -1:
                     continue
-
-                if label == ConstraintType.SMALL.value:
-                    color = [0.9, 0.05, 0.05]
-                elif label == ConstraintType.MID.value:
-                    color = [0.05, 0.9, 0.05]
-                elif label == ConstraintType.LARGE.value:
-                    color = [0.05, 0.05, 0.9]
-                else:
-                    color = [0.0, 0.0, 0.0]
-
                 self.add_constraint_at(traj, idx, target_idx, label, color)
 
         Logger.LogDebug(

@@ -170,12 +170,23 @@ class ClassificationResult(object):
             self.opt_nodes[i].position for i in self.partitions]
         if len(submap_positions) == 0:
             return []
+        dists_along_graph = self.compute_distances_along_graph(
+            submap_positions)
         tree = spatial.KDTree(submap_positions)
         _, nn_indices = self.query_tree(
-            submap_idx, tree, self.config.nn_neighbors)
+            submap_idx, tree, self.config.nn_neighbors,
+            dists_along_graph, self.config.min_dist_along_graph_large_constraints,
+            2, self.config.max_lookup_dist_large_constraints)
         return self.partitions[nn_indices]
 
-    def query_tree(self, cur_id, tree, n_neighbors=5, p_norm=2, dist=50):
+    def compute_distances_along_graph(self, positions):
+        global_distances = np.linalg.norm(positions, axis=1)
+        relative_distances = np.abs(np.diff(global_distances))
+        distance_along_graph = np.cumsum(
+            np.insert(relative_distances, 0, global_distances[0]))
+        return distance_along_graph
+
+    def query_tree(self, cur_id, tree, n_neighbors, dists_along_graph, min_dist_along_graph, p_norm=2, dist=50):
         if cur_id >= len(self.partitions):
             return [], []
 
@@ -189,7 +200,9 @@ class ClassificationResult(object):
         # Remove self and fix output.
         nn_dists, nn_indices = Utils.fix_nn_output(
             n_neighbors, cur_id, nn_dists, nn_indices)
-        mask = nn_dists >= self.config.min_dist_large_constraints
+        mask_dists = nn_dists >= self.config.min_dist_large_constraints
+        mask_dists_along_graph = dists_along_graph[nn_indices] >= min_dist_along_graph
+        mask = np.logical_or(mask_dists, mask_dists_along_graph)
         return nn_dists[mask], nn_indices[mask]
 
     def construct_mid_area_constraint(self, idx, relative_constraint, history):

@@ -26,7 +26,7 @@ graph_client:
     large_scale_anchor: False
     n_hop_mid_constraints: 5
     min_dist_large_constraints: 5.0
-    nn_neighbors: 10
+    nn_neighbors: 7
     stop_method: "" # "", "dirichlet", "tv", "alv"
     stop_threshold: 0.1
 

@@ -175,7 +175,7 @@ class ClassificationResult(object):
         tree = spatial.KDTree(submap_positions)
         _, nn_indices = self.query_tree(
             submap_idx, tree, self.config.nn_neighbors,
-            dists_along_graph, self.min_dist_along_graph_large_constraints,
+            dists_along_graph, self.config.min_dist_along_graph_large_constraints,
             2, self.config.max_lookup_dist_large_constraints)
         return self.partitions[nn_indices]
 
@@ -200,7 +200,9 @@ class ClassificationResult(object):
         # Remove self and fix output.
         nn_dists, nn_indices = Utils.fix_nn_output(
             n_neighbors, cur_id, nn_dists, nn_indices)
-        mask = nn_dists >= self.config.min_dist_large_constraints
+        mask_dists = nn_dists >= self.config.min_dist_large_constraints
+        mask_dists_along_graph = dists_along_graph[nn_indices] >= min_dist_along_graph
+        mask = np.logical_or(mask_dists, mask_dists_along_graph)
         return nn_dists[mask], nn_indices[mask]
 
     def construct_mid_area_constraint(self, idx, relative_constraint, history):

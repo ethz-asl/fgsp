@@ -170,10 +170,13 @@ class ClassificationResult(object):
             self.opt_nodes[i].position for i in self.partitions]
         if len(submap_positions) == 0:
             return []
-
+        dists_along_graph = self.compute_distances_along_graph(
+            submap_positions)
         tree = spatial.KDTree(submap_positions)
         _, nn_indices = self.query_tree(
-            submap_idx, tree, self.config.nn_neighbors)
+            submap_idx, tree, self.config.nn_neighbors,
+            dists_along_graph, self.min_dist_along_graph_large_constraints,
+            2, self.config.max_lookup_dist_large_constraints)
         return self.partitions[nn_indices]
 
     def compute_distances_along_graph(self, positions):
@@ -183,7 +186,7 @@ class ClassificationResult(object):
             np.insert(relative_distances, 0, global_distances[0]))
         return distance_along_graph
 
-    def query_tree(self, cur_id, tree, n_neighbors=5, p_norm=2, dist=50):
+    def query_tree(self, cur_id, tree, n_neighbors, dists_along_graph, min_dist_along_graph, p_norm=2, dist=50):
         if cur_id >= len(self.partitions):
             return [], []
 

@@ -121,7 +121,9 @@ class ClientConfig(BaseConfig):
         self.large_scale_partition_method = 'id'
         self.large_scale_anchor = False
         self.n_hop_mid_constraints = 10
-        self.min_dist_large_constraints = 20.0
+        self.min_dist_large_constraints = 5.0
+        self.min_dist_along_graph_large_constraints = 20.0
+        self.max_lookup_dist_large_constraints = 50.0
         self.nn_neighbors = 3
         self.stop_method = 'none'
         self.stop_threshold = 0.0
@@ -207,6 +209,10 @@ class ClientConfig(BaseConfig):
             "n_hop_mid_constraints", self.n_hop_mid_constraints)
         self.min_dist_large_constraints = self.try_get_param(
             "min_dist_large_constraints", self.min_dist_large_constraints)
+        self.min_dist_along_graph_large_constraints = self.try_get_param(
+            "min_dist_along_graph_large_constraints", self.min_dist_along_graph_large_constraints)
+        self.max_lookup_dist_large_constraints = self.try_get_param(
+            "max_lookup_dist_large_constraints", self.max_lookup_dist_large_constraints)
         self.nn_neighbors = self.try_get_param(
             "nn_neighbors", self.nn_neighbors)
         self.stop_method = self.try_get_param("stop_method", self.stop_method)

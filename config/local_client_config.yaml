@@ -18,11 +18,12 @@ graph_client:
 
     # Constraint construction:     multiscale, euclidean, always, absolute
     client_mode: "multiscale"
-    wavelet_scales: 3
+    wavelet_scales: 6
     classifier: "top" # "top" or "simple"
     top_classifier_select_n: 5
     top_classifier_min_threshold: 0.07
     large_scale_partition_method: "id" # 'id' or 'nth'
+    large_scale_anchor: False
     n_hop_mid_constraints: 5
     min_dist_large_constraints: 5.0
     nn_neighbors: 10

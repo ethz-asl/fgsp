@@ -61,6 +61,23 @@ For example, for running the graph monitor on the server side:
 
 Our paper is available at
 
+*Bernreiter, Lukas, Shehryar Khattak, Lionel Ott, Roland Siegwart, Marco Hutter, and Cesar Cadena. "Collaborative Robot Mapping using Spectral Graph Analysis." In The International Journal of Robotics Research
+, 02783649241246847.* [[Link](https://journals.sagepub.com/doi/full/10.1177/02783649241246847)]
+
+BibTex:
+```
+@article{bernreiter2024framework,
+  title={A framework for collaborative multi-robot mapping using spectral graph wavelets},
+  author={Bernreiter, Lukas and Khattak, Shehryar and Ott, Lionel and Siegwart, Roland and Hutter, Marco and Cadena, Cesar},
+  journal={The International Journal of Robotics Research},
+  pages={02783649241246847},
+  year={2024},
+  publisher={SAGE Publications Sage UK: London, England}
+}
+```
+
+and
+
 *Bernreiter, Lukas, Shehryar Khattak, Lionel Ott, Roland Siegwart, Marco Hutter, and Cesar Cadena. "Collaborative Robot Mapping using Spectral Graph Analysis." In 2022 IEEE International Conference on Robotics and Automation (ICRA), IEEE, 2022.* [[Link](https://ieeexplore.ieee.org/document/9812102)] [[ArXiv](https://arxiv.org/abs/2203.00308)]
 
 
